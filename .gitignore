@@ -13,4 +13,4 @@ dist-v2/
 [Oo]bj/
 src/**/bin/
 src/**/obj/
-src/v2-home.png
+src/v2-*.png

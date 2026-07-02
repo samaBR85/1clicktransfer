@@ -75,22 +75,16 @@
 
             <!-- 3) Opcoes -->
             <TextBlock x:Name="LblSec3" FontWeight="SemiBold" Margin="0,18,0,6"/>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="130"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="110"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock x:Name="LblShortcut" Grid.Column="0" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox x:Name="CmbKey" Grid.Column="1" VerticalAlignment="Center"/>
-                <TextBlock x:Name="LblTheme" Grid.Column="2" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="16,0,8,0"/>
-                <ComboBox x:Name="CmbTheme" Grid.Column="3" VerticalAlignment="Center"/>
-                <TextBlock x:Name="LblLang" Grid.Column="4" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="16,0,8,0"/>
-                <ComboBox x:Name="CmbLang" Grid.Column="5" VerticalAlignment="Center"/>
-            </Grid>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock x:Name="LblShortcut" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox x:Name="CmbKey" Width="150" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="LblTheme" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox x:Name="CmbTheme" Width="140" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LblLang" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="24,0,8,0"/>
+                <ComboBox x:Name="CmbLang" Width="150" VerticalAlignment="Center"/>
+            </StackPanel>
 
             <!-- 4) Perfis -->
             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
