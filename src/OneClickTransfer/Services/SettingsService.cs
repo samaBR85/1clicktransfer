@@ -49,7 +49,8 @@ public static class SettingsService
     {
         s.Theme ??= "dark";
         s.Language ??= "pt";
-        s.Shortcut ??= "F5";
+        s.Shortcut ??= "F4";
+        if (s.Shortcut == "F5") s.Shortcut = "F4";   // F5 agora e fixo p/ Atualizar
         s.Source ??= new SourceSpec();
         s.Destinations ??= new();
         s.Profiles ??= new();

@@ -61,13 +61,15 @@ public partial class SettingsWindow : Window
         BtnSave.Content = L.T("save");
         BtnCancel.Content = L.T("cancel");
 
-        // Combos
+        LblF5Note.Text = L.T("f5RefreshNote");
+
+        // Combos — F5 e reservado p/ Atualizar, entao nao aparece aqui
         var noneLabel = L.Lang == "en" ? "None" : "Nenhum";
         CmbKey.Items.Clear();
         CmbKey.Items.Add(noneLabel);
-        for (int i = 2; i <= 12; i++) CmbKey.Items.Add("F" + i);
+        for (int i = 2; i <= 12; i++) { if (i == 5) continue; CmbKey.Items.Add("F" + i); }
         CmbKey.SelectedItem = (S.Shortcut is "None" or "Nenhum" or "") ? noneLabel
-            : (CmbKey.Items.Contains(S.Shortcut) ? S.Shortcut : "F5");
+            : (CmbKey.Items.Contains(S.Shortcut) ? S.Shortcut : "F4");
 
         CmbTheme.Items.Clear();
         CmbTheme.Items.Add(L.T("themeDark"));

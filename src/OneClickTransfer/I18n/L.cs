@@ -94,6 +94,8 @@ public static class L
         ["upFolder"] = ("..  (voltar)", "..  (up)"),
         ["listErrorPrefix"] = ("(erro ao listar: {0})", "(list error: {0})"),
         ["ftpConnecting"] = ("Conectando...", "Connecting..."),
+        ["f5RefreshNote"] = ("(F5 = Atualizar, fixo)", "(F5 = Refresh, fixed)"),
+        ["refreshHint"] = ("F5 = Atualizar", "F5 = Refresh"),
     };
 
     public static string T(string key)

@@ -165,8 +165,10 @@ public partial class MainWindow : Window
         var ok = !string.IsNullOrEmpty(S.Source.Path) && DestReady(Dest0);
         BtnGo.IsEnabled = ok;
         BtnTheme.Content = S.Theme == "light" ? L.T("darkMode") : L.T("lightMode");
-        TxtHint.Text = (!string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum")
-            ? L.T("shortcutHint", S.Shortcut) : "";
+        var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
+        TxtHint.Text = hasSc
+            ? L.T("shortcutHint", S.Shortcut) + "   ·   " + L.T("refreshHint")
+            : L.T("refreshHint");
         _rbSync = true;
         RbAlways.IsChecked = S.OverwriteMode == OverwriteMode.Always;
         RbIfNewer.IsChecked = S.OverwriteMode == OverwriteMode.IfNewer;
@@ -242,6 +244,14 @@ public partial class MainWindow : Window
 
     private void MainWindow_KeyDown(object sender, KeyEventArgs e)
     {
+        // F5 = Atualizar (fixo, nao trocavel)
+        if (e.Key == Key.F5)
+        {
+            e.Handled = true;
+            if (BtnRefresh.IsEnabled) { SetStatus(L.T("refreshing"), StatusKind.Sub); RefreshHome(true); SetStatus("", StatusKind.Sub); }
+            return;
+        }
+        // Atalho configuravel = Transferir
         if (string.IsNullOrEmpty(S.Shortcut) || S.Shortcut is "None" or "Nenhum") return;
         if (e.Key.ToString() == S.Shortcut && BtnGo.IsEnabled) { e.Handled = true; _ = DoTransfer(); }
     }
