@@ -962,6 +962,19 @@ $form.BackColor = $script:P.Bg
 $form.KeyPreview = $true
 Set-DoubleBuffered $form
 
+# Icone da janela / barra de tarefas.
+# No .exe compilado: extrai o icone embutido no proprio exe.
+# Rodando como .ps1: usa assets\app.ico ao lado do script.
+try {
+    $exePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+    if ($exePath -and $exePath -notlike '*powershell*' -and (Test-Path -LiteralPath $exePath)) {
+        $form.Icon = [System.Drawing.Icon]::ExtractAssociatedIcon($exePath)
+    } else {
+        $icoFile = Join-Path $ScriptDir 'assets\app.ico'
+        if (Test-Path -LiteralPath $icoFile) { $form.Icon = New-Object System.Drawing.Icon($icoFile) }
+    }
+} catch {}
+
 # --- Top bar ---
 $lblTitle = New-Object System.Windows.Forms.Label
 $lblTitle.Text = 'Transferencia 1-Clique'
