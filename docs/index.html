@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt" class="lang-pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1-Click Transfer · Transferência 1-Clique</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563EB'/%3E%3Cpath d='M12 33 L52 14 L41 50 L33 39 L24 45 Z' fill='white'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#18181B; --card:#27272A; --border:#3F3F46; --text:#F4F4F5; --sub:#A1A1AA;
+    --accent:#2563EB; --accent2:#3B82F6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#1e2540 0%,var(--bg) 55%);
+       color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;line-height:1.6}
+  a{color:var(--accent2);text-decoration:none}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header .logo{width:56px;height:56px}
+  header h1{font-size:1.35rem;margin:0;font-weight:600}
+  header .spacer{flex:1}
+  .langbtns button{background:transparent;border:1px solid var(--border);color:var(--sub);
+       padding:6px 12px;border-radius:8px;cursor:pointer;font-size:.85rem}
+  .langbtns button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .hero{text-align:center;margin:46px 0 30px}
+  .hero h2{font-size:2.1rem;margin:0 0 10px;font-weight:700;letter-spacing:-.5px}
+  .hero p{color:var(--sub);font-size:1.12rem;max-width:620px;margin:0 auto 26px}
+  .cta{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;
+       font-weight:700;font-size:1.05rem;padding:14px 30px;border-radius:14px;
+       box-shadow:0 8px 24px rgba(37,99,235,.35);transition:.15s}
+  .cta:hover{background:var(--accent2);transform:translateY(-1px)}
+  .sub-note{color:var(--sub);font-size:.85rem;margin-top:12px}
+  .mock{display:block;margin:36px auto;max-width:100%;filter:drop-shadow(0 20px 50px rgba(0,0,0,.5))}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:44px 0}
+  .feat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 18px}
+  .feat .ic{font-size:1.4rem}
+  .feat h3{margin:.4rem 0 .3rem;font-size:1.02rem}
+  .feat p{margin:0;color:var(--sub);font-size:.92rem}
+  footer{border-top:1px solid var(--border);margin-top:50px;padding-top:22px;color:var(--sub);
+       font-size:.88rem;text-align:center}
+  .lang-pt [data-lang="en"],.lang-en [data-lang="pt"]{display:none}
+</style>
+</head>
+<body class="lang-pt">
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2563EB"/><path d="M12 33 L52 14 L41 50 L33 39 L24 45 Z" fill="#fff"/><path d="M52 14 L33 39" stroke="#2563EB" stroke-width="1.5" fill="none"/></svg>
+    <h1>1-Click Transfer</h1>
+    <span class="spacer"></span>
+    <div class="langbtns">
+      <button id="btn-pt" class="active" onclick="setLang('pt')">PT</button>
+      <button id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h2>
+      <span data-lang="pt">Transferência 1-Clique</span>
+      <span data-lang="en">1-Click Transfer</span>
+    </h2>
+    <p>
+      <span data-lang="pt">Envie um arquivo pré-escolhido para uma pasta local/rede ou um servidor FTP — com um único clique. App nativo para Windows 10/11, tema escuro, perfis e interface em Português e Inglês.</span>
+      <span data-lang="en">Send a pre-chosen file to a local/network folder or an FTP server — with a single click. Native Windows 10/11 app, dark theme, profiles, and a Portuguese/English interface.</span>
+    </p>
+    <a class="cta" href="https://github.com/samaBR85/1clicktransfer/releases/latest">
+      <span data-lang="pt">⬇ Baixar para Windows</span>
+      <span data-lang="en">⬇ Download for Windows</span>
+    </a>
+    <div class="sub-note">
+      <span data-lang="pt">Grátis e de código aberto (MIT). Sem instalação — baixe e execute.</span>
+      <span data-lang="en">Free &amp; open source (MIT). No installation — download and run.</span>
+    </div>
+  </section>
+
+  <!-- Mockup da interface -->
+  <svg class="mock" width="760" height="470" viewBox="0 0 760 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="App screenshot">
+    <rect x="1" y="1" width="758" height="468" rx="14" fill="#18181B" stroke="#3F3F46"/>
+    <rect x="1" y="1" width="758" height="34" rx="14" fill="#202024"/>
+    <rect x="1" y="20" width="758" height="15" fill="#202024"/>
+    <circle cx="738" cy="18" r="5" fill="#3F3F46"/><circle cx="718" cy="18" r="5" fill="#3F3F46"/>
+    <text x="20" y="23" fill="#A1A1AA" font-family="Segoe UI,sans-serif" font-size="11">Transferência 1-Clique</text>
+    <!-- title + buttons -->
+    <text x="24" y="70" fill="#F4F4F5" font-family="Segoe UI,sans-serif" font-size="20" font-weight="600">Transferência 1-Clique</text>
+    <rect x="560" y="52" width="90" height="26" rx="7" fill="#2D2D32"/><text x="605" y="69" fill="#F4F4F5" font-size="11" text-anchor="middle" font-family="Segoe UI,sans-serif">Atualizar</text>
+    <rect x="658" y="52" width="90" height="26" rx="7" fill="#2D2D32"/><text x="703" y="69" fill="#F4F4F5" font-size="11" text-anchor="middle" font-family="Segoe UI,sans-serif">Modo claro</text>
+    <!-- profile -->
+    <text x="24" y="103" fill="#A1A1AA" font-size="12" font-family="Segoe UI,sans-serif">Perfil:</text>
+    <rect x="70" y="90" width="300" height="22" rx="5" fill="#202024" stroke="#3F3F46"/><text x="80" y="105" fill="#F4F4F5" font-size="11" font-family="Segoe UI,sans-serif">GEN6 CTRP ▾</text>
+    <!-- cards -->
+    <g font-family="Segoe UI,sans-serif">
+      <rect x="24" y="124" width="352" height="196" rx="10" fill="#27272A" stroke="#3F3F46"/>
+      <text x="38" y="146" fill="#F4F4F5" font-size="11" font-weight="700">ORIGEM</text>
+      <text x="38" y="164" fill="#A1A1AA" font-size="10">Pasta: D:\...\plugins</text>
+      <rect x="34" y="174" width="332" height="20" fill="#202024"/><text x="42" y="188" fill="#A1A1AA" font-size="10">Nome            Tamanho     Modificado</text>
+      <text x="42" y="210" fill="#F4F4F5" font-size="10">AppGuide</text>
+      <text x="42" y="230" fill="#F4F4F5" font-size="10">Assets</text>
+      <rect x="34" y="238" width="332" height="20" fill="#2563EB"/><text x="42" y="252" fill="#fff" font-size="10">Gen6CTRPluginFramework.3gx   2.054.605</text>
+      <text x="42" y="274" fill="#F4F4F5" font-size="10">MyTeleport.txt</text>
+
+      <rect x="384" y="124" width="352" height="196" rx="10" fill="#27272A" stroke="#3F3F46"/>
+      <text x="398" y="146" fill="#F4F4F5" font-size="11" font-weight="700">DESTINO</text>
+      <text x="398" y="164" fill="#A1A1AA" font-size="10">FTP: 192.168.15.161/luma/plugins</text>
+      <rect x="394" y="174" width="332" height="20" fill="#202024"/><text x="402" y="188" fill="#A1A1AA" font-size="10">Nome            Tamanho     Modificado</text>
+      <text x="402" y="210" fill="#F4F4F5" font-size="10">AppGuide</text>
+      <text x="402" y="230" fill="#F4F4F5" font-size="10">Data.bin</text>
+      <text x="402" y="250" fill="#F4F4F5" font-size="10">Gen6CTRPluginFramework.3gx</text>
+      <text x="402" y="270" fill="#F4F4F5" font-size="10">MyTeleport.txt</text>
+    </g>
+    <!-- action radios -->
+    <text x="24" y="345" fill="#A1A1AA" font-size="11" font-family="Segoe UI,sans-serif">Ação:</text>
+    <circle cx="72" cy="341" r="6" fill="#2563EB"/><text x="84" y="345" fill="#F4F4F5" font-size="11" font-family="Segoe UI,sans-serif">Substituir</text>
+    <circle cx="180" cy="341" r="6" fill="none" stroke="#3F3F46"/><text x="192" y="345" fill="#A1A1AA" font-size="11" font-family="Segoe UI,sans-serif">Substituir se for mais recente</text>
+    <circle cx="410" cy="341" r="6" fill="none" stroke="#3F3F46"/><text x="422" y="345" fill="#A1A1AA" font-size="11" font-family="Segoe UI,sans-serif">Não Substituir</text>
+    <!-- transfer button -->
+    <rect x="24" y="366" width="712" height="66" rx="14" fill="#2563EB"/>
+    <text x="380" y="406" fill="#fff" font-size="22" font-weight="700" text-anchor="middle" font-family="Segoe UI,sans-serif">TRANSFERIR</text>
+  </svg>
+
+  <section class="features">
+    <div class="feat"><div class="ic">🖱️</div>
+      <h3><span data-lang="pt">Um clique</span><span data-lang="en">One click</span></h3>
+      <p><span data-lang="pt">Botão grande TRANSFERIR. Ou um atalho de teclado configurável.</span><span data-lang="en">One big TRANSFER button — or a configurable keyboard shortcut.</span></p></div>
+    <div class="feat"><div class="ic">🌐</div>
+      <h3><span data-lang="pt">Local ou FTP</span><span data-lang="en">Local or FTP</span></h3>
+      <p><span data-lang="pt">Pasta local/rede ou servidor FTP/FTPS, com navegador de pastas remotas.</span><span data-lang="en">Local/network folder or FTP/FTPS server, with a remote folder browser.</span></p></div>
+    <div class="feat"><div class="ic">💾</div>
+      <h3><span data-lang="pt">Perfis</span><span data-lang="en">Profiles</span></h3>
+      <p><span data-lang="pt">Salve vários destinos (incl. FTP com senha) e troque num instante.</span><span data-lang="en">Save multiple destinations (incl. FTP with password) and switch instantly.</span></p></div>
+    <div class="feat"><div class="ic">🌗</div>
+      <h3><span data-lang="pt">Tema &amp; idioma</span><span data-lang="en">Theme &amp; language</span></h3>
+      <p><span data-lang="pt">Modo escuro/claro e interface em Português ou Inglês.</span><span data-lang="en">Dark/light mode and a Portuguese or English interface.</span></p></div>
+    <div class="feat"><div class="ic">🔒</div>
+      <h3><span data-lang="pt">Senha segura</span><span data-lang="en">Secure password</span></h3>
+      <p><span data-lang="pt">A senha do FTP fica criptografada (DPAPI), só no seu usuário.</span><span data-lang="en">The FTP password is encrypted (DPAPI), tied to your Windows user.</span></p></div>
+    <div class="feat"><div class="ic">🪶</div>
+      <h3><span data-lang="pt">Leve &amp; portátil</span><span data-lang="en">Light &amp; portable</span></h3>
+      <p><span data-lang="pt">Um .exe pequeno, sem instalação. Nada precisa ser instalado.</span><span data-lang="en">A tiny .exe, no installation required.</span></p></div>
+  </section>
+
+  <footer>
+    <p>
+      <span data-lang="pt">Código aberto (MIT) · </span>
+      <span data-lang="en">Open source (MIT) · </span>
+      <a href="https://github.com/samaBR85/1clicktransfer">GitHub</a> ·
+      <a href="https://github.com/samaBR85/1clicktransfer/releases/latest">
+        <span data-lang="pt">Downloads</span><span data-lang="en">Downloads</span></a>
+    </p>
+  </footer>
+</div>
+
+<script>
+  function setLang(l){
+    document.documentElement.className = 'lang-' + l;
+    document.body.className = 'lang-' + l;
+    document.getElementById('btn-pt').classList.toggle('active', l==='pt');
+    document.getElementById('btn-en').classList.toggle('active', l==='en');
+    try{ localStorage.setItem('lang', l); }catch(e){}
+  }
+  (function(){
+    var saved = null; try{ saved = localStorage.getItem('lang'); }catch(e){}
+    var l = saved || ((navigator.language||'en').toLowerCase().indexOf('pt')===0 ? 'pt' : 'en');
+    setLang(l);
+  })();
+</script>
+</body>
+</html>

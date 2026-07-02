@@ -1,0 +1,65 @@
+========================================
+  TRANSFERENCIA 1-CLIQUE  (Windows 11)
+========================================
+
+Um app simples: um botao grande que transfere um arquivo pre-escolhido
+para um destino pre-escolhido (pasta local/rede OU servidor FTP).
+Nao precisa instalar nada - usa o PowerShell que ja vem no Windows.
+
+--------------------------------
+COMO USAR (primeira vez)
+--------------------------------
+1. De dois cliques em  "Iniciar.vbs"  para abrir o app.
+2. Clique em  "Configurar":
+   - Escolha o ARQUIVO que sera transferido.
+   - Escolha o destino:
+       * "Pasta local / rede"  -> escolha a pasta, ou
+       * "Servidor FTP"        -> preencha host, porta, pasta, usuario e senha.
+         (Use "Testar conexao" para conferir antes.)
+   - Clique em "Salvar".
+3. Pronto! A partir de agora e so abrir o app e clicar em  TRANSFERIR.
+
+--------------------------------
+PERFIS (varias origens/destinos salvos)
+--------------------------------
+- No topo da home ha o seletor "Perfil": escolher um perfil carrega a
+  origem + destino salvos e ja fica pronto pra clicar TRANSFERIR.
+- Para criar/gerenciar perfis, entre em "Configurar", secao "Perfis salvos":
+    * "Salvar atual como..." -> guarda os campos atuais com um nome
+      (se o nome ja existir, atualiza). Inclui destinos FTP com senha.
+    * "Renomear" / "Excluir" -> gerenciam o perfil selecionado.
+    * Selecionar um perfil na lista carrega os campos para edicao.
+- "Resetar campos" limpa origem e destino (efetiva ao clicar Salvar).
+
+--------------------------------
+ACAO (se o arquivo ja existir no destino)
+--------------------------------
+Na home, ao lado de "Acao:", escolha:
+- Substituir ................... sempre envia, sobrescrevendo.
+- Substituir se for mais recente  so envia se a origem for mais nova.
+- Nao Substituir .............. nao envia se ja existir no destino.
+
+--------------------------------
+ATALHO NA AREA DE TRABALHO
+--------------------------------
+De dois cliques em  "Criar atalho na Area de Trabalho.vbs".
+Isso cria o atalho "Transferencia 1-Clique" na sua Area de Trabalho.
+Voce pode arrastar esse atalho para a barra de tarefas para fixar.
+
+--------------------------------
+ARQUIVOS DESTA PASTA
+--------------------------------
+- Iniciar.vbs .................. abre o app (sem janela preta de console)
+- TransferApp.ps1 .............. o programa em si
+- Criar atalho na Area de Trabalho.vbs .. cria o atalho
+- settings.json ................ criado automaticamente com suas configuracoes
+- LEIA-ME.txt .................. este arquivo
+
+--------------------------------
+OBSERVACOES
+--------------------------------
+- A senha do FTP e guardada CRIPTOGRAFADA (so o seu usuario do Windows
+  consegue le-la). Se voce trocar de usuario/PC, reconfigure a senha.
+- Para trocar o arquivo ou o destino depois, e so abrir o app e clicar
+  em "Configurar" de novo.
+- Para adicionar mais TLS/FTPS, marque "Usar TLS (FTPS)" na configuracao.

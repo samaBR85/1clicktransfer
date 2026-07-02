@@ -1,0 +1,8 @@
+# Configuracoes locais do usuario (contem caminhos pessoais e senha FTP
+# criptografada por DPAPI, especifica da maquina) -- NUNCA versionar.
+settings.json
+
+# Artefatos de build / distribuicao
+dist/
+*.exe
+*.zip
