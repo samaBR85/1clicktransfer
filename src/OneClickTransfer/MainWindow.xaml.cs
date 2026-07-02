@@ -20,6 +20,9 @@ public class FileRow
     public string Size { get; set; } = "";
     public string Modified { get; set; } = "";
     public bool Highlight { get; set; }
+    public bool IsDir { get; set; }
+    public bool IsUp { get; set; }
+    public string RealName { get; set; } = "";
 }
 
 public partial class MainWindow : Window
@@ -29,6 +32,8 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<FileRow> _dst = new();
     private bool _profSync;
     private bool _rbSync;
+    private string _srcDir = "";   // pasta atual navegada na ORIGEM
+    private string _dstDir = "";   // pasta atual navegada no DESTINO
 
     private AppSettings S => App.Settings;
     private Destination? Dest0 => S.Destinations.FirstOrDefault();
@@ -102,59 +107,127 @@ public partial class MainWindow : Window
         Name = (e.IsDir ? "\U0001F4C1  " : "  ") + e.Name,
         Size = e.IsDir ? "" : FormatSize(e.Size),
         Modified = e.Modified == DateTime.MinValue ? "" : e.Modified.ToString("dd/MM/yyyy HH:mm"),
-        Highlight = highlight
+        Highlight = highlight, IsDir = e.IsDir, RealName = e.Name
     };
+
+    private static FileRow UpRow() => new() { Name = "  " + L.T("upFolder"), IsUp = true, IsDir = true };
+    private static FileRow InfoRow(string key) => new() { Name = "  " + L.T(key) };
 
     private void RefreshHome(bool fetchFtp = false)
     {
-        // Origem
-        _src.Clear();
-        var srcPath = S.Source.Path;
-        if (!string.IsNullOrEmpty(srcPath))
-        {
-            var folder = Path.GetDirectoryName(srcPath) ?? "";
-            var leaf = Path.GetFileName(srcPath);
-            TxtSrcPath.Text = L.T("folderPrefix") + folder;
-            foreach (var it in TransferService.LocalList(folder))
-                _src.Add(ToRow(it, it.Name.Equals(leaf, StringComparison.OrdinalIgnoreCase)));
-        }
-        else TxtSrcPath.Text = L.T("noFile");
+        // Origem: comeca na pasta do arquivo escolhido
+        _srcDir = !string.IsNullOrEmpty(S.Source.Path) ? (Path.GetDirectoryName(S.Source.Path) ?? "") : "";
+        RefillSource();
 
         // Destino
-        _dst.Clear();
         var d = Dest0;
-        if (d == null) { TxtDstPath.Text = L.T("noDest"); return; }
-
+        if (d == null) { _dst.Clear(); TxtDstPath.Text = L.T("noDest"); return; }
+        _dstDir = d.Folder;
         if (d.Type == DestType.Local)
         {
-            TxtDstPath.Text = string.IsNullOrEmpty(d.Folder) ? L.T("noDest") : L.T("folderPrefix") + d.Folder;
-            if (!string.IsNullOrEmpty(d.Folder))
-                foreach (var it in TransferService.LocalList(d.Folder))
-                    _dst.Add(ToRow(it, false));
+            RefillDestLocal();
         }
         else // remoto (FTP / SFTP)
         {
+            _dst.Clear();
             var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
-            TxtDstPath.Text = prefix + d.Host + d.Folder;
-            if (fetchFtp) { _dst.Add(new FileRow { Name = "  " + L.T("loadingFtp") }); FetchRemoteAsync(d); }
-            else _dst.Add(new FileRow { Name = "  " + L.T("clickRefreshFtp") });
+            TxtDstPath.Text = prefix + d.Host + (_dstDir ?? "/");
+            if (fetchFtp) { _dst.Add(InfoRow("loadingFtp")); FetchRemoteAt(d, string.IsNullOrEmpty(_dstDir) ? "/" : _dstDir); }
+            else _dst.Add(InfoRow("clickRefreshFtp"));
         }
     }
 
-    private async void FetchRemoteAsync(Destination d)
+    private void RefillSource()
     {
+        _src.Clear();
+        if (string.IsNullOrEmpty(_srcDir) || !Directory.Exists(_srcDir)) { TxtSrcPath.Text = L.T("noFile"); return; }
+        TxtSrcPath.Text = L.T("folderPrefix") + _srcDir;
+        var leaf = (!string.IsNullOrEmpty(S.Source.Path) &&
+                    string.Equals(Path.GetDirectoryName(S.Source.Path), _srcDir, StringComparison.OrdinalIgnoreCase))
+                    ? Path.GetFileName(S.Source.Path) : null;
+        if (Directory.GetParent(_srcDir) != null) _src.Add(UpRow());
+        foreach (var it in TransferService.LocalList(_srcDir))
+            _src.Add(ToRow(it, leaf != null && it.Name.Equals(leaf, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private void RefillDestLocal()
+    {
+        _dst.Clear();
+        if (string.IsNullOrEmpty(_dstDir)) { TxtDstPath.Text = L.T("noDest"); return; }
+        TxtDstPath.Text = L.T("folderPrefix") + _dstDir;
+        if (!Directory.Exists(_dstDir)) return;
+        if (Directory.GetParent(_dstDir) != null) _dst.Add(UpRow());
+        foreach (var it in TransferService.LocalList(_dstDir))
+            _dst.Add(ToRow(it, false));
+    }
+
+    private async void FetchRemoteAt(Destination d, string path)
+    {
+        _dst.Clear(); _dst.Add(InfoRow("loadingFtp"));
         try
         {
-            var list = await Task.Run(() => TransferService.ListDest(d));
+            var list = await Task.Run(() => TransferService.ListPath(d, path));
             _dst.Clear();
+            if (path.TrimEnd('/').Length > 0) _dst.Add(UpRow());
             foreach (var it in list.OrderByDescending(x => x.IsDir).ThenBy(x => x.Name))
                 _dst.Add(ToRow(it, false));
-            if (_dst.Count == 0) _dst.Add(new FileRow { Name = "  " + L.T("emptyFolder") });
+            if (_dst.Count == 0 || (_dst.Count == 1 && _dst[0].IsUp)) _dst.Add(InfoRow("emptyFolder"));
         }
         catch
         {
             _dst.Clear();
-            _dst.Add(new FileRow { Name = "  " + L.T("cantListFtp") });
+            if (path.TrimEnd('/').Length > 0) _dst.Add(UpRow());
+            _dst.Add(InfoRow("cantListFtp"));
+        }
+    }
+
+    // ---------------- Navegacao nas listas ----------------
+    private void GridSrc_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (GridSrc.SelectedItem is not FileRow it || string.IsNullOrEmpty(_srcDir)) return;
+        if (it.IsUp) { _srcDir = Directory.GetParent(_srcDir)?.FullName ?? _srcDir; RefillSource(); }
+        else if (it.IsDir) { _srcDir = Path.Combine(_srcDir, it.RealName); RefillSource(); }
+        else if (!string.IsNullOrEmpty(it.RealName))
+        {
+            // duplo-clique em arquivo = escolhe como origem
+            S.Source.Path = Path.Combine(_srcDir, it.RealName);
+            S.ActiveProfile = "";
+            SettingsService.Save(S);
+            SyncProfileCombo();
+            RefillSource();
+            UpdateReadyState();
+            SetStatus(Path.GetFileName(S.Source.Path), StatusKind.Sub);
+        }
+    }
+
+    private void GridDst_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var d = Dest0;
+        if (d == null || GridDst.SelectedItem is not FileRow it) return;
+        if (!it.IsDir && !it.IsUp) return;   // arquivos no destino nao navegam
+
+        if (d.Type == DestType.Local)
+        {
+            if (string.IsNullOrEmpty(_dstDir)) return;
+            if (it.IsUp) _dstDir = Directory.GetParent(_dstDir)?.FullName ?? _dstDir;
+            else _dstDir = Path.Combine(_dstDir, it.RealName);
+            d.Folder = _dstDir; SettingsService.Save(S);
+            RefillDestLocal(); UpdateReadyState();
+        }
+        else // remoto
+        {
+            string np;
+            if (it.IsUp)
+            {
+                var c = _dstDir.TrimEnd('/');
+                var idx = c.LastIndexOf('/');
+                np = idx <= 0 ? "/" : c.Substring(0, idx);
+            }
+            else np = _dstDir.TrimEnd('/') + "/" + it.RealName;
+            _dstDir = np; d.Folder = np; SettingsService.Save(S);
+            var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
+            TxtDstPath.Text = prefix + d.Host + np;
+            FetchRemoteAt(d, np);
         }
     }
 

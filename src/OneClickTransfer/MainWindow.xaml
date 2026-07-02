@@ -51,7 +51,7 @@
                     <TextBlock x:Name="TxtSrcHdr" Text="SOURCE" DockPanel.Dock="Top" FontWeight="Bold" FontSize="13"/>
                     <TextBlock x:Name="TxtSrcPath" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
                                TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>
-                    <DataGrid x:Name="GridSrc">
+                    <DataGrid x:Name="GridSrc" MouseDoubleClick="GridSrc_DoubleClick">
                         <DataGrid.Columns>
                             <DataGridTextColumn x:Name="SrcColName" Header="Name" Binding="{Binding Name}" Width="*"/>
                             <DataGridTextColumn x:Name="SrcColSize" Header="Size" Binding="{Binding Size}" Width="90">
@@ -87,7 +87,7 @@
                     <TextBlock x:Name="TxtDstHdr" Text="DESTINATION" DockPanel.Dock="Top" FontWeight="Bold" FontSize="13"/>
                     <TextBlock x:Name="TxtDstPath" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
                                TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>
-                    <DataGrid x:Name="GridDst">
+                    <DataGrid x:Name="GridDst" MouseDoubleClick="GridDst_DoubleClick">
                         <DataGrid.Columns>
                             <DataGridTextColumn x:Name="DstColName" Header="Name" Binding="{Binding Name}" Width="*"/>
                             <DataGridTextColumn x:Name="DstColSize" Header="Size" Binding="{Binding Size}" Width="90">
