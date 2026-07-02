@@ -42,8 +42,12 @@ public static class TransferService
     // ---------------- FTP ----------------
     private static FtpClient MakeClient(Destination d)
     {
+        // FTP anonimo: se usuario vazio, usa "anonymous" (o FluentFTP nao aceita usuario vazio,
+        // e servidores sem autenticacao -- ex.: ftpd do Luma/3DS -- aceitam anonymous).
+        var user = string.IsNullOrWhiteSpace(d.Username) ? "anonymous" : d.Username;
         var pass = SecretProtector.Unprotect(d.Password);
-        var c = new FtpClient(d.Host, d.Username, pass, d.Port <= 0 ? 21 : d.Port);
+        if (string.IsNullOrEmpty(pass) && user == "anonymous") pass = "anonymous@";
+        var c = new FtpClient(d.Host, user, pass, d.Port <= 0 ? 21 : d.Port);
         c.Config.ConnectTimeout = 8000;
         c.Config.DataConnectionConnectTimeout = 8000;
         c.Config.ReadTimeout = 15000;
