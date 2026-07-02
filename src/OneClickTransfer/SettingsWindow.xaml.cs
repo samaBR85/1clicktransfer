@@ -44,6 +44,7 @@ public partial class SettingsWindow : Window
         LblHost.Text = L.T("ftpHost");
         LblPort.Text = L.T("ftpPort");
         LblRemote.Text = L.T("ftpRemote");
+        BtnBrowseRemote.Content = L.T("ftpSearch");
         LblUser.Text = L.T("ftpUser");
         LblPass.Text = L.T("ftpPass");
         ChkTls.Content = L.T("ftpTls");
@@ -142,6 +143,29 @@ public partial class SettingsWindow : Window
         var dlg = new Microsoft.Win32.OpenFolderDialog();
         if (!string.IsNullOrWhiteSpace(TxtDstFolder.Text)) { try { dlg.InitialDirectory = TxtDstFolder.Text; } catch { } }
         if (dlg.ShowDialog() == true) TxtDstFolder.Text = dlg.FolderName;
+    }
+
+    private void BrowseRemote_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(TxtHost.Text))
+        {
+            MessageBox.Show(this, L.T("ftpHost"), L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = 21;
+        var d = new Destination
+        {
+            Type = DestType.Ftp,
+            Host = TxtHost.Text.Trim(),
+            Port = port,
+            Folder = "/",
+            Username = TxtUser.Text.Trim(),
+            Password = SecretProtector.Protect(TxtPass.Password),
+            UseTls = ChkTls.IsChecked == true
+        };
+        var start = string.IsNullOrWhiteSpace(TxtRemote.Text) ? "/" : TxtRemote.Text.Trim();
+        var br = new FtpBrowserWindow(d, start) { Owner = this };
+        if (br.ShowDialog() == true && br.ChosenPath != null) TxtRemote.Text = br.ChosenPath;
     }
 
     private async void Test_Click(object sender, RoutedEventArgs e)

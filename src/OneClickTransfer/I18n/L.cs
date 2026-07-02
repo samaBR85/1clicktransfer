@@ -85,6 +85,15 @@ public static class L
         ["successTitle"] = ("Sucesso", "Success"),
         ["langPtItem"] = ("Português", "Português"),
         ["langEnItem"] = ("English", "English"),
+        // Navegador de pastas FTP
+        ["ftpSearch"] = ("Pesquisar", "Browse"),
+        ["ftpBrowserTitle"] = ("Escolher pasta no FTP", "Choose FTP folder"),
+        ["currentFolder"] = ("Pasta atual: {0}", "Current folder: {0}"),
+        ["selectThisFolder"] = ("Selecionar esta pasta", "Select this folder"),
+        ["dblClickEnter"] = ("Duplo-clique para entrar na pasta.", "Double-click to enter the folder."),
+        ["upFolder"] = ("..  (voltar)", "..  (up)"),
+        ["listErrorPrefix"] = ("(erro ao listar: {0})", "(list error: {0})"),
+        ["ftpConnecting"] = ("Conectando...", "Connecting..."),
     };
 
     public static string T(string key)

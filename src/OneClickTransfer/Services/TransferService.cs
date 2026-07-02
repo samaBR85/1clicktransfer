@@ -100,13 +100,15 @@ public static class TransferService
         catch { return null; }
     }
 
-    public static List<RemoteEntry> FtpList(Destination d)
+    public static List<RemoteEntry> FtpList(Destination d) => FtpListPath(d, d.Folder);
+
+    public static List<RemoteEntry> FtpListPath(Destination d, string path)
     {
         var list = new List<RemoteEntry>();
         using var c = MakeClient(d);
         c.Connect();
-        var path = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
-        foreach (var item in c.GetListing(path))
+        var p = string.IsNullOrWhiteSpace(path) ? "/" : path;
+        foreach (var item in c.GetListing(p))
         {
             list.Add(new RemoteEntry(
                 item.Name,
