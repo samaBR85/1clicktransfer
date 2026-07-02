@@ -1,16 +1,12 @@
 <p align="center">
-  <img src="assets/app-icon-256.png" width="128" height="128" alt="1-Click Transfer">
+  <img src="assets/app-icon-256.png" width="120" height="120" alt="1-Click Transfer">
 </p>
 
-<h1 align="center">1-Click Transfer &nbsp;·&nbsp; Transferência 1-Clique</h1>
-
-<p align="center">
-  Send a pre-chosen file to a pre-chosen destination (local folder or FTP) with a single click.<br>
-  <em>Envie um arquivo pré-escolhido para um destino pré-escolhido (pasta local ou FTP) com um clique.</em>
-</p>
+<h1 align="center">1-Click Transfer</h1>
 
 <p align="center">
   <a href="https://github.com/samaBR85/1clicktransfer/releases/latest"><img src="https://img.shields.io/github/v/release/samaBR85/1clicktransfer?label=download" alt="Release"></a>
+  <img src="https://img.shields.io/github/downloads/samaBR85/1clicktransfer/total?label=downloads&color=success" alt="Downloads">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4" alt="Windows 10/11">
   <img src="https://img.shields.io/badge/i18n-PT%20%2B%20EN-success" alt="PT + EN">
@@ -18,21 +14,23 @@
 
 <p align="center">
   <a href="https://samabr85.github.io/1clicktransfer/"><b>🌐 Website</b></a> &nbsp;·&nbsp;
-  <a href="#english"><b>English</b></a> &nbsp;·&nbsp;
-  <a href="#português"><b>Português</b></a>
+  <a href="#-english"><b>🇬🇧 English</b></a> &nbsp;·&nbsp;
+  <a href="#-português"><b>🇧🇷 Português</b></a>
 </p>
 
-<p align="center">
-  <img src="screenshots/home.png" width="720" alt="1-Click Transfer — app window">
-</p>
+<hr>
 
----
+<a id="-english"></a>
 
-## English
+## 🇬🇧 English
 
 A tiny native Windows app (PowerShell + WinForms). One big **TRANSFER** button copies a
 pre-chosen file to a pre-chosen destination — a **local/network folder** or an **FTP/FTPS server**.
 Modern dark/light UI, resizable window, and a **Portuguese/English** language switch.
+
+<p align="center">
+  <img src="screenshots/home-en.png" width="760" alt="1-Click Transfer — app window">
+</p>
 
 ### Features
 - **1-click transfer** to a local/network folder or FTP/FTPS.
@@ -40,7 +38,7 @@ Modern dark/light UI, resizable window, and a **Portuguese/English** language sw
 - **Action modes**: *Replace*, *Replace if newer*, *Don't replace*.
 - **Source/Destination panels** listing files, with a *Refresh* button and an FTP folder browser.
 - **Dark mode** (default) + light mode, resizable window, configurable keyboard shortcut.
-- **Bilingual** UI (PT/EN) selectable in Settings.
+- **Bilingual** UI (PT/EN), switchable in Settings.
 - FTP password stored **encrypted** (Windows DPAPI, per user).
 
 ### Download & run
@@ -53,7 +51,7 @@ Modern dark/light UI, resizable window, and a **Portuguese/English** language sw
 
 ### Run from source
 Requires Windows PowerShell 5.1 (built into Windows). Double-click **`Iniciar.vbs`** (runs the
-script without a console window), or run `powershell -ExecutionPolicy Bypass -File TransferApp.ps1`.
+script without a console window), or `powershell -ExecutionPolicy Bypass -File TransferApp.ps1`.
 
 ### Build the .exe
 ```powershell
@@ -65,14 +63,20 @@ Uses [PS2EXE](https://github.com/MScholtes/PS2EXE) (installed automatically).
 ### License
 [MIT](LICENSE) © 2026 samaBR85.
 
----
+<hr>
 
-## Português
+<a id="-português"></a>
+
+## 🇧🇷 Português
 
 Um app nativo e pequeno para Windows (PowerShell + WinForms). Um botão grande **TRANSFERIR**
 copia um arquivo pré-escolhido para um destino pré-escolhido — uma **pasta local/rede** ou um
 **servidor FTP/FTPS**. Visual moderno escuro/claro, janela redimensionável e troca de idioma
 **Português/Inglês**.
+
+<p align="center">
+  <img src="screenshots/home-pt.png" width="760" alt="Transferência 1-Clique — janela do app">
+</p>
 
 ### Recursos
 - **Transferência em 1 clique** para pasta local/rede ou FTP/FTPS.
@@ -80,7 +84,7 @@ copia um arquivo pré-escolhido para um destino pré-escolhido — uma **pasta l
 - **Ações**: *Substituir*, *Substituir se for mais recente*, *Não Substituir*.
 - **Painéis de Origem/Destino** listando arquivos, com botão *Atualizar* e navegador de pastas FTP.
 - **Modo escuro** (padrão) + claro, janela redimensionável, atalho de teclado configurável.
-- Interface **bilíngue** (PT/EN) selecionável no Configurar.
+- Interface **bilíngue** (PT/EN), com troca no Configurar.
 - Senha do FTP guardada **criptografada** (DPAPI do Windows, por usuário).
 
 ### Baixar e usar

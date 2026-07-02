@@ -30,6 +30,9 @@
        box-shadow:0 8px 24px rgba(37,99,235,.35);transition:.15s}
   .cta:hover{background:var(--accent2);transform:translateY(-1px)}
   .sub-note{color:var(--sub);font-size:.85rem;margin-top:12px}
+  .dlcount{margin-top:16px;display:none;font-size:.9rem;color:var(--text)}
+  .dlcount.show{display:inline-block;background:var(--card);border:1px solid var(--border);
+       border-radius:999px;padding:6px 16px}
   .mock{display:block;margin:36px auto;max-width:100%;filter:drop-shadow(0 20px 50px rgba(0,0,0,.5))}
   .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:44px 0}
   .feat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 18px}
@@ -70,10 +73,12 @@
       <span data-lang="pt">Grátis e de código aberto (MIT). Sem instalação — baixe e execute.</span>
       <span data-lang="en">Free &amp; open source (MIT). No installation — download and run.</span>
     </div>
+    <div id="dlcount" class="dlcount"></div>
   </section>
 
-  <!-- Screenshot real do app -->
-  <img class="mock" src="home.png" width="760" alt="1-Click Transfer app window" loading="lazy">
+  <!-- Screenshot real do app (uma por idioma) -->
+  <img class="mock" data-lang="en" src="home-en.png" width="860" alt="1-Click Transfer app window" loading="lazy">
+  <img class="mock" data-lang="pt" src="home-pt.png" width="860" alt="Janela do app Transferência 1-Clique" loading="lazy">
   <p style="text-align:center;color:var(--sub);font-size:.82rem;margin-top:-18px">
     <span data-lang="pt">Tela inicial do app (modo escuro)</span>
     <span data-lang="en">App home screen (dark mode)</span>
@@ -123,6 +128,19 @@
     var saved = null; try{ saved = localStorage.getItem('lang'); }catch(e){}
     var l = saved || ((navigator.language||'en').toLowerCase().indexOf('pt')===0 ? 'pt' : 'en');
     setLang(l);
+  })();
+
+  // Contador de downloads (soma os assets de todos os releases)
+  (function(){
+    fetch('https://api.github.com/repos/samaBR85/1clicktransfer/releases')
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+      .then(function(rels){
+        var n = 0;
+        rels.forEach(function(rel){ (rel.assets||[]).forEach(function(a){ n += a.download_count || 0; }); });
+        var el = document.getElementById('dlcount');
+        el.textContent = '⬇ ' + n.toLocaleString() + ' downloads';
+        el.classList.add('show');
+      }).catch(function(){});
   })();
 </script>
 </body>
