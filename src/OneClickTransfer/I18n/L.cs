@@ -84,6 +84,8 @@ public static class L
         ["save"] = ("Salvar", "Save"),
         ["cancel"] = ("Cancelar", "Cancel"),
         ["connOkMsg"] = ("Conexão OK! O FTP respondeu corretamente.", "Connection OK! The FTP responded correctly."),
+        ["connOk"] = ("Conexão OK", "Connection OK"),
+        ["connFailed"] = ("Falha na conexão", "Connection failed"),
         ["successTitle"] = ("Sucesso", "Success"),
         ["langPtItem"] = ("Português", "Português"),
         ["langEnItem"] = ("English", "English"),

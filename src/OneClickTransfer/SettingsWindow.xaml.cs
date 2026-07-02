@@ -184,23 +184,31 @@ public partial class SettingsWindow : Window
         if (br.ShowDialog() == true && br.ChosenPath != null) TxtRemote.Text = br.ChosenPath;
     }
 
+    private void SetTestResult(string text, string brushKey, string? tip = null)
+    {
+        TxtTestResult.Text = text;
+        TxtTestResult.ToolTip = tip;
+        TxtTestResult.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, brushKey);
+    }
+
     private async void Test_Click(object sender, RoutedEventArgs e)
     {
         var d = ReadDest();
         if ((d.Type != DestType.Ftp && d.Type != DestType.Sftp) || string.IsNullOrWhiteSpace(d.Host))
         {
-            MessageBox.Show(this, L.T("ftpHost"), L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            SetTestResult("✗ " + L.T("ftpHost"), "ErrorBrush");
             return;
         }
         BtnTest.IsEnabled = false; BtnTest.Content = L.T("testing");
+        SetTestResult(L.T("testing"), "SubTextBrush");
         try
         {
             await Task.Run(() => TransferService.TestConnection(d));
-            MessageBox.Show(this, L.T("connOkMsg"), L.T("successTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+            SetTestResult("✓ " + L.T("connOk"), "SuccessBrush");
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+            SetTestResult("✗ " + L.T("connFailed"), "ErrorBrush", ex.Message);
         }
         finally { BtnTest.IsEnabled = true; BtnTest.Content = L.T("testConn"); }
     }
