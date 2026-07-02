@@ -1,7 +1,7 @@
 <Window x:Class="OneClickTransfer.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Settings" Height="700" Width="580"
+        Title="Settings" Height="740" Width="580"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}" FontFamily="Segoe UI" FontSize="13">
     <DockPanel Margin="18">
@@ -88,7 +88,7 @@
 
             <!-- 4) Perfis -->
             <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
-                    BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,18,0,0">
+                    BorderThickness="1" CornerRadius="8" Padding="14,14,14,18" Margin="0,18,0,0">
                 <StackPanel>
                     <DockPanel Margin="0,0,0,8">
                         <TextBlock x:Name="LblProfiles" DockPanel.Dock="Left" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
