@@ -63,6 +63,11 @@ Uses [PS2EXE](https://github.com/MScholtes/PS2EXE) (installed automatically).
 ### License
 [MIT](LICENSE) © 2026 samaBR85.
 
+### Credits
+UI/UX and feature ideas inspired by **[Cyberduck](https://cyberduck.io)**, the open-source
+file transfer browser. This project shares **no code** with Cyberduck and is independently
+licensed under MIT.
+
 <hr>
 
 <a id="-português"></a>
@@ -108,3 +113,8 @@ Usa o [PS2EXE](https://github.com/MScholtes/PS2EXE) (instalado automaticamente).
 
 ### Licença
 [MIT](LICENSE) © 2026 samaBR85.
+
+### Créditos
+UI/UX e ideias de recursos inspiradas no **[Cyberduck](https://cyberduck.io)**, o navegador
+de transferência de arquivos open source. Este projeto **não compartilha código** com o
+Cyberduck e é licenciado de forma independente sob MIT.

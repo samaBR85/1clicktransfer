@@ -4,5 +4,13 @@ settings.json
 
 # Artefatos de build / distribuicao
 dist/
+dist-v2/
 *.exe
 *.zip
+
+# Build do projeto .NET (v2)
+[Bb]in/
+[Oo]bj/
+src/**/bin/
+src/**/obj/
+src/v2-home.png
