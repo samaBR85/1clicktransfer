@@ -132,19 +132,20 @@ public partial class MainWindow : Window
                 foreach (var it in TransferService.LocalList(d.Folder))
                     _dst.Add(ToRow(it, false));
         }
-        else // FTP
+        else // remoto (FTP / SFTP)
         {
-            TxtDstPath.Text = L.T("ftpPrefix") + d.Host + d.Folder;
-            if (fetchFtp) { _dst.Add(new FileRow { Name = "  " + L.T("loadingFtp") }); FetchFtpAsync(d); }
+            var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
+            TxtDstPath.Text = prefix + d.Host + d.Folder;
+            if (fetchFtp) { _dst.Add(new FileRow { Name = "  " + L.T("loadingFtp") }); FetchRemoteAsync(d); }
             else _dst.Add(new FileRow { Name = "  " + L.T("clickRefreshFtp") });
         }
     }
 
-    private async void FetchFtpAsync(Destination d)
+    private async void FetchRemoteAsync(Destination d)
     {
         try
         {
-            var list = await Task.Run(() => TransferService.FtpList(d));
+            var list = await Task.Run(() => TransferService.ListDest(d));
             _dst.Clear();
             foreach (var it in list.OrderByDescending(x => x.IsDir).ThenBy(x => x.Name))
                 _dst.Add(ToRow(it, false));
@@ -277,9 +278,7 @@ public partial class MainWindow : Window
             if (mode != OverwriteMode.Always)
             {
                 SetStatus(L.T("checkingDest"), StatusKind.Sub);
-                bool exists = await Task.Run(() => d.Type == DestType.Local
-                    ? TransferService.LocalExists(d.Folder, fileName)
-                    : TransferService.FtpExists(d, fileName));
+                bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
                 if (exists)
                 {
                     if (mode == OverwriteMode.Never) { SetStatus(L.T("notSentExists", fileName), StatusKind.Sub); return; }
@@ -291,17 +290,9 @@ public partial class MainWindow : Window
                 }
             }
 
-            if (d.Type == DestType.Local)
-            {
-                SetStatus(L.T("copying"), StatusKind.Sub);
-                await Task.Run(() => TransferService.LocalCopy(S.Source.Path, d.Folder));
-            }
-            else
-            {
-                SetStatus(L.T("uploading"), StatusKind.Sub);
-                await Task.Run(() => TransferService.FtpUpload(d, S.Source.Path,
-                    pct => Dispatcher.Invoke(() => Prog.Value = pct)));
-            }
+            SetStatus(d.Type == DestType.Local ? L.T("copying") : L.T("uploading"), StatusKind.Sub);
+            await Task.Run(() => TransferService.Send(d, S.Source.Path,
+                pct => Dispatcher.Invoke(() => Prog.Value = pct)));
             Prog.Value = 100;
             SetStatus(L.T("completed"), StatusKind.Success);
             RefreshHome(true);
@@ -328,7 +319,7 @@ public partial class MainWindow : Window
             if (!File.Exists(dst)) return true;
             return srcT > File.GetLastWriteTime(dst);
         }
-        var rt = TransferService.FtpModified(d, fileName);
+        var rt = TransferService.DestModified(d, fileName);
         return rt == null || srcT > rt.Value;
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using FluentFTP;
+using Renci.SshNet;
 using OneClickTransfer.Models;
 
 namespace OneClickTransfer.Services;
@@ -126,5 +127,133 @@ public static class TransferService
         c.Connect();
         c.GetListing(string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder);
         c.Disconnect();
+    }
+
+    // ---------------- SFTP (SSH.NET) ----------------
+    private static SftpClient MakeSftp(Destination d)
+    {
+        var user = string.IsNullOrWhiteSpace(d.Username) ? "anonymous" : d.Username;
+        var pass = SecretProtector.Unprotect(d.Password);
+        var c = new SftpClient(d.Host, d.Port <= 0 ? 22 : d.Port, user, pass);
+        c.ConnectionInfo.Timeout = TimeSpan.FromSeconds(15);
+        return c;
+    }
+
+    private static void EnsureSftpDir(SftpClient c, string dir)
+    {
+        if (string.IsNullOrWhiteSpace(dir) || dir == "/") return;
+        var cur = "";
+        foreach (var part in dir.Trim('/').Split('/'))
+        {
+            if (part.Length == 0) continue;
+            cur += "/" + part;
+            try { if (!c.Exists(cur)) c.CreateDirectory(cur); } catch { }
+        }
+    }
+
+    public static void SftpUpload(Destination d, string srcFile, Action<double>? onProgress)
+    {
+        using var c = MakeSftp(d);
+        c.Connect();
+        var folder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
+        EnsureSftpDir(c, folder);
+        var remote = folder.TrimEnd('/') + "/" + Path.GetFileName(srcFile);
+        using var fs = File.OpenRead(srcFile);
+        double total = fs.Length;
+        c.UploadFile(fs, remote, true, uploaded =>
+        {
+            if (total > 0) onProgress?.Invoke(uploaded / total * 100.0);
+        });
+        c.Disconnect();
+    }
+
+    public static List<RemoteEntry> SftpListPath(Destination d, string path)
+    {
+        var list = new List<RemoteEntry>();
+        using var c = MakeSftp(d);
+        c.Connect();
+        var p = string.IsNullOrWhiteSpace(path) ? "/" : path;
+        foreach (var f in c.ListDirectory(p))
+        {
+            if (f.Name is "." or "..") continue;
+            list.Add(new RemoteEntry(f.Name, f.IsDirectory, f.Length < 0 ? 0 : f.Length, f.LastWriteTime));
+        }
+        c.Disconnect();
+        return list;
+    }
+
+    public static bool SftpExists(Destination d, string fileName)
+    {
+        using var c = MakeSftp(d);
+        c.Connect();
+        var folder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
+        var ok = c.Exists(folder.TrimEnd('/') + "/" + fileName);
+        c.Disconnect();
+        return ok;
+    }
+
+    public static DateTime? SftpModified(Destination d, string fileName)
+    {
+        try
+        {
+            using var c = MakeSftp(d);
+            c.Connect();
+            var folder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
+            var full = folder.TrimEnd('/') + "/" + fileName;
+            DateTime? t = c.Exists(full) ? c.GetLastWriteTime(full) : null;
+            c.Disconnect();
+            return t;
+        }
+        catch { return null; }
+    }
+
+    public static void SftpTest(Destination d)
+    {
+        using var c = MakeSftp(d);
+        c.Connect();
+        c.ListDirectory(string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder);
+        c.Disconnect();
+    }
+
+    // ---------------- Dispatchers por tipo ----------------
+    public static void Send(Destination d, string srcFile, Action<double>? onProgress)
+    {
+        switch (d.Type)
+        {
+            case DestType.Local: LocalCopy(srcFile, d.Folder); onProgress?.Invoke(100); break;
+            case DestType.Ftp: FtpUpload(d, srcFile, onProgress); break;
+            case DestType.Sftp: SftpUpload(d, srcFile, onProgress); break;
+        }
+    }
+
+    public static bool DestExists(Destination d, string fileName) => d.Type switch
+    {
+        DestType.Local => LocalExists(d.Folder, fileName),
+        DestType.Ftp => FtpExists(d, fileName),
+        DestType.Sftp => SftpExists(d, fileName),
+        _ => false
+    };
+
+    public static DateTime? DestModified(Destination d, string fileName) => d.Type switch
+    {
+        DestType.Ftp => FtpModified(d, fileName),
+        DestType.Sftp => SftpModified(d, fileName),
+        _ => null
+    };
+
+    public static List<RemoteEntry> ListPath(Destination d, string path) => d.Type switch
+    {
+        DestType.Local => new List<RemoteEntry>(LocalList(path)),
+        DestType.Ftp => FtpListPath(d, path),
+        DestType.Sftp => SftpListPath(d, path),
+        _ => new List<RemoteEntry>()
+    };
+
+    public static List<RemoteEntry> ListDest(Destination d) => ListPath(d, d.Folder);
+
+    public static void TestConnection(Destination d)
+    {
+        if (d.Type == DestType.Ftp) FtpTestConnection(d);
+        else if (d.Type == DestType.Sftp) SftpTest(d);
     }
 }

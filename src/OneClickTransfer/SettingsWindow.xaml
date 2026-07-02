@@ -24,6 +24,7 @@
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                 <RadioButton x:Name="RbLocal" GroupName="dest" Checked="DestType_Changed" VerticalAlignment="Center"/>
                 <RadioButton x:Name="RbFtp" GroupName="dest" Checked="DestType_Changed" VerticalAlignment="Center" Margin="24,0,0,0"/>
+                <RadioButton x:Name="RbSftp" GroupName="dest" Checked="DestType_Changed" VerticalAlignment="Center" Margin="24,0,0,0"/>
             </StackPanel>
 
             <!-- Painel local -->

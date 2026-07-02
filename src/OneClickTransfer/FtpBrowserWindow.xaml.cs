@@ -57,7 +57,7 @@ public partial class FtpBrowserWindow : Window
         _items.Add(new Item { Display = L.T("ftpConnecting"), Name = null });
         try
         {
-            var list = await Task.Run(() => TransferService.FtpListPath(_dest, _cur));
+            var list = await Task.Run(() => TransferService.ListPath(_dest, _cur));
             _items.Clear();
             if (_cur.TrimEnd('/').Length > 0)
                 _items.Add(new Item { Display = L.T("upFolder"), IsUp = true });

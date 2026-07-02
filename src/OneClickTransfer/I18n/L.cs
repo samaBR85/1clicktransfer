@@ -58,6 +58,8 @@ public static class L
         ["sec2Where"] = ("2) Para onde enviar", "2) Where to send"),
         ["localFolder"] = ("Pasta local / rede", "Local / network folder"),
         ["ftpServer"] = ("Servidor FTP", "FTP server"),
+        ["sftpServer"] = ("Servidor SFTP", "SFTP server"),
+        ["sftpPrefix"] = ("SFTP: ", "SFTP: "),
         ["destFolderLabel"] = ("Pasta de destino:", "Destination folder:"),
         ["ftpHost"] = ("Servidor (host):", "Server (host):"),
         ["ftpPort"] = ("Porta:", "Port:"),
@@ -87,7 +89,7 @@ public static class L
         ["langEnItem"] = ("English", "English"),
         // Navegador de pastas FTP
         ["ftpSearch"] = ("Pesquisar", "Browse"),
-        ["ftpBrowserTitle"] = ("Escolher pasta no FTP", "Choose FTP folder"),
+        ["ftpBrowserTitle"] = ("Escolher pasta remota", "Choose remote folder"),
         ["currentFolder"] = ("Pasta atual: {0}", "Current folder: {0}"),
         ["selectThisFolder"] = ("Selecionar esta pasta", "Select this folder"),
         ["dblClickEnter"] = ("Duplo-clique para entrar na pasta.", "Double-click to enter the folder."),

@@ -39,6 +39,7 @@ public partial class SettingsWindow : Window
         LblSec2.Text = L.T("sec2Where");
         RbLocal.Content = L.T("localFolder");
         RbFtp.Content = L.T("ftpServer");
+        RbSftp.Content = L.T("sftpServer");
         LblDstFolder.Text = L.T("destFolderLabel");
         BtnBrowseDst.Content = L.T("browse");
         LblHost.Text = L.T("ftpHost");
@@ -86,9 +87,9 @@ public partial class SettingsWindow : Window
     {
         TxtSrc.Text = src.Path;
         d ??= new Destination();
-        if (d.Type == DestType.Ftp)
+        if (d.Type == DestType.Ftp || d.Type == DestType.Sftp)
         {
-            RbFtp.IsChecked = true;
+            if (d.Type == DestType.Sftp) RbSftp.IsChecked = true; else RbFtp.IsChecked = true;
             TxtRemote.Text = string.IsNullOrEmpty(d.Folder) ? "/" : d.Folder;
             TxtDstFolder.Text = "";
         }
@@ -99,7 +100,7 @@ public partial class SettingsWindow : Window
             TxtRemote.Text = "/";
         }
         TxtHost.Text = d.Host;
-        TxtPort.Text = (d.Port <= 0 ? 21 : d.Port).ToString();
+        TxtPort.Text = (d.Port <= 0 ? (d.Type == DestType.Sftp ? 22 : 21) : d.Port).ToString();
         TxtUser.Text = d.Username;
         TxtPass.Password = SecretProtector.Unprotect(d.Password);
         ChkTls.IsChecked = d.UseTls;
@@ -109,18 +110,19 @@ public partial class SettingsWindow : Window
 
     private Destination ReadDest()
     {
-        if (RbFtp.IsChecked == true)
+        if (RbFtp.IsChecked == true || RbSftp.IsChecked == true)
         {
-            int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = 21;
+            bool sftp = RbSftp.IsChecked == true;
+            int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = sftp ? 22 : 21;
             return new Destination
             {
-                Type = DestType.Ftp,
+                Type = sftp ? DestType.Sftp : DestType.Ftp,
                 Host = TxtHost.Text.Trim(),
                 Port = port,
                 Folder = string.IsNullOrWhiteSpace(TxtRemote.Text) ? "/" : TxtRemote.Text.Trim(),
                 Username = TxtUser.Text.Trim(),
                 Password = SecretProtector.Protect(TxtPass.Password),
-                UseTls = ChkTls.IsChecked == true
+                UseTls = !sftp && ChkTls.IsChecked == true
             };
         }
         return new Destination { Type = DestType.Local, Folder = TxtDstFolder.Text.Trim() };
@@ -129,10 +131,21 @@ public partial class SettingsWindow : Window
     private void UpdatePanels()
     {
         bool ftp = RbFtp.IsChecked == true;
-        PanelLocal.IsEnabled = !ftp; PanelLocal.Opacity = ftp ? 0.5 : 1;
-        PanelFtp.IsEnabled = ftp; PanelFtp.Opacity = ftp ? 1 : 0.5;
+        bool sftp = RbSftp.IsChecked == true;
+        bool server = ftp || sftp;
+        bool local = RbLocal.IsChecked == true;
+        PanelLocal.IsEnabled = local; PanelLocal.Opacity = local ? 1 : 0.5;
+        PanelFtp.IsEnabled = server; PanelFtp.Opacity = server ? 1 : 0.5;
+        ChkTls.Visibility = ftp ? Visibility.Visible : Visibility.Hidden;  // TLS so faz sentido no FTP
     }
-    private void DestType_Changed(object sender, RoutedEventArgs e) => UpdatePanels();
+
+    private void DestType_Changed(object sender, RoutedEventArgs e)
+    {
+        // Ajusta a porta padrao ao alternar FTP<->SFTP
+        if (RbSftp.IsChecked == true && (TxtPort.Text == "21" || string.IsNullOrWhiteSpace(TxtPort.Text))) TxtPort.Text = "22";
+        else if (RbFtp.IsChecked == true && (TxtPort.Text == "22" || string.IsNullOrWhiteSpace(TxtPort.Text))) TxtPort.Text = "21";
+        UpdatePanels();
+    }
 
     private void BrowseSrc_Click(object sender, RoutedEventArgs e)
     {
@@ -154,16 +167,17 @@ public partial class SettingsWindow : Window
             MessageBox.Show(this, L.T("ftpHost"), L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = 21;
+        bool sftp = RbSftp.IsChecked == true;
+        int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = sftp ? 22 : 21;
         var d = new Destination
         {
-            Type = DestType.Ftp,
+            Type = sftp ? DestType.Sftp : DestType.Ftp,
             Host = TxtHost.Text.Trim(),
             Port = port,
             Folder = "/",
             Username = TxtUser.Text.Trim(),
             Password = SecretProtector.Protect(TxtPass.Password),
-            UseTls = ChkTls.IsChecked == true
+            UseTls = !sftp && ChkTls.IsChecked == true
         };
         var start = string.IsNullOrWhiteSpace(TxtRemote.Text) ? "/" : TxtRemote.Text.Trim();
         var br = new FtpBrowserWindow(d, start) { Owner = this };
@@ -173,7 +187,7 @@ public partial class SettingsWindow : Window
     private async void Test_Click(object sender, RoutedEventArgs e)
     {
         var d = ReadDest();
-        if (d.Type != DestType.Ftp || string.IsNullOrWhiteSpace(d.Host))
+        if ((d.Type != DestType.Ftp && d.Type != DestType.Sftp) || string.IsNullOrWhiteSpace(d.Host))
         {
             MessageBox.Show(this, L.T("ftpHost"), L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
@@ -181,7 +195,7 @@ public partial class SettingsWindow : Window
         BtnTest.IsEnabled = false; BtnTest.Content = L.T("testing");
         try
         {
-            await Task.Run(() => TransferService.FtpTestConnection(d));
+            await Task.Run(() => TransferService.TestConnection(d));
             MessageBox.Show(this, L.T("connOkMsg"), L.T("successTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
