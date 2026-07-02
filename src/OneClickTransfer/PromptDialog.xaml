@@ -1,0 +1,22 @@
+<Window x:Class="OneClickTransfer.PromptDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="" Height="170" Width="420"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource BgBrush}" FontFamily="Segoe UI" FontSize="13"
+        ShowInTaskbar="False">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="TxtMsg" Grid.Row="0" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
+        <TextBox x:Name="TxtInput" Grid.Row="1" Height="30" VerticalContentAlignment="Center"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="BtnOk" Content="OK" Width="90" Height="32" Style="{StaticResource AccentButton}" Click="Ok_Click" IsDefault="True"/>
+            <Button x:Name="BtnCancel" Content="Cancel" Width="90" Height="32" Margin="10,0,0,0" Click="Cancel_Click" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
