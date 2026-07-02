@@ -22,6 +22,10 @@
   <a href="#português"><b>Português</b></a>
 </p>
 
+<p align="center">
+  <img src="screenshots/home.png" width="720" alt="1-Click Transfer — app window">
+</p>
+
 ---
 
 ## English
