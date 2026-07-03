@@ -13,6 +13,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        UpdateService.CleanupLeftovers();   // remove exe antigo de uma atualizacao anterior
         Settings = SettingsService.Load();
         L.Lang = Settings.Language == "en" ? "en" : "pt";
 

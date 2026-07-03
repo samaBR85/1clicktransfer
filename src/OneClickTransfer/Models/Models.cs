@@ -148,6 +148,7 @@ public class AppSettings
     public double WindowLeft { get; set; } = 0;
     public double WindowTop { get; set; } = 0;
     public bool WindowMaximized { get; set; } = false;
+    public bool AutoUpdateCheck { get; set; } = true;   // procurar atualizacoes ao iniciar
     public bool WatchEnabled { get; set; } = false; // envio automatico ao mudar o arquivo
     public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;  // legado (migrado p/ Jobs)
 

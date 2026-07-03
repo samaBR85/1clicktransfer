@@ -131,6 +131,21 @@ public static class L
         ["ftpConnecting"] = ("Conectando...", "Connecting..."),
         ["f5RefreshNote"] = ("(F5 = Atualizar, fixo)", "(F5 = Refresh, fixed)"),
         ["refreshHint"] = ("F5 = Atualizar", "F5 = Refresh"),
+        // Auto-update
+        ["updateTitle"] = ("Atualização", "Update"),
+        ["checkUpdates"] = ("Procurar atualizações", "Check for updates"),
+        ["autoUpdateLabel"] = ("Verificar ao iniciar", "Check on startup"),
+        ["updateChecking"] = ("Procurando atualizações...", "Checking for updates..."),
+        ["updateAvailable"] = ("Nova versão disponível: {0}", "New version available: {0}"),
+        ["updateCurrentVersion"] = ("Versão atual: {0}", "Current version: {0}"),
+        ["upToDate"] = ("Você já está na versão mais recente ({0}).", "You already have the latest version ({0})."),
+        ["updateCheckFailed"] = ("Não foi possível verificar atualizações.", "Couldn't check for updates."),
+        ["whatsNew"] = ("Novidades:", "What's new:"),
+        ["updateNow"] = ("Atualizar agora", "Update now"),
+        ["updateLater"] = ("Depois", "Later"),
+        ["updateDownloading"] = ("Baixando a nova versão...", "Downloading the new version..."),
+        ["updateFailed"] = ("Falha ao atualizar: {0}", "Update failed: {0}"),
+        ["updateRestarting"] = ("Atualizado! Reiniciando...", "Updated! Restarting..."),
     };
 
     public static string T(string key)

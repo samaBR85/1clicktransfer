@@ -72,6 +72,7 @@ public partial class MainWindow : Window
             if (S.WatchEnabled) SetStatus(L.T("watchStatus"), StatusKind.Sub);
             else if (Job.Source.Count == 0)
                 SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
+            if (S.AutoUpdateCheck) _ = CheckUpdatesAtStartup();
         };
         KeyDown += MainWindow_KeyDown;
         Closing += (_, _) => SaveWindowBounds();
@@ -725,6 +726,18 @@ public partial class MainWindow : Window
         }
         var rt = TransferService.DestModified(d, fileName);
         return rt == null || srcT > rt.Value;
+    }
+
+    // ---------------- Auto-update ----------------
+    private async Task CheckUpdatesAtStartup()
+    {
+        try
+        {
+            var info = await UpdateService.CheckAsync();
+            if (info != null && !_transferring)
+                new UpdateWindow(info) { Owner = this }.ShowDialog();
+        }
+        catch { /* silencioso no arranque (sem internet etc.) */ }
     }
 
     private void BtnCfg_Click(object sender, RoutedEventArgs e) => OpenSettings();

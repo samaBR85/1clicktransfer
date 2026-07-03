@@ -57,6 +57,10 @@ public partial class SettingsWindow : Window
         LblShortcut.Text = L.T("shortcutLabel");
         LblTheme.Text = L.T("themeLabel");
         LblLang.Text = L.T("langLabel");
+        BtnCheckUpdate.Content = L.T("checkUpdates");
+        ChkAutoUpdate.Content = L.T("autoUpdateLabel");
+        ChkAutoUpdate.IsChecked = S.AutoUpdateCheck;
+        LblVersion.Text = "v" + Services.UpdateService.Current;
         LblProfiles.Text = L.T("profSaved");
         BtnProfSave.Content = L.T("saveAs");
         BtnProfRename.Content = L.T("rename");
@@ -270,6 +274,33 @@ public partial class SettingsWindow : Window
         _dests.Clear();
     }
 
+    // ---------------- Atualizacoes ----------------
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        BtnCheckUpdate.IsEnabled = false;
+        var old = BtnCheckUpdate.Content;
+        BtnCheckUpdate.Content = L.T("updateChecking");
+        try
+        {
+            var info = await Services.UpdateService.CheckAsync();
+            if (info == null)
+                MessageBox.Show(this, L.T("upToDate", Services.UpdateService.Current.ToString()),
+                    L.T("updateTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+            else
+                new UpdateWindow(info) { Owner = this }.ShowDialog();
+        }
+        catch
+        {
+            MessageBox.Show(this, L.T("updateCheckFailed"), L.T("updateTitle"),
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            BtnCheckUpdate.Content = old;
+            BtnCheckUpdate.IsEnabled = true;
+        }
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         // Grava na tarefa selecionada (origem + destinos)
@@ -278,6 +309,7 @@ public partial class SettingsWindow : Window
         S.Shortcut = CmbKey.SelectedIndex == 0 ? "None" : (CmbKey.SelectedItem?.ToString() ?? "F4");
         S.Theme = CmbTheme.SelectedIndex == 1 ? "light" : "dark";
         S.Language = CmbLang.SelectedIndex == 1 ? "en" : "pt";
+        S.AutoUpdateCheck = ChkAutoUpdate.IsChecked == true;
         SettingsService.Save(S);
         DialogResult = true;
         Close();

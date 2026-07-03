@@ -1,0 +1,38 @@
+<Window x:Class="OneClickTransfer.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Update" Height="440" Width="500"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{DynamicResource BgBrush}" FontFamily="Segoe UI" FontSize="13">
+    <DockPanel Margin="18">
+        <!-- Rodape: progresso + botoes -->
+        <Grid DockPanel.Dock="Bottom" Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <ProgressBar x:Name="Prog" Height="8" Minimum="0" Maximum="100" Value="0" Visibility="Collapsed"
+                             BorderThickness="0" Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+                <TextBlock x:Name="TxtStatus" Foreground="{DynamicResource SubTextBrush}" Margin="0,6,0,0"
+                           TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button x:Name="BtnUpdate" Width="150" Height="36" Style="{StaticResource AccentButton}" Click="Update_Click"/>
+                <Button x:Name="BtnLater" Width="100" Height="36" Margin="10,0,0,0" Click="Later_Click" IsCancel="True"/>
+            </StackPanel>
+        </Grid>
+
+        <StackPanel>
+            <TextBlock x:Name="TxtHead" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            <TextBlock x:Name="TxtCurrent" Foreground="{DynamicResource SubTextBrush}" Margin="0,4,0,10"/>
+            <TextBlock x:Name="TxtWhatsNew" FontWeight="SemiBold" Margin="0,0,0,6"/>
+            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="4">
+                <TextBox x:Name="TxtNotes" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                         BorderThickness="0" Background="Transparent" Height="230"
+                         VerticalScrollBarVisibility="Auto"/>
+            </Border>
+        </StackPanel>
+    </DockPanel>
+</Window>
