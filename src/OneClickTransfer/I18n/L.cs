@@ -105,7 +105,7 @@ public static class L
         ["themeLabel"] = ("Tema:", "Theme:"),
         ["themeDark"] = ("Escuro", "Dark"),
         ["themeLight"] = ("Claro", "Light"),
-        ["langLabel"] = ("Idioma / Language:", "Idioma / Language:"),
+        ["langLabel"] = ("Idioma:", "Language:"),
         ["profSaved"] = ("Perfis salvos:", "Saved profiles:"),
         ["selectItem"] = ("(selecione)", "(select)"),
         ["saveAs"] = ("Salvar atual como...", "Save current as..."),
