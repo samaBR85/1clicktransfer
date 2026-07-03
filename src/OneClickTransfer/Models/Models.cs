@@ -77,6 +77,7 @@ public class AppSettings
     public string Language { get; set; } = "pt";      // pt | en
     public string Shortcut { get; set; } = "F4";   // atalho do TRANSFERIR (F5 e fixo p/ Atualizar)
     public double SplitRatio { get; set; } = 0.5;   // largura do card ORIGEM (0..1)
+    public bool WatchEnabled { get; set; } = false; // envio automatico ao mudar o arquivo
     public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;
 
     // Configuracao "atual" (de trabalho) — espelha o v1

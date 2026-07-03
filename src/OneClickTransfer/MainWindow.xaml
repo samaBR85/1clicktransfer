@@ -24,7 +24,8 @@
             <TextBlock x:Name="TxtTitle" Text="1-Click Transfer" FontSize="20" FontWeight="SemiBold"
                        VerticalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="BtnRefresh" Content="Refresh" Width="120" Height="32" Click="BtnRefresh_Click"/>
+                <ToggleButton x:Name="BtnWatch" Style="{StaticResource ToggleFlat}" Height="32" Padding="14,0" Click="Watch_Toggled"/>
+                <Button x:Name="BtnRefresh" Content="Refresh" Width="120" Height="32" Margin="10,0,0,0" Click="BtnRefresh_Click"/>
                 <Button x:Name="BtnTheme" Content="Light mode" Width="150" Height="32" Margin="10,0,0,0" Click="BtnTheme_Click"/>
             </StackPanel>
         </Grid>

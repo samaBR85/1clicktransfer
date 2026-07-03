@@ -34,6 +34,9 @@ public partial class MainWindow : Window
     private bool _rbSync;
     private string _srcDir = "";   // pasta atual navegada na ORIGEM
     private string _dstDir = "";   // pasta atual navegada no DESTINO
+    private System.IO.FileSystemWatcher? _watcher;
+    private System.Windows.Threading.DispatcherTimer? _watchDebounce;
+    private bool _transferring;
 
     private AppSettings S => App.Settings;
     private Destination? Dest0 => S.Destinations.FirstOrDefault();
@@ -59,10 +62,13 @@ public partial class MainWindow : Window
             SyncProfileCombo();
             RefreshHome();
             UpdateReadyState();
-            if (string.IsNullOrEmpty(S.Source.Path))
+            StartOrStopWatch();
+            if (S.WatchEnabled) SetStatus(L.T("watchStatus"), StatusKind.Sub);
+            else if (string.IsNullOrEmpty(S.Source.Path))
                 SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
         };
         KeyDown += MainWindow_KeyDown;
+        Closed += (_, _) => { try { if (_watcher != null) { _watcher.EnableRaisingEvents = false; _watcher.Dispose(); } } catch { } };
     }
 
     // ---------------- i18n / tema ----------------
@@ -70,6 +76,7 @@ public partial class MainWindow : Window
     {
         Title = L.T("appTitle");
         TxtTitle.Text = L.T("appTitle");
+        BtnWatch.Content = L.T("watch");
         BtnRefresh.Content = L.T("refresh");
         TxtProfile.Text = L.T("profile");
         TxtSrcHdr.Text = L.T("source");
@@ -233,6 +240,7 @@ public partial class MainWindow : Window
             SyncProfileCombo();
             RefillSource();
             UpdateReadyState();
+            StartOrStopWatch();
             SetStatus(Path.GetFileName(S.Source.Path), StatusKind.Sub);
         }
     }
@@ -275,6 +283,7 @@ public partial class MainWindow : Window
     {
         var ok = !string.IsNullOrEmpty(S.Source.Path) && S.Destinations.Any(d => d.Enabled && DestReady(d));
         BtnGo.IsEnabled = ok;
+        BtnWatch.IsChecked = S.WatchEnabled;
         BtnTheme.Content = S.Theme == "light" ? L.T("darkMode") : L.T("lightMode");
         var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
         TxtHint.Text = hasSc
@@ -321,7 +330,7 @@ public partial class MainWindow : Window
             S.Destinations = new();
             S.ActiveProfile = "";
             SettingsService.Save(S);
-            RefreshHome(); UpdateReadyState();
+            RefreshHome(); UpdateReadyState(); StartOrStopWatch();
             SetStatus(L.T("fieldsCleared"), StatusKind.Sub);
             return;
         }
@@ -332,7 +341,7 @@ public partial class MainWindow : Window
         S.Destinations = prof.Destinations.ConvertAll(x => x.Clone());
         S.ActiveProfile = name;
         SettingsService.Save(S);
-        RefreshHome(); UpdateReadyState();
+        RefreshHome(); UpdateReadyState(); StartOrStopWatch();
         SetStatus(L.T("profileLoaded", name), StatusKind.Sub);
     }
 
@@ -369,6 +378,62 @@ public partial class MainWindow : Window
 
     private void BtnGo_Click(object sender, RoutedEventArgs e) => _ = DoTransfer();
 
+    // ---------------- Watch (envio automatico) ----------------
+    private void Watch_Toggled(object sender, RoutedEventArgs e)
+    {
+        S.WatchEnabled = BtnWatch.IsChecked == true;
+        SettingsService.Save(S);
+        StartOrStopWatch();
+        SetStatus(S.WatchEnabled ? L.T("watchStatus") : "", StatusKind.Sub);
+    }
+
+    private void StartOrStopWatch()
+    {
+        try { if (_watcher != null) { _watcher.EnableRaisingEvents = false; _watcher.Dispose(); _watcher = null; } } catch { }
+        if (!S.WatchEnabled) return;
+        var path = S.Source.Path;
+        if (string.IsNullOrEmpty(path)) return;
+        var dir = Path.GetDirectoryName(path);
+        var file = Path.GetFileName(path);
+        if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) return;
+        try
+        {
+            _watcher = new System.IO.FileSystemWatcher(dir, file)
+            {
+                NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
+                             | System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.CreationTime
+            };
+            _watcher.Changed += OnWatchEvent;
+            _watcher.Created += OnWatchEvent;
+            _watcher.Renamed += OnWatchEvent;
+            _watcher.EnableRaisingEvents = true;
+        }
+        catch { }
+    }
+
+    private void OnWatchEvent(object sender, System.IO.FileSystemEventArgs e)
+    {
+        // Debounce: builds costumam escrever o arquivo varias vezes seguidas
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (_watchDebounce == null)
+            {
+                _watchDebounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+                _watchDebounce.Tick += (_, _) => { _watchDebounce!.Stop(); TriggerWatch(); };
+            }
+            _watchDebounce.Stop();
+            _watchDebounce.Start();
+        }));
+    }
+
+    private void TriggerWatch()
+    {
+        if (!S.WatchEnabled || _transferring) return;
+        if (!File.Exists(S.Source.Path)) return;
+        if (!S.Destinations.Any(d => d.Enabled && DestReady(d))) return;
+        _ = DoTransfer();
+    }
+
     private async Task DoTransfer()
     {
         if (!BtnGo.IsEnabled) return;
@@ -382,6 +447,7 @@ public partial class MainWindow : Window
         if (dests.Count == 0) return;
         var fileName = Path.GetFileName(S.Source.Path);
         var mode = S.OverwriteMode;
+        _transferring = true;
         BtnGo.IsEnabled = BtnCfg.IsEnabled = BtnRefresh.IsEnabled = false;
         Prog.Value = 0;
         int sent = 0, skipped = 0, failed = 0;
@@ -421,6 +487,7 @@ public partial class MainWindow : Window
         }
         finally
         {
+            _transferring = false;
             BtnCfg.IsEnabled = BtnRefresh.IsEnabled = true;
             UpdateReadyState();
         }
@@ -452,6 +519,7 @@ public partial class MainWindow : Window
         SyncProfileCombo();
         RefreshHome();
         UpdateReadyState();
+        StartOrStopWatch();
         SetStatus(L.T("settingsSaved"), StatusKind.Sub);
     }
 }
