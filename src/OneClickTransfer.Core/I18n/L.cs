@@ -116,6 +116,8 @@ public static class L
         ["resetFields"] = ("Resetar campos", "Reset fields"),
         ["save"] = ("Salvar", "Save"),
         ["cancel"] = ("Cancelar", "Cancel"),
+        ["yes"] = ("Sim", "Yes"),
+        ["no"] = ("Não", "No"),
         ["connOkMsg"] = ("Conexão OK! O FTP respondeu corretamente.", "Connection OK! The FTP responded correctly."),
         ["connOk"] = ("Conexão OK", "Connection OK"),
         ["connFailed"] = ("Falha na conexão", "Connection failed"),

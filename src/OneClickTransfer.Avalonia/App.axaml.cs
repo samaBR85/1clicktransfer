@@ -24,7 +24,7 @@ public partial class App : Application
             AppServices.Dispatcher = new AvaloniaUiDispatcher();
             AppServices.App = new AppControl();
             AppServices.Files = new AvaloniaFilePickerService(() => window);
-            // AppServices.Dialogs = ... (atribuido na E7, quando existirem os diálogos)
+            AppServices.Dialogs = new AvaloniaDialogService(() => desktop.MainWindow);
 
             desktop.MainWindow = window;
         }

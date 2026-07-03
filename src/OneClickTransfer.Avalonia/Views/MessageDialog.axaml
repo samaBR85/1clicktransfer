@@ -1,0 +1,14 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OneClickTransfer.Avalonia.Views.MessageDialog"
+        Width="420" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource BgBrush}">
+  <StackPanel Margin="18" Spacing="16">
+    <TextBlock x:Name="MessageText" Foreground="{DynamicResource TextBrush}" TextWrapping="Wrap"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+      <Button x:Name="YesButton" Classes="primary" Content="OK" Width="100" Height="34" Click="Yes_Click"/>
+      <Button x:Name="NoButton" Content="Cancelar" Width="100" Height="34" Click="No_Click" IsVisible="False"/>
+    </StackPanel>
+  </StackPanel>
+</Window>

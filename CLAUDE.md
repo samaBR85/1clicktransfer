@@ -59,3 +59,7 @@ App desktop: envia arquivos pré-escolhidos a destinos (local/FTP/FTPS/SFTP) em 
   F4/F5: AddHandler(KeyDownEvent, ..., RoutingStrategies.Tunnel). Dispatcher.UIThread, não Dispatcher.Invoke.
 - Ícones funcionais: PathIcon/StreamGeometry (Segoe MDL2 e emoji não existem no Linux).
 - Publish: single-file self-contained; NUNCA PublishTrimmed/AOT.
+- **NUNCA escreva um `InitializeComponent` manual** (`AvaloniaXamlLoader.Load(this)`) em janelas/controles
+  com `x:Name`: use o `InitializeComponent()` GERADO (só chame no ctor). O manual compila mas NÃO
+  atribui os campos x:Name -> NullReferenceException em runtime (engolido por `async void`; o diálogo
+  simplesmente não abre).
