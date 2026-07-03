@@ -4,9 +4,26 @@
         Title="1-Click Transfer"
         Width="900" Height="810" MinWidth="740" MinHeight="700"
         WindowStartupLocation="CenterScreen"
-        Background="#18181B">
+        Background="{DynamicResource BgBrush}">
 
-  <TextBlock Text="1-Click Transfer" FontSize="20" FontWeight="SemiBold"
-             Foreground="#F4F4F5" Margin="20" VerticalAlignment="Top"/>
+  <!-- DEMO E5 (temporario: sera substituido pela Home na E8) -->
+  <StackPanel Margin="24" Spacing="14">
+    <TextBlock Text="1-Click Transfer" FontSize="20" FontWeight="SemiBold"
+               Foreground="{DynamicResource TextBrush}"/>
+    <TextBlock Text="Demonstração de estilos (E5) — troca de tema em tempo real"
+               Foreground="{DynamicResource SubTextBrush}"/>
+    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+            BorderThickness="1" CornerRadius="10" Padding="16">
+      <StackPanel Spacing="12">
+        <TextBox Watermark="Um TextBox" Width="320" HorizontalAlignment="Left"/>
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Button Content="Botão flat"/>
+          <ToggleButton Classes="toggle-flat" Content="👁 Observar" Padding="14,6"/>
+          <Button Content="Trocar tema" Click="ToggleTheme_Click"/>
+        </StackPanel>
+        <Button Classes="primary" Content="TRANSFERIR" Height="56" FontSize="18"/>
+      </StackPanel>
+    </Border>
+  </StackPanel>
 
 </Window>
