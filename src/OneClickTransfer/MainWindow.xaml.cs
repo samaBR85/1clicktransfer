@@ -55,6 +55,7 @@ public partial class MainWindow : Window
         {
             ApplyDwm();
             ApplyTexts();
+            ApplySplit();
             SyncProfileCombo();
             RefreshHome();
             UpdateReadyState();
@@ -82,6 +83,24 @@ public partial class MainWindow : Window
         SrcColName.Header = DstColName.Header = L.T("colName");
         SrcColSize.Header = DstColSize.Header = L.T("colSize");
         SrcColMod.Header = DstColMod.Header = L.T("colModified");
+    }
+
+    private void ApplySplit()
+    {
+        var r = S.SplitRatio;
+        if (r < 0.15) r = 0.15; else if (r > 0.85) r = 0.85;
+        ColSrc.Width = new GridLength(r, GridUnitType.Star);
+        ColDst.Width = new GridLength(1 - r, GridUnitType.Star);
+    }
+
+    private void Splitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+    {
+        var total = ColSrc.ActualWidth + ColDst.ActualWidth;
+        if (total > 0)
+        {
+            S.SplitRatio = ColSrc.ActualWidth / total;
+            SettingsService.Save(S);
+        }
     }
 
     private void ApplyDwm()

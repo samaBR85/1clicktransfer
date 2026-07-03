@@ -39,10 +39,16 @@
         <!-- Cards -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="20"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition x:Name="ColSrc" Width="*" MinWidth="220"/>
+                <ColumnDefinition Width="18"/>
+                <ColumnDefinition x:Name="ColDst" Width="*" MinWidth="220"/>
             </Grid.ColumnDefinitions>
+
+            <!-- Divisor arrastavel entre os cards -->
+            <Border Grid.Column="1" Width="2" HorizontalAlignment="Center" Background="{DynamicResource LineBrush}" IsHitTestVisible="False"/>
+            <GridSplitter Grid.Column="1" Width="18" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Background="Transparent" ResizeBehavior="PreviousAndNext" ResizeDirection="Columns"
+                          DragCompleted="Splitter_DragCompleted"/>
 
             <!-- Source card -->
             <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
