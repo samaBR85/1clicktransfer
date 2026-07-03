@@ -119,9 +119,21 @@ public partial class MainWindow : Window
         _srcDir = !string.IsNullOrEmpty(S.Source.Path) ? (Path.GetDirectoryName(S.Source.Path) ?? "") : "";
         RefillSource();
 
-        // Destino
-        var d = Dest0;
-        if (d == null) { _dst.Clear(); TxtDstPath.Text = L.T("noDest"); return; }
+        // Destino(s)
+        var dests = S.Destinations;
+        _dst.Clear();
+        if (dests.Count == 0) { TxtDstPath.Text = L.T("noDest"); return; }
+        if (dests.Count > 1)
+        {
+            // Multiplos destinos: mostra a lista de resumos (sem navegacao)
+            TxtDstPath.Text = L.T("destCount", dests.Count);
+            foreach (var dd in dests)
+                _dst.Add(new FileRow { Name = SettingsWindow.DestSummary(dd) });
+            return;
+        }
+
+        // Um destino: listagem navegavel
+        var d = dests[0];
         _dstDir = d.Folder;
         if (d.Type == DestType.Local)
         {
@@ -129,7 +141,6 @@ public partial class MainWindow : Window
         }
         else // remoto (FTP / SFTP)
         {
-            _dst.Clear();
             var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
             TxtDstPath.Text = prefix + d.Host + (_dstDir ?? "/");
             if (fetchFtp) { _dst.Add(InfoRow("loadingFtp")); FetchRemoteAt(d, string.IsNullOrEmpty(_dstDir) ? "/" : _dstDir); }
@@ -236,7 +247,7 @@ public partial class MainWindow : Window
 
     private void UpdateReadyState()
     {
-        var ok = !string.IsNullOrEmpty(S.Source.Path) && DestReady(Dest0);
+        var ok = !string.IsNullOrEmpty(S.Source.Path) && S.Destinations.Any(DestReady);
         BtnGo.IsEnabled = ok;
         BtnTheme.Content = S.Theme == "light" ? L.T("darkMode") : L.T("lightMode");
         var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
@@ -341,40 +352,46 @@ public partial class MainWindow : Window
             MessageBox.Show(this, S.Source.Path, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
-        var d = Dest0!;
+        var dests = S.Destinations.Where(DestReady).ToList();
+        if (dests.Count == 0) return;
         var fileName = Path.GetFileName(S.Source.Path);
+        var mode = S.OverwriteMode;
         BtnGo.IsEnabled = BtnCfg.IsEnabled = BtnRefresh.IsEnabled = false;
         Prog.Value = 0;
+        int sent = 0, skipped = 0, failed = 0;
+        string? lastError = null;
         try
         {
-            var mode = S.OverwriteMode;
-            if (mode != OverwriteMode.Always)
+            for (int i = 0; i < dests.Count; i++)
             {
-                SetStatus(L.T("checkingDest"), StatusKind.Sub);
-                bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
-                if (exists)
+                var d = dests[i];
+                var label = dests.Count > 1 ? SettingsWindow.DestSummary(d) : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
+                SetStatus(L.T("sendingTo", label, i + 1, dests.Count), StatusKind.Sub);
+                Prog.Value = 0;
+                try
                 {
-                    if (mode == OverwriteMode.Never) { SetStatus(L.T("notSentExists", fileName), StatusKind.Sub); return; }
-                    if (mode == OverwriteMode.IfNewer)
+                    if (mode != OverwriteMode.Always)
                     {
-                        bool notNewer = await Task.Run(() => !IsSourceNewer(d, fileName));
-                        if (notNewer) { SetStatus(L.T("nothingNewer"), StatusKind.Sub); return; }
+                        bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
+                        if (exists)
+                        {
+                            if (mode == OverwriteMode.Never) { skipped++; continue; }
+                            if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, fileName))) { skipped++; continue; }
+                        }
                     }
+                    await Task.Run(() => TransferService.Send(d, S.Source.Path,
+                        pct => Dispatcher.Invoke(() => Prog.Value = pct)));
+                    Prog.Value = 100;
+                    sent++;
                 }
+                catch (Exception ex) { failed++; lastError = ex.Message; }
             }
 
-            SetStatus(d.Type == DestType.Local ? L.T("copying") : L.T("uploading"), StatusKind.Sub);
-            await Task.Run(() => TransferService.Send(d, S.Source.Path,
-                pct => Dispatcher.Invoke(() => Prog.Value = pct)));
-            Prog.Value = 100;
-            SetStatus(L.T("completed"), StatusKind.Success);
+            var kind = failed > 0 ? StatusKind.Error : (sent > 0 ? StatusKind.Success : StatusKind.Sub);
+            SetStatus(L.T("transferDone", sent, skipped, failed), kind);
+            if (failed == 0) Prog.Value = sent > 0 ? 100 : 0;
+            if (lastError != null) TxtStatus.ToolTip = lastError;
             RefreshHome(true);
-        }
-        catch (Exception ex)
-        {
-            Prog.Value = 0;
-            SetStatus(L.T("transferFailed"), StatusKind.Error);
-            MessageBox.Show(this, ex.Message, L.T("transferErrorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {

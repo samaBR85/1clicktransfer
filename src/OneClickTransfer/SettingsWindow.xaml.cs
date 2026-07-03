@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using OneClickTransfer.I18n;
@@ -14,6 +14,7 @@ public partial class SettingsWindow : Window
 {
     private AppSettings S => App.Settings;
     private bool _profSync;
+    private List<Destination> _dests = new();
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int val, int size);
@@ -22,9 +23,10 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         ApplyTexts();
-        LoadFields(S.Source, S.Destinations.FirstOrDefault());
+        TxtSrc.Text = S.Source.Path;
+        _dests = S.Destinations.ConvertAll(d => d.Clone());
+        ReloadDests();
         ReloadProfiles();
-        UpdatePanels();
         Loaded += (_, _) =>
         {
             try { var h = new WindowInteropHelper(this).Handle; int v = S.Theme != "light" ? 1 : 0; DwmSetWindowAttribute(h, 20, ref v, 4); } catch { }
@@ -37,19 +39,10 @@ public partial class SettingsWindow : Window
         LblSec1.Text = L.T("sec1File");
         BtnBrowseSrc.Content = L.T("browse");
         LblSec2.Text = L.T("sec2Where");
-        RbLocal.Content = L.T("localFolder");
-        RbFtp.Content = L.T("ftpServer");
-        RbSftp.Content = L.T("sftpServer");
-        LblDstFolder.Text = L.T("destFolderLabel");
-        BtnBrowseDst.Content = L.T("browse");
-        LblHost.Text = L.T("ftpHost");
-        LblPort.Text = L.T("ftpPort");
-        LblRemote.Text = L.T("ftpRemote");
-        BtnBrowseRemote.Content = L.T("ftpSearch");
-        LblUser.Text = L.T("ftpUser");
-        LblPass.Text = L.T("ftpPass");
-        ChkTls.Content = L.T("ftpTls");
-        BtnTest.Content = L.T("testConn");
+        BtnAddDest.Content = L.T("addDest");
+        BtnEditDest.Content = L.T("editDest");
+        BtnRemoveDest.Content = L.T("removeDest");
+        LblF5Note.Text = L.T("f5RefreshNote");
         LblSec3.Text = L.T("sec3Options");
         LblShortcut.Text = L.T("shortcutLabel");
         LblTheme.Text = L.T("themeLabel");
@@ -62,9 +55,6 @@ public partial class SettingsWindow : Window
         BtnSave.Content = L.T("save");
         BtnCancel.Content = L.T("cancel");
 
-        LblF5Note.Text = L.T("f5RefreshNote");
-
-        // Combos — F5 e reservado p/ Atualizar, entao nao aparece aqui
         var noneLabel = L.Lang == "en" ? "None" : "Nenhum";
         CmbKey.Items.Clear();
         CmbKey.Items.Add(noneLabel);
@@ -83,134 +73,54 @@ public partial class SettingsWindow : Window
         CmbLang.SelectedIndex = S.Language == "en" ? 1 : 0;
     }
 
-    private void LoadFields(SourceSpec src, Destination? d)
+    // ---------------- Destinos ----------------
+    public static string DestSummary(Destination d) => d.Type switch
     {
-        TxtSrc.Text = src.Path;
-        d ??= new Destination();
-        if (d.Type == DestType.Ftp || d.Type == DestType.Sftp)
-        {
-            if (d.Type == DestType.Sftp) RbSftp.IsChecked = true; else RbFtp.IsChecked = true;
-            TxtRemote.Text = string.IsNullOrEmpty(d.Folder) ? "/" : d.Folder;
-            TxtDstFolder.Text = "";
-        }
-        else
-        {
-            RbLocal.IsChecked = true;
-            TxtDstFolder.Text = d.Folder;
-            TxtRemote.Text = "/";
-        }
-        TxtHost.Text = d.Host;
-        TxtPort.Text = (d.Port <= 0 ? (d.Type == DestType.Sftp ? 22 : 21) : d.Port).ToString();
-        TxtUser.Text = d.Username;
-        TxtPass.Password = SecretProtector.Unprotect(d.Password);
-        ChkTls.IsChecked = d.UseTls;
+        DestType.Local => "\U0001F4C1  " + d.Folder,
+        DestType.Ftp => "\U0001F310  FTP  " + d.Host + ":" + d.Port + d.Folder,
+        DestType.Sftp => "\U0001F310  SFTP  " + d.Host + ":" + d.Port + d.Folder,
+        _ => ""
+    };
+
+    private void ReloadDests()
+    {
+        var sel = LstDests.SelectedIndex;
+        LstDests.Items.Clear();
+        foreach (var d in _dests) LstDests.Items.Add(DestSummary(d));
+        if (sel >= 0 && sel < LstDests.Items.Count) LstDests.SelectedIndex = sel;
+    }
+
+    private void AddDest_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new DestinationEditorWindow(null) { Owner = this };
+        if (dlg.ShowDialog() == true && dlg.Result != null) { _dests.Add(dlg.Result); ReloadDests(); LstDests.SelectedIndex = _dests.Count - 1; }
+    }
+
+    private void EditDest_Click(object sender, RoutedEventArgs e) => EditSelected();
+    private void Dests_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) => EditSelected();
+
+    private void EditSelected()
+    {
+        var idx = LstDests.SelectedIndex;
+        if (idx < 0) return;
+        var dlg = new DestinationEditorWindow(_dests[idx].Clone()) { Owner = this };
+        if (dlg.ShowDialog() == true && dlg.Result != null) { _dests[idx] = dlg.Result; ReloadDests(); LstDests.SelectedIndex = idx; }
+    }
+
+    private void RemoveDest_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = LstDests.SelectedIndex;
+        if (idx < 0) return;
+        _dests.RemoveAt(idx);
+        ReloadDests();
     }
 
     private SourceSpec ReadSource() => new() { Path = TxtSrc.Text.Trim(), Kind = SourceKind.File };
-
-    private Destination ReadDest()
-    {
-        if (RbFtp.IsChecked == true || RbSftp.IsChecked == true)
-        {
-            bool sftp = RbSftp.IsChecked == true;
-            int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = sftp ? 22 : 21;
-            return new Destination
-            {
-                Type = sftp ? DestType.Sftp : DestType.Ftp,
-                Host = TxtHost.Text.Trim(),
-                Port = port,
-                Folder = string.IsNullOrWhiteSpace(TxtRemote.Text) ? "/" : TxtRemote.Text.Trim(),
-                Username = TxtUser.Text.Trim(),
-                Password = SecretProtector.Protect(TxtPass.Password),
-                UseTls = !sftp && ChkTls.IsChecked == true
-            };
-        }
-        return new Destination { Type = DestType.Local, Folder = TxtDstFolder.Text.Trim() };
-    }
-
-    private void UpdatePanels()
-    {
-        bool ftp = RbFtp.IsChecked == true;
-        bool sftp = RbSftp.IsChecked == true;
-        bool server = ftp || sftp;
-        bool local = RbLocal.IsChecked == true;
-        PanelLocal.IsEnabled = local; PanelLocal.Opacity = local ? 1 : 0.5;
-        PanelFtp.IsEnabled = server; PanelFtp.Opacity = server ? 1 : 0.5;
-        ChkTls.Visibility = ftp ? Visibility.Visible : Visibility.Hidden;  // TLS so faz sentido no FTP
-    }
-
-    private void DestType_Changed(object sender, RoutedEventArgs e)
-    {
-        // Ajusta a porta padrao ao alternar FTP<->SFTP
-        if (RbSftp.IsChecked == true && (TxtPort.Text == "21" || string.IsNullOrWhiteSpace(TxtPort.Text))) TxtPort.Text = "22";
-        else if (RbFtp.IsChecked == true && (TxtPort.Text == "22" || string.IsNullOrWhiteSpace(TxtPort.Text))) TxtPort.Text = "21";
-        UpdatePanels();
-    }
 
     private void BrowseSrc_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog();
         if (dlg.ShowDialog() == true) TxtSrc.Text = dlg.FileName;
-    }
-
-    private void BrowseDst_Click(object sender, RoutedEventArgs e)
-    {
-        var dlg = new Microsoft.Win32.OpenFolderDialog();
-        if (!string.IsNullOrWhiteSpace(TxtDstFolder.Text)) { try { dlg.InitialDirectory = TxtDstFolder.Text; } catch { } }
-        if (dlg.ShowDialog() == true) TxtDstFolder.Text = dlg.FolderName;
-    }
-
-    private void BrowseRemote_Click(object sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(TxtHost.Text))
-        {
-            MessageBox.Show(this, L.T("ftpHost"), L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-        bool sftp = RbSftp.IsChecked == true;
-        int.TryParse(TxtPort.Text, out var port); if (port <= 0) port = sftp ? 22 : 21;
-        var d = new Destination
-        {
-            Type = sftp ? DestType.Sftp : DestType.Ftp,
-            Host = TxtHost.Text.Trim(),
-            Port = port,
-            Folder = "/",
-            Username = TxtUser.Text.Trim(),
-            Password = SecretProtector.Protect(TxtPass.Password),
-            UseTls = !sftp && ChkTls.IsChecked == true
-        };
-        var start = string.IsNullOrWhiteSpace(TxtRemote.Text) ? "/" : TxtRemote.Text.Trim();
-        var br = new FtpBrowserWindow(d, start) { Owner = this };
-        if (br.ShowDialog() == true && br.ChosenPath != null) TxtRemote.Text = br.ChosenPath;
-    }
-
-    private void SetTestResult(string text, string brushKey, string? tip = null)
-    {
-        TxtTestResult.Text = text;
-        TxtTestResult.ToolTip = tip;
-        TxtTestResult.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, brushKey);
-    }
-
-    private async void Test_Click(object sender, RoutedEventArgs e)
-    {
-        var d = ReadDest();
-        if ((d.Type != DestType.Ftp && d.Type != DestType.Sftp) || string.IsNullOrWhiteSpace(d.Host))
-        {
-            SetTestResult("✗ " + L.T("ftpHost"), "ErrorBrush");
-            return;
-        }
-        BtnTest.IsEnabled = false; BtnTest.Content = L.T("testing");
-        SetTestResult(L.T("testing"), "SubTextBrush");
-        try
-        {
-            await Task.Run(() => TransferService.TestConnection(d));
-            SetTestResult("✓ " + L.T("connOk"), "SuccessBrush");
-        }
-        catch (Exception ex)
-        {
-            SetTestResult("✗ " + L.T("connFailed"), "ErrorBrush", ex.Message);
-        }
-        finally { BtnTest.IsEnabled = true; BtnTest.Content = L.T("testConn"); }
     }
 
     // ---------------- Perfis ----------------
@@ -229,7 +139,12 @@ public partial class SettingsWindow : Window
         if (_profSync || CmbProfiles.SelectedIndex <= 0) return;
         var name = CmbProfiles.SelectedItem?.ToString() ?? "";
         var prof = S.Profiles.FirstOrDefault(p => p.Name == name);
-        if (prof != null) { LoadFields(prof.Source, prof.Destinations.FirstOrDefault()); UpdatePanels(); }
+        if (prof != null)
+        {
+            TxtSrc.Text = prof.Source.Path;
+            _dests = prof.Destinations.ConvertAll(d => d.Clone());
+            ReloadDests();
+        }
     }
 
     private void ProfSave_Click(object sender, RoutedEventArgs e)
@@ -237,7 +152,7 @@ public partial class SettingsWindow : Window
         var suggest = CmbProfiles.SelectedIndex > 0 ? CmbProfiles.SelectedItem?.ToString() ?? "" : "";
         var name = PromptDialog.Ask(this, L.T("saveAs"), L.T("profSaved"), suggest);
         if (name == null) return;
-        var prof = new Profile { Name = name, Source = ReadSource(), Destinations = { ReadDest() } };
+        var prof = new Profile { Name = name, Source = ReadSource(), Destinations = _dests.ConvertAll(d => d.Clone()) };
         var existing = S.Profiles.FindIndex(p => p.Name == name);
         if (existing >= 0) S.Profiles[existing] = prof; else S.Profiles.Add(prof);
         SettingsService.Save(S);
@@ -247,7 +162,7 @@ public partial class SettingsWindow : Window
 
     private void ProfRename_Click(object sender, RoutedEventArgs e)
     {
-        if (CmbProfiles.SelectedIndex <= 0) return;
+        if (CmbProfiles.SelectedIndex <= 0) { MessageBox.Show(this, L.T("selectProfileWarn"), L.T("profilesTitle"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         var name = CmbProfiles.SelectedItem!.ToString()!;
         var nn = PromptDialog.Ask(this, L.T("rename"), L.T("rename"), name);
         if (nn == null) return;
@@ -257,7 +172,7 @@ public partial class SettingsWindow : Window
 
     private void ProfDelete_Click(object sender, RoutedEventArgs e)
     {
-        if (CmbProfiles.SelectedIndex <= 0) return;
+        if (CmbProfiles.SelectedIndex <= 0) { MessageBox.Show(this, L.T("selectProfileWarn"), L.T("profilesTitle"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         var name = CmbProfiles.SelectedItem!.ToString()!;
         if (MessageBox.Show(this, name, L.T("delete"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         S.Profiles.RemoveAll(p => p.Name == name);
@@ -268,16 +183,16 @@ public partial class SettingsWindow : Window
 
     private void Reset_Click(object sender, RoutedEventArgs e)
     {
-        TxtSrc.Text = ""; RbLocal.IsChecked = true; TxtDstFolder.Text = "";
-        TxtHost.Text = ""; TxtPort.Text = "21"; TxtRemote.Text = "/"; TxtUser.Text = ""; TxtPass.Password = ""; ChkTls.IsChecked = false;
-        UpdatePanels();
+        TxtSrc.Text = "";
+        _dests.Clear();
+        ReloadDests();
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         S.Source = ReadSource();
-        S.Destinations = new() { ReadDest() };
-        S.Shortcut = CmbKey.SelectedIndex == 0 ? "None" : (CmbKey.SelectedItem?.ToString() ?? "F5");
+        S.Destinations = _dests.ConvertAll(d => d.Clone());
+        S.Shortcut = CmbKey.SelectedIndex == 0 ? "None" : (CmbKey.SelectedItem?.ToString() ?? "F4");
         S.Theme = CmbTheme.SelectedIndex == 1 ? "light" : "dark";
         S.Language = CmbLang.SelectedIndex == 1 ? "en" : "pt";
         S.ActiveProfile = "";
