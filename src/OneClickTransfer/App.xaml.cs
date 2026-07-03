@@ -15,6 +15,14 @@ public partial class App : Application
         base.OnStartup(e);
         Settings = SettingsService.Load();
         L.Lang = Settings.Language == "en" ? "en" : "pt";
+
+        // Modo linha de comando (headless): --task/--all/--list/--help. Sem UI.
+        if (CliRunner.IsCli(e.Args))
+        {
+            Shutdown(CliRunner.Run(e.Args, Settings));
+            return;
+        }
+
         ThemeManager.Apply(Settings.Theme);
         new MainWindow().Show();
     }
