@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -28,7 +29,9 @@ public partial class App : Application
             AppServices.Dispatcher = new AvaloniaUiDispatcher();
             AppServices.App = new AppControl();
             AppServices.Files = new AvaloniaFilePickerService(() => window);
-            AppServices.Dialogs = new AvaloniaDialogService(() => desktop.MainWindow);
+            // Owner = janela ativa (p/ um diálogo aberto de dentro de outro ser modal ao pai correto).
+            AppServices.Dialogs = new AvaloniaDialogService(
+                () => desktop.Windows.LastOrDefault(w => w.IsActive) ?? desktop.MainWindow);
 
             var vm = new MainViewModel(Settings, AppServices.Dialogs, AppServices.Dispatcher);
             // Ao salvar Configurar (E9): troca App.Settings, tema e a barra de título.

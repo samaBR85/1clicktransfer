@@ -110,6 +110,8 @@ public static class L
         ["langLabel"] = ("Idioma:", "Language:"),
         ["profSaved"] = ("Perfis salvos:", "Saved profiles:"),
         ["selectItem"] = ("(selecione)", "(select)"),
+        ["selectProfileWarn"] = ("Selecione um perfil.", "Select a profile."),
+        ["profilesTitle"] = ("Perfis", "Profiles"),
         ["saveAs"] = ("Salvar atual como...", "Save current as..."),
         ["rename"] = ("Renomear", "Rename"),
         ["delete"] = ("Excluir", "Delete"),

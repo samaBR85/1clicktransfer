@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:OneClickTransfer.Avalonia.ViewModels"
+        x:Class="OneClickTransfer.Avalonia.Views.FtpBrowserWindow"
+        x:DataType="vm:FtpBrowserViewModel"
+        Title="{Binding WindowTitle}"
+        Width="460" Height="450"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource BgBrush}">
+
+  <Grid Margin="14" RowDefinitions="Auto,*,Auto,Auto">
+    <TextBlock Grid.Row="0" Text="{Binding CurrentText}" Foreground="{DynamicResource SubTextBrush}"
+               TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+    <ListBox x:Name="Lb" Grid.Row="1" ItemsSource="{Binding Items}" DoubleTapped="Lb_DoubleTapped">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:FtpBrowserItem">
+          <TextBlock Text="{Binding Display}" VerticalAlignment="Center"/>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+    <TextBlock Grid.Row="2" Text="{Binding HintText}" Foreground="{DynamicResource SubTextBrush}"
+               FontSize="11" Margin="0,8,0,0"/>
+    <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+      <Button Classes="primary" Width="196" Height="32" Content="{Binding SelectLabel}" Command="{Binding SelectCommand}"/>
+      <Button Width="96" Height="32" Content="{Binding CancelLabel}" Command="{Binding CancelCommand}"/>
+    </StackPanel>
+  </Grid>
+</Window>
