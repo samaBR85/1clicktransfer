@@ -95,6 +95,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-v2.ps1   # -> di
 ```
 `build-v2.ps1` publishes a single-file, self-contained `win-x64` executable.
 
+> **Legacy (v1).** The root `TransferApp.ps1`, `Iniciar.vbs` and `Criar atalho na Area de Trabalho.vbs`
+> are the original v1 (PowerShell/VBScript). They are kept for history only and are **not part of the
+> v2/v3 distribution** — don't run or ship them. The current app is the C# build above.
+
 ### License
 [MIT](LICENSE) © 2026 samaBR85.
 
@@ -178,6 +182,10 @@ dotnet run --project src\OneClickTransfer          # roda pelo código-fonte
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-v2.ps1   # -> dist-v2\1clickTransfer.exe
 ```
 O `build-v2.ps1` publica um executável único, self-contained, para `win-x64`.
+
+> **Legado (v1).** Os arquivos `TransferApp.ps1`, `Iniciar.vbs` e `Criar atalho na Area de Trabalho.vbs`
+> na raiz são a versão v1 original (PowerShell/VBScript). Ficam só por histórico e **não fazem parte da
+> distribuição v2/v3** — não execute nem distribua. O app atual é o build C# acima.
 
 ### Licença
 [MIT](LICENSE) © 2026 samaBR85.
