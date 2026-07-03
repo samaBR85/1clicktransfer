@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
@@ -30,20 +31,22 @@ public partial class MainWindow : Window
     private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
     private readonly ObservableCollection<FileRow> _src = new();
     private readonly ObservableCollection<FileRow> _dst = new();
-    private bool _profSync;
+    private readonly ObservableCollection<TransferJob> _jobs = new();
+    private bool _jobSync;
     private bool _rbSync;
     private string _srcDir = "";   // pasta atual navegada na ORIGEM
     private string _dstDir = "";   // pasta atual navegada no DESTINO
-    private System.IO.FileSystemWatcher? _watcher;
-    private System.Windows.Threading.DispatcherTimer? _watchDebounce;
+    private readonly List<System.IO.FileSystemWatcher> _watchers = new();
+    private readonly Dictionary<TransferJob, System.Windows.Threading.DispatcherTimer> _watchTimers = new();
     private bool _transferring;
 
     private AppSettings S => App.Settings;
-    private Destination? Dest0 => S.Destinations.FirstOrDefault();
-    // Destino usado para navegacao na home (so quando ha exatamente 1 ativo)
+    // Tarefa selecionada na lista (o que os cards ORIGEM/DESTINO mostram).
+    private TransferJob Job => S.CurrentJob;
+    // Destino usado para navegacao na home (so quando ha exatamente 1 ativo na tarefa selecionada)
     private Destination? SingleNavDest
     {
-        get { var en = S.Destinations.Where(x => x.Enabled).ToList(); return en.Count == 1 ? en[0] : null; }
+        get { var en = Job.Destinations.Where(x => x.Enabled).ToList(); return en.Count == 1 ? en[0] : null; }
     }
 
     [DllImport("dwmapi.dll")]
@@ -54,21 +57,22 @@ public partial class MainWindow : Window
         InitializeComponent();
         GridSrc.ItemsSource = _src;
         GridDst.ItemsSource = _dst;
+        LstJobs.ItemsSource = _jobs;
         Loaded += (_, _) =>
         {
             ApplyDwm();
             ApplyTexts();
             ApplySplit();
-            SyncProfileCombo();
+            RefreshJobs();
             RefreshHome();
             UpdateReadyState();
             StartOrStopWatch();
             if (S.WatchEnabled) SetStatus(L.T("watchStatus"), StatusKind.Sub);
-            else if (string.IsNullOrEmpty(S.Source.Path))
+            else if (string.IsNullOrEmpty(Job.Source.Path))
                 SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
         };
         KeyDown += MainWindow_KeyDown;
-        Closed += (_, _) => { try { if (_watcher != null) { _watcher.EnableRaisingEvents = false; _watcher.Dispose(); } } catch { } };
+        Closed += (_, _) => StopAllWatchers();
     }
 
     // ---------------- i18n / tema ----------------
@@ -78,7 +82,11 @@ public partial class MainWindow : Window
         TxtTitle.Text = L.T("appTitle");
         BtnWatch.Content = L.T("watch");
         BtnRefresh.Content = L.T("refresh");
-        TxtProfile.Text = L.T("profile");
+        TxtTasksHdr.Text = L.T("tasks");
+        BtnJobNew.Content = L.T("taskNew");
+        BtnJobDup.Content = L.T("taskDuplicate");
+        BtnJobRen.Content = L.T("taskRename");
+        BtnJobDel.Content = L.T("taskRemove");
         TxtSrcHdr.Text = L.T("source");
         TxtDstHdr.Text = L.T("destination");
         RbAlways.Content = L.T("replace");
@@ -130,6 +138,96 @@ public partial class MainWindow : Window
         UpdateReadyState();
     }
 
+    // ---------------- Tarefas ----------------
+    private void RefreshJobs()
+    {
+        _jobSync = true;
+        _jobs.Clear();
+        foreach (var j in S.Jobs) _jobs.Add(j);
+        var idx = S.SelectedJob;
+        if (idx < 0 || idx >= _jobs.Count) idx = _jobs.Count > 0 ? 0 : -1;
+        LstJobs.SelectedIndex = idx;
+        _jobSync = false;
+    }
+
+    private void Jobs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_jobSync) return;
+        var idx = LstJobs.SelectedIndex;
+        if (idx < 0) return;
+        S.SelectedJob = idx;
+        SettingsService.Save(S);
+        RefreshHome();
+        UpdateReadyState();
+    }
+
+    private void Jobs_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) => OpenSettings();
+
+    private void JobEnabled_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_jobSync) return;
+        SettingsService.Save(S);
+        LstJobs.Items.Refresh();
+        UpdateReadyState();
+        StartOrStopWatch();
+    }
+
+    private void JobNew_Click(object sender, RoutedEventArgs e)
+    {
+        var job = new TransferJob { Name = SettingsService.DefaultJobName(S.Jobs.Count), Enabled = true };
+        S.Jobs.Add(job);
+        S.SelectedJob = S.Jobs.Count - 1;
+        SettingsService.Save(S);
+        RefreshJobs();
+        RefreshHome();
+        UpdateReadyState();
+        OpenSettings();   // guia o usuario a escolher arquivo + destino da nova tarefa
+    }
+
+    private void JobDuplicate_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = LstJobs.SelectedIndex;
+        if (idx < 0) return;
+        var copy = S.Jobs[idx].Clone();
+        copy.Name = S.Jobs[idx].Name + " " + L.T("copySuffix");
+        S.Jobs.Insert(idx + 1, copy);
+        S.SelectedJob = idx + 1;
+        SettingsService.Save(S);
+        RefreshJobs();
+        RefreshHome();
+        UpdateReadyState();
+        StartOrStopWatch();
+    }
+
+    private void JobRename_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = LstJobs.SelectedIndex;
+        if (idx < 0) return;
+        var job = S.Jobs[idx];
+        var nn = PromptDialog.Ask(this, L.T("taskRename"), L.T("taskNamePrompt"), job.Name);
+        if (nn == null) return;
+        if (!string.IsNullOrWhiteSpace(nn)) job.Name = nn.Trim();
+        SettingsService.Save(S);
+        RefreshJobs();
+    }
+
+    private void JobRemove_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = LstJobs.SelectedIndex;
+        if (idx < 0) return;
+        var job = S.Jobs[idx];
+        if (MessageBox.Show(this, L.T("taskRemoveConfirm", job.Name), L.T("taskRemove"),
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        S.Jobs.RemoveAt(idx);
+        if (S.Jobs.Count == 0) S.Jobs.Add(new TransferJob { Name = SettingsService.DefaultJobName(0) });
+        if (S.SelectedJob >= S.Jobs.Count) S.SelectedJob = S.Jobs.Count - 1;
+        SettingsService.Save(S);
+        RefreshJobs();
+        RefreshHome();
+        UpdateReadyState();
+        StartOrStopWatch();
+    }
+
     // ---------------- Home ----------------
     private static string FormatSize(long b) => b.ToString("#,0", PtBr);
 
@@ -146,12 +244,12 @@ public partial class MainWindow : Window
 
     private void RefreshHome(bool fetchFtp = false)
     {
-        // Origem: comeca na pasta do arquivo escolhido
-        _srcDir = !string.IsNullOrEmpty(S.Source.Path) ? (Path.GetDirectoryName(S.Source.Path) ?? "") : "";
+        // Origem da tarefa selecionada: comeca na pasta do arquivo escolhido
+        _srcDir = !string.IsNullOrEmpty(Job.Source.Path) ? (Path.GetDirectoryName(Job.Source.Path) ?? "") : "";
         RefillSource();
 
-        // Destino(s)
-        var dests = S.Destinations;
+        // Destino(s) da tarefa selecionada
+        var dests = Job.Destinations;
         _dst.Clear();
         if (dests.Count == 0) { TxtDstPath.Text = L.T("noDest"); return; }
 
@@ -186,9 +284,9 @@ public partial class MainWindow : Window
         _src.Clear();
         if (string.IsNullOrEmpty(_srcDir) || !Directory.Exists(_srcDir)) { TxtSrcPath.Text = L.T("noFile"); return; }
         TxtSrcPath.Text = L.T("folderPrefix") + _srcDir;
-        var leaf = (!string.IsNullOrEmpty(S.Source.Path) &&
-                    string.Equals(Path.GetDirectoryName(S.Source.Path), _srcDir, StringComparison.OrdinalIgnoreCase))
-                    ? Path.GetFileName(S.Source.Path) : null;
+        var leaf = (!string.IsNullOrEmpty(Job.Source.Path) &&
+                    string.Equals(Path.GetDirectoryName(Job.Source.Path), _srcDir, StringComparison.OrdinalIgnoreCase))
+                    ? Path.GetFileName(Job.Source.Path) : null;
         if (Directory.GetParent(_srcDir) != null) _src.Add(UpRow());
         foreach (var it in TransferService.LocalList(_srcDir))
             _src.Add(ToRow(it, leaf != null && it.Name.Equals(leaf, StringComparison.OrdinalIgnoreCase)));
@@ -233,15 +331,14 @@ public partial class MainWindow : Window
         else if (it.IsDir) { _srcDir = Path.Combine(_srcDir, it.RealName); RefillSource(); }
         else if (!string.IsNullOrEmpty(it.RealName))
         {
-            // duplo-clique em arquivo = escolhe como origem
-            S.Source.Path = Path.Combine(_srcDir, it.RealName);
-            S.ActiveProfile = "";
+            // duplo-clique em arquivo = escolhe como origem da tarefa selecionada
+            Job.Source.Path = Path.Combine(_srcDir, it.RealName);
             SettingsService.Save(S);
-            SyncProfileCombo();
             RefillSource();
+            LstJobs.Items.Refresh();
             UpdateReadyState();
             StartOrStopWatch();
-            SetStatus(Path.GetFileName(S.Source.Path), StatusKind.Sub);
+            SetStatus(Path.GetFileName(Job.Source.Path), StatusKind.Sub);
         }
     }
 
@@ -257,7 +354,7 @@ public partial class MainWindow : Window
             if (it.IsUp) _dstDir = Directory.GetParent(_dstDir)?.FullName ?? _dstDir;
             else _dstDir = Path.Combine(_dstDir, it.RealName);
             d.Folder = _dstDir; SettingsService.Save(S);
-            RefillDestLocal(); UpdateReadyState();
+            RefillDestLocal(); LstJobs.Items.Refresh(); UpdateReadyState();
         }
         else // remoto
         {
@@ -270,6 +367,7 @@ public partial class MainWindow : Window
             }
             else np = _dstDir.TrimEnd('/') + "/" + it.RealName;
             _dstDir = np; d.Folder = np; SettingsService.Save(S);
+            LstJobs.Items.Refresh();
             var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
             TxtDstPath.Text = prefix + d.Host + np;
             FetchRemoteAt(d, np);
@@ -279,10 +377,12 @@ public partial class MainWindow : Window
     private bool DestReady(Destination? d)
         => d != null && (d.Type == DestType.Local ? !string.IsNullOrEmpty(d.Folder) : !string.IsNullOrEmpty(d.Host));
 
+    private bool JobHasReadyDest(TransferJob j) => j.Destinations.Any(d => d.Enabled && DestReady(d));
+    private bool JobReady(TransferJob j) => j.Enabled && !string.IsNullOrEmpty(j.Source.Path) && JobHasReadyDest(j);
+
     private void UpdateReadyState()
     {
-        var ok = !string.IsNullOrEmpty(S.Source.Path) && S.Destinations.Any(d => d.Enabled && DestReady(d));
-        BtnGo.IsEnabled = ok;
+        BtnGo.IsEnabled = S.Jobs.Any(JobReady);
         BtnWatch.IsChecked = S.WatchEnabled;
         BtnTheme.Content = S.Theme == "light" ? L.T("darkMode") : L.T("lightMode");
         var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
@@ -290,9 +390,9 @@ public partial class MainWindow : Window
             ? L.T("shortcutHint", S.Shortcut) + "   ·   " + L.T("refreshHint")
             : L.T("refreshHint");
         _rbSync = true;
-        RbAlways.IsChecked = S.OverwriteMode == OverwriteMode.Always;
-        RbIfNewer.IsChecked = S.OverwriteMode == OverwriteMode.IfNewer;
-        RbNever.IsChecked = S.OverwriteMode == OverwriteMode.Never;
+        RbAlways.IsChecked = Job.Overwrite == OverwriteMode.Always;
+        RbIfNewer.IsChecked = Job.Overwrite == OverwriteMode.IfNewer;
+        RbNever.IsChecked = Job.Overwrite == OverwriteMode.Never;
         _rbSync = false;
     }
 
@@ -304,53 +404,12 @@ public partial class MainWindow : Window
             kind switch { StatusKind.Success => "SuccessBrush", StatusKind.Error => "ErrorBrush", _ => "SubTextBrush" });
     }
 
-    // ---------------- Perfis ----------------
-    private void SyncProfileCombo()
-    {
-        _profSync = true;
-        CmbProfile.Items.Clear();
-        CmbProfile.Items.Add(L.T("noneItem"));
-        foreach (var p in S.Profiles) CmbProfile.Items.Add(p.Name);
-        var idx = 0;
-        if (!string.IsNullOrEmpty(S.ActiveProfile))
-        {
-            var found = S.Profiles.FindIndex(p => p.Name == S.ActiveProfile);
-            if (found >= 0) idx = found + 1;
-        }
-        CmbProfile.SelectedIndex = idx;
-        _profSync = false;
-    }
-
-    private void CmbProfile_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-    {
-        if (_profSync) return;
-        if (CmbProfile.SelectedIndex <= 0)
-        {
-            S.Source = new SourceSpec();
-            S.Destinations = new();
-            S.ActiveProfile = "";
-            SettingsService.Save(S);
-            RefreshHome(); UpdateReadyState(); StartOrStopWatch();
-            SetStatus(L.T("fieldsCleared"), StatusKind.Sub);
-            return;
-        }
-        var name = CmbProfile.SelectedItem?.ToString() ?? "";
-        var prof = S.Profiles.FirstOrDefault(p => p.Name == name);
-        if (prof == null) return;
-        S.Source = prof.Source.Clone();
-        S.Destinations = prof.Destinations.ConvertAll(x => x.Clone());
-        S.ActiveProfile = name;
-        SettingsService.Save(S);
-        RefreshHome(); UpdateReadyState(); StartOrStopWatch();
-        SetStatus(L.T("profileLoaded", name), StatusKind.Sub);
-    }
-
     private void Overwrite_Changed(object sender, RoutedEventArgs e)
     {
         if (_rbSync) return;
-        S.OverwriteMode = RbIfNewer.IsChecked == true ? OverwriteMode.IfNewer
-                        : RbNever.IsChecked == true ? OverwriteMode.Never
-                        : OverwriteMode.Always;
+        Job.Overwrite = RbIfNewer.IsChecked == true ? OverwriteMode.IfNewer
+                      : RbNever.IsChecked == true ? OverwriteMode.Never
+                      : OverwriteMode.Always;
         SettingsService.Save(S);
     }
 
@@ -373,10 +432,10 @@ public partial class MainWindow : Window
         }
         // Atalho configuravel = Transferir
         if (string.IsNullOrEmpty(S.Shortcut) || S.Shortcut is "None" or "Nenhum") return;
-        if (e.Key.ToString() == S.Shortcut && BtnGo.IsEnabled) { e.Handled = true; _ = DoTransfer(); }
+        if (e.Key.ToString() == S.Shortcut && BtnGo.IsEnabled) { e.Handled = true; _ = DoTransferJobs(S.Jobs.ToList()); }
     }
 
-    private void BtnGo_Click(object sender, RoutedEventArgs e) => _ = DoTransfer();
+    private void BtnGo_Click(object sender, RoutedEventArgs e) => _ = DoTransferJobs(S.Jobs.ToList());
 
     // ---------------- Watch (envio automatico) ----------------
     private void Watch_Toggled(object sender, RoutedEventArgs e)
@@ -387,103 +446,133 @@ public partial class MainWindow : Window
         SetStatus(S.WatchEnabled ? L.T("watchStatus") : "", StatusKind.Sub);
     }
 
-    private void StartOrStopWatch()
+    private void StopAllWatchers()
     {
-        try { if (_watcher != null) { _watcher.EnableRaisingEvents = false; _watcher.Dispose(); _watcher = null; } } catch { }
-        if (!S.WatchEnabled) return;
-        var path = S.Source.Path;
-        if (string.IsNullOrEmpty(path)) return;
-        var dir = Path.GetDirectoryName(path);
-        var file = Path.GetFileName(path);
-        if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) return;
-        try
-        {
-            _watcher = new System.IO.FileSystemWatcher(dir, file)
-            {
-                NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
-                             | System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.CreationTime
-            };
-            _watcher.Changed += OnWatchEvent;
-            _watcher.Created += OnWatchEvent;
-            _watcher.Renamed += OnWatchEvent;
-            _watcher.EnableRaisingEvents = true;
-        }
-        catch { }
+        foreach (var w in _watchers) { try { w.EnableRaisingEvents = false; w.Dispose(); } catch { } }
+        _watchers.Clear();
+        foreach (var t in _watchTimers.Values) { try { t.Stop(); } catch { } }
+        _watchTimers.Clear();
     }
 
-    private void OnWatchEvent(object sender, System.IO.FileSystemEventArgs e)
+    private void StartOrStopWatch()
     {
-        // Debounce: builds costumam escrever o arquivo varias vezes seguidas
+        StopAllWatchers();
+        if (!S.WatchEnabled) return;
+        foreach (var job in S.Jobs.Where(JobReady))
+        {
+            var path = job.Source.Path;
+            var dir = Path.GetDirectoryName(path);
+            var file = Path.GetFileName(path);
+            if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) continue;
+            try
+            {
+                var w = new System.IO.FileSystemWatcher(dir, file)
+                {
+                    NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
+                                 | System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.CreationTime
+                };
+                var captured = job;
+                System.IO.FileSystemEventHandler h = (_, _) => OnWatchEvent(captured);
+                w.Changed += h;
+                w.Created += h;
+                w.Renamed += (_, _) => OnWatchEvent(captured);
+                w.EnableRaisingEvents = true;
+                _watchers.Add(w);
+            }
+            catch { }
+        }
+    }
+
+    private void OnWatchEvent(TransferJob job)
+    {
+        // Debounce por tarefa: builds costumam escrever o arquivo varias vezes seguidas
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            if (_watchDebounce == null)
+            if (!_watchTimers.TryGetValue(job, out var timer))
             {
-                _watchDebounce = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
-                _watchDebounce.Tick += (_, _) => { _watchDebounce!.Stop(); TriggerWatch(); };
+                timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+                var jb = job;
+                timer.Tick += (_, _) => { timer!.Stop(); TriggerWatch(jb); };
+                _watchTimers[job] = timer;
             }
-            _watchDebounce.Stop();
-            _watchDebounce.Start();
+            timer.Stop();
+            timer.Start();
         }));
     }
 
-    private void TriggerWatch()
+    private void TriggerWatch(TransferJob job)
     {
         if (!S.WatchEnabled || _transferring) return;
-        if (!File.Exists(S.Source.Path)) return;
-        if (!S.Destinations.Any(d => d.Enabled && DestReady(d))) return;
-        _ = DoTransfer();
+        if (!JobReady(job) || !File.Exists(job.Source.Path)) return;
+        _ = DoTransferJobs(new List<TransferJob> { job });
     }
 
-    private async Task DoTransfer()
+    // ---------------- Transferencia ----------------
+    private async Task DoTransferJobs(List<TransferJob> jobs)
     {
-        if (!BtnGo.IsEnabled) return;
-        if (!File.Exists(S.Source.Path))
+        if (_transferring) return;
+        jobs = jobs.Where(JobReady).ToList();
+        // Ignora tarefas cujo arquivo de origem sumiu; avisa se nenhuma sobrou.
+        var withFile = jobs.Where(j => File.Exists(j.Source.Path)).ToList();
+        if (withFile.Count == 0)
         {
-            SetStatus(L.T("srcNotFound"), StatusKind.Error);
-            MessageBox.Show(this, S.Source.Path, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+            if (jobs.Count > 0)
+            {
+                SetStatus(L.T("srcNotFound"), StatusKind.Error);
+                MessageBox.Show(this, jobs[0].Source.Path, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             return;
         }
-        var dests = S.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
-        if (dests.Count == 0) return;
-        var fileName = Path.GetFileName(S.Source.Path);
-        var mode = S.OverwriteMode;
+        jobs = withFile;
+
         _transferring = true;
         BtnGo.IsEnabled = BtnCfg.IsEnabled = BtnRefresh.IsEnabled = false;
         Prog.Value = 0;
         int sent = 0, skipped = 0, failed = 0;
         string? lastError = null;
+        var steps = jobs.Sum(j => j.Destinations.Count(d => d.Enabled && DestReady(d)));
+        int step = 0;
         try
         {
-            for (int i = 0; i < dests.Count; i++)
+            foreach (var j in jobs)
             {
-                var d = dests[i];
-                var label = dests.Count > 1 ? d.Summary : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
-                SetStatus(L.T("sendingTo", label, i + 1, dests.Count), StatusKind.Sub);
-                Prog.Value = 0;
-                try
+                var fileName = Path.GetFileName(j.Source.Path);
+                var mode = j.Overwrite;
+                var dests = j.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
+                foreach (var d in dests)
                 {
-                    if (mode != OverwriteMode.Always)
+                    step++;
+                    var label = (jobs.Count > 1 || dests.Count > 1)
+                        ? j.Name + " · " + d.Summary
+                        : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
+                    SetStatus(L.T("sendingTo", label, step, steps), StatusKind.Sub);
+                    Prog.Value = 0;
+                    try
                     {
-                        bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
-                        if (exists)
+                        if (mode != OverwriteMode.Always)
                         {
-                            if (mode == OverwriteMode.Never) { skipped++; continue; }
-                            if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, fileName))) { skipped++; continue; }
+                            bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
+                            if (exists)
+                            {
+                                if (mode == OverwriteMode.Never) { skipped++; continue; }
+                                if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, j.Source.Path, fileName))) { skipped++; continue; }
+                            }
                         }
+                        await Task.Run(() => TransferService.Send(d, j.Source.Path,
+                            pct => Dispatcher.Invoke(() => Prog.Value = pct)));
+                        Prog.Value = 100;
+                        sent++;
                     }
-                    await Task.Run(() => TransferService.Send(d, S.Source.Path,
-                        pct => Dispatcher.Invoke(() => Prog.Value = pct)));
-                    Prog.Value = 100;
-                    sent++;
+                    catch (Exception ex) { failed++; lastError = ex.Message; }
                 }
-                catch (Exception ex) { failed++; lastError = ex.Message; }
             }
 
             var kind = failed > 0 ? StatusKind.Error : (sent > 0 ? StatusKind.Success : StatusKind.Sub);
             SetStatus(L.T("transferDone", sent, skipped, failed), kind);
             if (failed == 0) Prog.Value = sent > 0 ? 100 : 0;
-            if (lastError != null) TxtStatus.ToolTip = lastError;
+            TxtStatus.ToolTip = lastError;
             RefreshHome(true);
+            LstJobs.Items.Refresh();
         }
         finally
         {
@@ -493,9 +582,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private bool IsSourceNewer(Destination d, string fileName)
+    private bool IsSourceNewer(Destination d, string sourcePath, string fileName)
     {
-        var srcT = File.GetLastWriteTime(S.Source.Path);
+        var srcT = File.GetLastWriteTime(sourcePath);
         if (d.Type == DestType.Local)
         {
             var dst = Path.Combine(d.Folder, fileName);
@@ -506,17 +595,19 @@ public partial class MainWindow : Window
         return rt == null || srcT > rt.Value;
     }
 
-    private void BtnCfg_Click(object sender, RoutedEventArgs e)
+    private void BtnCfg_Click(object sender, RoutedEventArgs e) => OpenSettings();
+
+    private void OpenSettings()
     {
         var dlg = new SettingsWindow { Owner = this };
         dlg.ShowDialog();
-        // Recarrega tudo (idioma/tema/perfis podem ter mudado)
+        // Recarrega tudo (idioma/tema/tarefas podem ter mudado)
         App.Settings = SettingsService.Load();
         L.Lang = S.Language == "en" ? "en" : "pt";
         ThemeManager.Apply(S.Theme);
         ApplyDwm();
         ApplyTexts();
-        SyncProfileCombo();
+        RefreshJobs();
         RefreshHome();
         UpdateReadyState();
         StartOrStopWatch();

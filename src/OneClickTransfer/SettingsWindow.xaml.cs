@@ -24,9 +24,10 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         ApplyTexts();
-        TxtSrc.Text = S.Source.Path;
+        Title = L.T("settingsTitle") + " — " + L.T("editingTask", S.CurrentJob.Name);
+        TxtSrc.Text = S.CurrentJob.Source.Path;
         LstDests.ItemsSource = _dests;
-        LoadDests(S.Destinations);
+        LoadDests(S.CurrentJob.Destinations);
         ReloadGroups();
         ReloadProfiles();
         Loaded += (_, _) =>
@@ -247,12 +248,12 @@ public partial class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        S.Source = ReadSource();
-        S.Destinations = _dests.Select(d => d.Clone()).ToList();
+        // Grava na tarefa selecionada (origem + destinos)
+        S.CurrentJob.Source = ReadSource();
+        S.CurrentJob.Destinations = _dests.Select(d => d.Clone()).ToList();
         S.Shortcut = CmbKey.SelectedIndex == 0 ? "None" : (CmbKey.SelectedItem?.ToString() ?? "F4");
         S.Theme = CmbTheme.SelectedIndex == 1 ? "light" : "dark";
         S.Language = CmbLang.SelectedIndex == 1 ? "en" : "pt";
-        S.ActiveProfile = "";
         SettingsService.Save(S);
         DialogResult = true;
         Close();

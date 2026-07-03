@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace OneClickTransfer.Models;
@@ -62,6 +63,53 @@ public class Profile
     };
 }
 
+/// <summary>Uma tarefa: origem + destinos + modo de substituição próprios.
+/// Várias tarefas coexistem; TRANSFERIR envia todas as marcadas (Enabled).</summary>
+public class TransferJob
+{
+    public string Name { get; set; } = "";
+    public bool Enabled { get; set; } = true;
+    public SourceSpec Source { get; set; } = new();
+    public List<Destination> Destinations { get; set; } = new();
+    public OverwriteMode Overwrite { get; set; } = OverwriteMode.Always;
+
+    /// <summary>Nome do arquivo de origem (sem pasta), p/ exibição.</summary>
+    [JsonIgnore]
+    public string SourceFile
+    {
+        get
+        {
+            var p = Source?.Path ?? "";
+            if (string.IsNullOrEmpty(p)) return "";
+            var i = p.LastIndexOfAny(new[] { '/', '\\' });
+            return i >= 0 ? p.Substring(i + 1) : p;
+        }
+    }
+
+    /// <summary>Resumo "arquivo → destino(s)" exibido na lista de tarefas.</summary>
+    [JsonIgnore]
+    public string Summary
+    {
+        get
+        {
+            var src = string.IsNullOrEmpty(SourceFile) ? "—" : SourceFile;
+            var enabled = Destinations?.Where(d => d.Enabled).ToList() ?? new List<Destination>();
+            string dst;
+            if (enabled.Count == 0) dst = "—";
+            else if (enabled.Count == 1) dst = enabled[0].Summary;
+            else dst = enabled.Count + " destinos";
+            return src + "  →  " + dst;
+        }
+    }
+
+    public TransferJob Clone() => new()
+    {
+        Name = Name, Enabled = Enabled, Overwrite = Overwrite,
+        Source = Source.Clone(),
+        Destinations = Destinations.ConvertAll(d => d.Clone())
+    };
+}
+
 /// <summary>Conjunto nomeado de destinos (reutilizável).</summary>
 public class DestGroup
 {
@@ -78,11 +126,28 @@ public class AppSettings
     public string Shortcut { get; set; } = "F4";   // atalho do TRANSFERIR (F5 e fixo p/ Atualizar)
     public double SplitRatio { get; set; } = 0.5;   // largura do card ORIGEM (0..1)
     public bool WatchEnabled { get; set; } = false; // envio automatico ao mudar o arquivo
-    public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;
+    public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;  // legado (migrado p/ Jobs)
 
-    // Configuracao "atual" (de trabalho) — espelha o v1
+    // Tarefas: cada uma tem origem + destinos + modo próprios (v2.1)
+    public List<TransferJob> Jobs { get; set; } = new();
+    public int SelectedJob { get; set; } = 0;
+
+    // Configuracao "atual" legada (v1/v2.0) — migrada para Jobs[0] no Normalize
     public SourceSpec Source { get; set; } = new();
     public List<Destination> Destinations { get; set; } = new();
+
+    /// <summary>Tarefa atualmente selecionada na Home. Nunca nula (garante ao menos 1).</summary>
+    [JsonIgnore]
+    public TransferJob CurrentJob
+    {
+        get
+        {
+            if (Jobs.Count == 0) Jobs.Add(new TransferJob());
+            if (SelectedJob < 0) SelectedJob = 0;
+            if (SelectedJob >= Jobs.Count) SelectedJob = Jobs.Count - 1;
+            return Jobs[SelectedJob];
+        }
+    }
 
     // Perfis salvos (origem + destinos)
     public List<Profile> Profiles { get; set; } = new();
