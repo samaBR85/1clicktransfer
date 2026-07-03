@@ -1,0 +1,12 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OneClickTransfer.Avalonia.Views.MainWindow"
+        Title="1-Click Transfer"
+        Width="900" Height="810" MinWidth="740" MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        Background="#18181B">
+
+  <TextBlock Text="1-Click Transfer" FontSize="20" FontWeight="SemiBold"
+             Foreground="#F4F4F5" Margin="20" VerticalAlignment="Top"/>
+
+</Window>
