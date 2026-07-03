@@ -1,7 +1,7 @@
 <Window x:Class="OneClickTransfer.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Settings" Height="690" Width="580"
+        Title="Settings" Height="780" Width="580"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource BgBrush}" FontFamily="Segoe UI" FontSize="13">
     <DockPanel Margin="18">
@@ -11,12 +11,19 @@
         </StackPanel>
 
         <StackPanel>
-            <!-- 1) Arquivo -->
+            <!-- 1) Arquivo(s) de origem -->
             <TextBlock x:Name="LblSec1" FontWeight="SemiBold" Margin="0,0,0,6"/>
-            <DockPanel>
-                <Button x:Name="BtnBrowseSrc" DockPanel.Dock="Right" Width="110" Height="30" Margin="8,0,0,0" Click="BrowseSrc_Click"/>
-                <TextBox x:Name="TxtSrc" Height="30"/>
-            </DockPanel>
+            <ListBox x:Name="LstSrc" Height="92" SelectionMode="Extended">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button x:Name="BtnAddSrc" Width="130" Height="30" Click="AddSrc_Click"/>
+                <Button x:Name="BtnRemoveSrc" Width="110" Height="30" Margin="8,0,0,0" Click="RemoveSrc_Click"/>
+            </StackPanel>
 
             <!-- 2) Destinos -->
             <TextBlock x:Name="LblSec2" FontWeight="SemiBold" Margin="0,18,0,6"/>

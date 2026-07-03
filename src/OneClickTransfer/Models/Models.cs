@@ -37,15 +37,28 @@ public class Destination
     };
 }
 
-/// <summary>O que sera transferido. Marco 1 usa Kind=File.</summary>
+/// <summary>O que sera transferido: um ou mais arquivos de origem.</summary>
 public class SourceSpec
 {
-    public string Path { get; set; } = "";
+    public string Path { get; set; } = "";      // legado (1 arquivo) — migrado p/ Files
     public SourceKind Kind { get; set; } = SourceKind.File;
     public string Pattern { get; set; } = "*";
     public bool Recursive { get; set; } = true;
+    public List<string> Files { get; set; } = new();  // vários arquivos de origem
 
-    public SourceSpec Clone() => new() { Path = Path, Kind = Kind, Pattern = Pattern, Recursive = Recursive };
+    /// <summary>Lista efetiva de arquivos (Files, ou o Path legado se Files vazio).</summary>
+    [JsonIgnore]
+    public List<string> All => Files.Count > 0 ? Files
+        : (string.IsNullOrEmpty(Path) ? new List<string>() : new List<string> { Path });
+
+    [JsonIgnore] public int Count => All.Count;
+    [JsonIgnore] public string First => All.Count > 0 ? All[0] : "";
+
+    public SourceSpec Clone() => new()
+    {
+        Path = Path, Kind = Kind, Pattern = Pattern, Recursive = Recursive,
+        Files = new List<string>(Files)
+    };
 }
 
 /// <summary>Perfil salvo: origem + lista de destinos, com nome.</summary>
@@ -73,16 +86,18 @@ public class TransferJob
     public List<Destination> Destinations { get; set; } = new();
     public OverwriteMode Overwrite { get; set; } = OverwriteMode.Always;
 
-    /// <summary>Nome do arquivo de origem (sem pasta), p/ exibição.</summary>
+    /// <summary>Rótulo da origem: nome do arquivo, ou "arquivo +N" se vários.</summary>
     [JsonIgnore]
     public string SourceFile
     {
         get
         {
-            var p = Source?.Path ?? "";
-            if (string.IsNullOrEmpty(p)) return "";
+            var all = Source?.All ?? new List<string>();
+            if (all.Count == 0) return "";
+            var p = all[0];
             var i = p.LastIndexOfAny(new[] { '/', '\\' });
-            return i >= 0 ? p.Substring(i + 1) : p;
+            var name = i >= 0 ? p.Substring(i + 1) : p;
+            return all.Count > 1 ? name + " +" + (all.Count - 1) : name;
         }
     }
 

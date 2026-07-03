@@ -78,6 +78,10 @@ public static class SettingsService
         {
             var j = s.Jobs[i];
             j.Source ??= new SourceSpec();
+            j.Source.Files ??= new();
+            // Migração: origem antiga de 1 arquivo (Path) vira a lista Files.
+            if (j.Source.Files.Count == 0 && !string.IsNullOrEmpty(j.Source.Path))
+                j.Source.Files.Add(j.Source.Path);
             j.Destinations ??= new();
             if (string.IsNullOrWhiteSpace(j.Name)) j.Name = DefaultJobName(i);
         }

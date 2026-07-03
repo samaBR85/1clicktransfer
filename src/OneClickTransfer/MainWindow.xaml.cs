@@ -68,7 +68,7 @@ public partial class MainWindow : Window
             UpdateReadyState();
             StartOrStopWatch();
             if (S.WatchEnabled) SetStatus(L.T("watchStatus"), StatusKind.Sub);
-            else if (string.IsNullOrEmpty(Job.Source.Path))
+            else if (Job.Source.Count == 0)
                 SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
         };
         KeyDown += MainWindow_KeyDown;
@@ -244,9 +244,23 @@ public partial class MainWindow : Window
 
     private void RefreshHome(bool fetchFtp = false)
     {
-        // Origem da tarefa selecionada: comeca na pasta do arquivo escolhido
-        _srcDir = !string.IsNullOrEmpty(Job.Source.Path) ? (Path.GetDirectoryName(Job.Source.Path) ?? "") : "";
-        RefillSource();
+        // Origem da tarefa selecionada
+        var files = Job.Source.All;
+        if (files.Count >= 2)
+        {
+            // Vários arquivos: mostra resumo (não-navegável). Editar em Configurar.
+            _srcDir = "";
+            _src.Clear();
+            TxtSrcPath.Text = L.T("srcCount", files.Count);
+            foreach (var f in files)
+                _src.Add(new FileRow { Name = "\U0001F4C4  " + Path.GetFileName(f) });
+        }
+        else
+        {
+            // 0 ou 1 arquivo: navegação por pastas como antes
+            _srcDir = files.Count == 1 ? (Path.GetDirectoryName(files[0]) ?? "") : "";
+            RefillSource();
+        }
 
         // Destino(s) da tarefa selecionada
         var dests = Job.Destinations;
@@ -284,9 +298,10 @@ public partial class MainWindow : Window
         _src.Clear();
         if (string.IsNullOrEmpty(_srcDir) || !Directory.Exists(_srcDir)) { TxtSrcPath.Text = L.T("noFile"); return; }
         TxtSrcPath.Text = L.T("folderPrefix") + _srcDir;
-        var leaf = (!string.IsNullOrEmpty(Job.Source.Path) &&
-                    string.Equals(Path.GetDirectoryName(Job.Source.Path), _srcDir, StringComparison.OrdinalIgnoreCase))
-                    ? Path.GetFileName(Job.Source.Path) : null;
+        var first = Job.Source.First;
+        var leaf = (!string.IsNullOrEmpty(first) &&
+                    string.Equals(Path.GetDirectoryName(first), _srcDir, StringComparison.OrdinalIgnoreCase))
+                    ? Path.GetFileName(first) : null;
         if (Directory.GetParent(_srcDir) != null) _src.Add(UpRow());
         foreach (var it in TransferService.LocalList(_srcDir))
             _src.Add(ToRow(it, leaf != null && it.Name.Equals(leaf, StringComparison.OrdinalIgnoreCase)));
@@ -326,19 +341,23 @@ public partial class MainWindow : Window
     // ---------------- Navegacao nas listas ----------------
     private void GridSrc_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
+        // Várias origens: a lista é editada no Configurar.
+        if (Job.Source.Count >= 2) { OpenSettings(); return; }
         if (GridSrc.SelectedItem is not FileRow it || string.IsNullOrEmpty(_srcDir)) return;
         if (it.IsUp) { _srcDir = Directory.GetParent(_srcDir)?.FullName ?? _srcDir; RefillSource(); }
         else if (it.IsDir) { _srcDir = Path.Combine(_srcDir, it.RealName); RefillSource(); }
         else if (!string.IsNullOrEmpty(it.RealName))
         {
-            // duplo-clique em arquivo = escolhe como origem da tarefa selecionada
-            Job.Source.Path = Path.Combine(_srcDir, it.RealName);
+            // duplo-clique em arquivo = define como (única) origem da tarefa selecionada
+            var full = Path.Combine(_srcDir, it.RealName);
+            Job.Source.Files = new List<string> { full };
+            Job.Source.Path = full;
             SettingsService.Save(S);
             RefillSource();
             LstJobs.Items.Refresh();
             UpdateReadyState();
             StartOrStopWatch();
-            SetStatus(Path.GetFileName(Job.Source.Path), StatusKind.Sub);
+            SetStatus(it.RealName, StatusKind.Sub);
         }
     }
 
@@ -378,7 +397,7 @@ public partial class MainWindow : Window
         => d != null && (d.Type == DestType.Local ? !string.IsNullOrEmpty(d.Folder) : !string.IsNullOrEmpty(d.Host));
 
     private bool JobHasReadyDest(TransferJob j) => j.Destinations.Any(d => d.Enabled && DestReady(d));
-    private bool JobReady(TransferJob j) => j.Enabled && !string.IsNullOrEmpty(j.Source.Path) && JobHasReadyDest(j);
+    private bool JobReady(TransferJob j) => j.Enabled && j.Source.Count > 0 && JobHasReadyDest(j);
 
     private void UpdateReadyState()
     {
@@ -460,26 +479,28 @@ public partial class MainWindow : Window
         if (!S.WatchEnabled) return;
         foreach (var job in S.Jobs.Where(JobReady))
         {
-            var path = job.Source.Path;
-            var dir = Path.GetDirectoryName(path);
-            var file = Path.GetFileName(path);
-            if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) continue;
-            try
+            foreach (var path in job.Source.All)
             {
-                var w = new System.IO.FileSystemWatcher(dir, file)
+                var dir = Path.GetDirectoryName(path);
+                var file = Path.GetFileName(path);
+                if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) continue;
+                try
                 {
-                    NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
-                                 | System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.CreationTime
-                };
-                var captured = job;
-                System.IO.FileSystemEventHandler h = (_, _) => OnWatchEvent(captured);
-                w.Changed += h;
-                w.Created += h;
-                w.Renamed += (_, _) => OnWatchEvent(captured);
-                w.EnableRaisingEvents = true;
-                _watchers.Add(w);
+                    var w = new System.IO.FileSystemWatcher(dir, file)
+                    {
+                        NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.Size
+                                     | System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.CreationTime
+                    };
+                    var captured = job;
+                    System.IO.FileSystemEventHandler h = (_, _) => OnWatchEvent(captured);
+                    w.Changed += h;
+                    w.Created += h;
+                    w.Renamed += (_, _) => OnWatchEvent(captured);
+                    w.EnableRaisingEvents = true;
+                    _watchers.Add(w);
+                }
+                catch { }
             }
-            catch { }
         }
     }
 
@@ -503,7 +524,7 @@ public partial class MainWindow : Window
     private void TriggerWatch(TransferJob job)
     {
         if (!S.WatchEnabled || _transferring) return;
-        if (!JobReady(job) || !File.Exists(job.Source.Path)) return;
+        if (!JobReady(job) || !job.Source.All.Any(File.Exists)) return;
         _ = DoTransferJobs(new List<TransferJob> { job });
     }
 
@@ -512,14 +533,14 @@ public partial class MainWindow : Window
     {
         if (_transferring) return;
         jobs = jobs.Where(JobReady).ToList();
-        // Ignora tarefas cujo arquivo de origem sumiu; avisa se nenhuma sobrou.
-        var withFile = jobs.Where(j => File.Exists(j.Source.Path)).ToList();
+        // Ignora tarefas cujos arquivos de origem sumiram; avisa se nenhuma sobrou.
+        var withFile = jobs.Where(j => j.Source.All.Any(File.Exists)).ToList();
         if (withFile.Count == 0)
         {
             if (jobs.Count > 0)
             {
                 SetStatus(L.T("srcNotFound"), StatusKind.Error);
-                MessageBox.Show(this, jobs[0].Source.Path, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(this, jobs[0].Source.First, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
             return;
         }
@@ -530,40 +551,44 @@ public partial class MainWindow : Window
         Prog.Value = 0;
         int sent = 0, skipped = 0, failed = 0;
         string? lastError = null;
-        var steps = jobs.Sum(j => j.Destinations.Count(d => d.Enabled && DestReady(d)));
+        var steps = jobs.Sum(j => j.Source.All.Count(File.Exists) * j.Destinations.Count(d => d.Enabled && DestReady(d)));
         int step = 0;
         try
         {
             foreach (var j in jobs)
             {
-                var fileName = Path.GetFileName(j.Source.Path);
                 var mode = j.Overwrite;
                 var dests = j.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
-                foreach (var d in dests)
+                var files = j.Source.All.Where(File.Exists).ToList();
+                foreach (var src in files)
                 {
-                    step++;
-                    var label = (jobs.Count > 1 || dests.Count > 1)
-                        ? j.Name + " · " + d.Summary
-                        : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
-                    SetStatus(L.T("sendingTo", label, step, steps), StatusKind.Sub);
-                    Prog.Value = 0;
-                    try
+                    var fileName = Path.GetFileName(src);
+                    foreach (var d in dests)
                     {
-                        if (mode != OverwriteMode.Always)
+                        step++;
+                        var label = steps > 1
+                            ? j.Name + " · " + fileName + " → " + d.Summary
+                            : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
+                        SetStatus(L.T("sendingTo", label, step, steps), StatusKind.Sub);
+                        Prog.Value = 0;
+                        try
                         {
-                            bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
-                            if (exists)
+                            if (mode != OverwriteMode.Always)
                             {
-                                if (mode == OverwriteMode.Never) { skipped++; continue; }
-                                if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, j.Source.Path, fileName))) { skipped++; continue; }
+                                bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
+                                if (exists)
+                                {
+                                    if (mode == OverwriteMode.Never) { skipped++; continue; }
+                                    if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, src, fileName))) { skipped++; continue; }
+                                }
                             }
+                            await Task.Run(() => TransferService.Send(d, src,
+                                pct => Dispatcher.Invoke(() => Prog.Value = pct)));
+                            Prog.Value = 100;
+                            sent++;
                         }
-                        await Task.Run(() => TransferService.Send(d, j.Source.Path,
-                            pct => Dispatcher.Invoke(() => Prog.Value = pct)));
-                        Prog.Value = 100;
-                        sent++;
+                        catch (Exception ex) { failed++; lastError = ex.Message; }
                     }
-                    catch (Exception ex) { failed++; lastError = ex.Message; }
                 }
             }
 

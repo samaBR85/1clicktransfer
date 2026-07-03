@@ -16,6 +16,7 @@ public partial class SettingsWindow : Window
     private bool _profSync;
     private bool _grpSync;
     private readonly ObservableCollection<Destination> _dests = new();
+    private readonly ObservableCollection<string> _srcFiles = new();
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int val, int size);
@@ -25,7 +26,8 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         ApplyTexts();
         Title = L.T("settingsTitle") + " — " + L.T("editingTask", S.CurrentJob.Name);
-        TxtSrc.Text = S.CurrentJob.Source.Path;
+        LstSrc.ItemsSource = _srcFiles;
+        LoadSrc(S.CurrentJob.Source.All);
         LstDests.ItemsSource = _dests;
         LoadDests(S.CurrentJob.Destinations);
         ReloadGroups();
@@ -40,7 +42,8 @@ public partial class SettingsWindow : Window
     {
         Title = L.T("settingsTitle");
         LblSec1.Text = L.T("sec1File");
-        BtnBrowseSrc.Content = L.T("browse");
+        BtnAddSrc.Content = L.T("addFile");
+        BtnRemoveSrc.Content = L.T("removeFile");
         LblSec2.Text = L.T("sec2Where");
         BtnAddDest.Content = L.T("addDest");
         BtnEditDest.Content = L.T("editDest");
@@ -175,12 +178,33 @@ public partial class SettingsWindow : Window
         ReloadGroups();
     }
 
-    private SourceSpec ReadSource() => new() { Path = TxtSrc.Text.Trim(), Kind = SourceKind.File };
-
-    private void BrowseSrc_Click(object sender, RoutedEventArgs e)
+    // ---------------- Origem (1+ arquivos) ----------------
+    private void LoadSrc(System.Collections.Generic.IEnumerable<string> files)
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog();
-        if (dlg.ShowDialog() == true) TxtSrc.Text = dlg.FileName;
+        _srcFiles.Clear();
+        foreach (var f in files) if (!string.IsNullOrWhiteSpace(f)) _srcFiles.Add(f);
+    }
+
+    private SourceSpec ReadSource() => new()
+    {
+        Files = _srcFiles.ToList(),
+        Path = _srcFiles.Count > 0 ? _srcFiles[0] : "",
+        Kind = SourceKind.File
+    };
+
+    private void AddSrc_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Multiselect = true };
+        if (dlg.ShowDialog() != true) return;
+        foreach (var f in dlg.FileNames)
+            if (!_srcFiles.Any(x => string.Equals(x, f, StringComparison.OrdinalIgnoreCase)))
+                _srcFiles.Add(f);
+    }
+
+    private void RemoveSrc_Click(object sender, RoutedEventArgs e)
+    {
+        var sel = LstSrc.SelectedItems.Cast<string>().ToList();
+        foreach (var f in sel) _srcFiles.Remove(f);
     }
 
     // ---------------- Perfis ----------------
@@ -201,7 +225,7 @@ public partial class SettingsWindow : Window
         var prof = S.Profiles.FirstOrDefault(p => p.Name == name);
         if (prof != null)
         {
-            TxtSrc.Text = prof.Source.Path;
+            LoadSrc(prof.Source.All);
             LoadDests(prof.Destinations);
         }
     }
@@ -242,7 +266,7 @@ public partial class SettingsWindow : Window
 
     private void Reset_Click(object sender, RoutedEventArgs e)
     {
-        TxtSrc.Text = "";
+        _srcFiles.Clear();
         _dests.Clear();
     }
 
