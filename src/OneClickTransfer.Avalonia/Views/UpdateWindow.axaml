@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:OneClickTransfer.Avalonia.ViewModels"
+        x:Class="OneClickTransfer.Avalonia.Views.UpdateWindow"
+        x:DataType="vm:UpdateViewModel"
+        Title="{Binding WindowTitle}"
+        Width="500" Height="430"
+        WindowStartupLocation="CenterOwner" CanResize="False" ShowInTaskbar="False"
+        Background="{DynamicResource BgBrush}">
+
+  <DockPanel Margin="16">
+    <Grid DockPanel.Dock="Bottom" Margin="0,14,0,0" ColumnDefinitions="*,Auto">
+      <StackPanel Grid.Column="0" VerticalAlignment="Center">
+        <ProgressBar Height="6" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
+                     IsVisible="{Binding ProgressVisible}"
+                     Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+        <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource SubTextBrush}" Margin="0,6,0,0"
+                   TextTrimming="CharacterEllipsis"/>
+      </StackPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" VerticalAlignment="Center">
+        <Button Classes="primary" Width="150" Height="34" Content="{Binding PrimaryLabel}" Command="{Binding UpdateNowCommand}"/>
+        <Button Width="96" Height="34" Content="{Binding LaterLabel}" Command="{Binding LaterCommand}"/>
+      </StackPanel>
+    </Grid>
+
+    <StackPanel>
+      <TextBlock Text="{Binding Head}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+      <TextBlock Text="{Binding CurrentText}" Foreground="{DynamicResource SubTextBrush}" Margin="0,4,0,10"/>
+      <TextBlock Text="{Binding WhatsNewLabel}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+      <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="8" Padding="4">
+        <TextBox Text="{Binding Notes}" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                 BorderThickness="0" Background="Transparent" Height="220"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+      </Border>
+    </StackPanel>
+  </DockPanel>
+</Window>

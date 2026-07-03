@@ -148,6 +148,7 @@ public static class L
         ["updateCheckFailed"] = ("Não foi possível verificar atualizações.", "Couldn't check for updates."),
         ["whatsNew"] = ("Novidades:", "What's new:"),
         ["updateNow"] = ("Atualizar agora", "Update now"),
+        ["openReleasePage"] = ("Abrir página do release", "Open release page"),
         ["updateLater"] = ("Depois", "Later"),
         ["updateDownloading"] = ("Baixando a nova versão...", "Downloading the new version..."),
         ["updateFailed"] = ("Falha ao atualizar: {0}", "Update failed: {0}"),

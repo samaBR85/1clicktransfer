@@ -56,6 +56,11 @@ public sealed class AvaloniaDialogService : IDialogService
         return await new SettingsWindow(vm).ShowDialog<bool>(o);
     }
 
-    // Implementado na E10 (UpdateWindow).
-    public Task ShowUpdateAsync(UpdateInfo info) => throw new NotImplementedException("E10");
+    public async Task ShowUpdateAsync(UpdateInfo info)
+    {
+        var o = _owner();
+        if (o is null) return;
+        var vm = new UpdateViewModel(info, AppServices.App);
+        await new UpdateWindow(vm).ShowDialog(o);
+    }
 }
