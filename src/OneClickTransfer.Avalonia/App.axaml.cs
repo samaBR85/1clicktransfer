@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using OneClickTransfer.Avalonia.Services;
+using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Avalonia.Views;
 using OneClickTransfer.Models;
 
@@ -18,6 +20,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            RequestedThemeVariant = Settings.Theme == "light" ? ThemeVariant.Light : ThemeVariant.Dark;
+
             var window = new MainWindow();
 
             // Composition root manual (sem container DI).
@@ -25,6 +29,16 @@ public partial class App : Application
             AppServices.App = new AppControl();
             AppServices.Files = new AvaloniaFilePickerService(() => window);
             AppServices.Dialogs = new AvaloniaDialogService(() => desktop.MainWindow);
+
+            var vm = new MainViewModel(Settings, AppServices.Dialogs, AppServices.Dispatcher);
+            // Ao salvar Configurar (E9): troca App.Settings, tema e a barra de título.
+            vm.SettingsReloaded += s =>
+            {
+                Settings = s;
+                RequestedThemeVariant = s.Theme == "light" ? ThemeVariant.Light : ThemeVariant.Dark;
+                WindowsDarkTitleBar.Apply(window, s.Theme != "light");
+            };
+            window.DataContext = vm;
 
             desktop.MainWindow = window;
         }

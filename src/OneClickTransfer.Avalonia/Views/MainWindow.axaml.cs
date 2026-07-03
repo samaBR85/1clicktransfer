@@ -1,22 +1,162 @@
+using System;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Styling;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using OneClickTransfer.Avalonia.Services;
+using OneClickTransfer.Avalonia.ViewModels;
+using OneClickTransfer.Models;
+using OneClickTransfer.Services;
 
 namespace OneClickTransfer.Avalonia.Views;
 
 public partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    // Avalonia não tem RestoreBounds: rastreamos o último retângulo Normal manualmente.
+    private double _normalX, _normalY, _normalW, _normalH;
 
-    // DEMO E5 (temporario): prova a troca de ThemeVariant em runtime.
-    private void ToggleTheme_Click(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+    private static AppSettings S => App.Settings;
+    private MainViewModel? Vm => DataContext as MainViewModel;
+
+    // ColumnDefinition/RowDefinition não geram campos x:Name em Avalonia → acesso por índice.
+    private ColumnDefinition ColSrc => CardsGrid.ColumnDefinitions[0];
+    private ColumnDefinition ColDst => CardsGrid.ColumnDefinitions[2];
+    private RowDefinition RowTasks => RootGrid.RowDefinitions[1];
+
+    public MainWindow()
     {
-        if (Application.Current is { } app)
-            app.RequestedThemeVariant =
-                app.ActualThemeVariant == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
+        InitializeComponent();
+        TryRestoreBounds();
+        ApplyLayout();
+
+        // F4 (atalho configurável) / F5 (refresh) — tunnel p/ ganhar das listas.
+        AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
+
+        LayoutUpdated += (_, _) =>
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                _normalX = Position.X; _normalY = Position.Y;
+                _normalW = Width; _normalH = Height;
+            }
+        };
+
+        Opened += (_, _) =>
+        {
+            WindowsDarkTitleBar.Apply(this, S.Theme != "light");
+            EnsureOnScreen();
+            Vm?.OnOpened();
+        };
+        Closing += (_, _) => SaveBounds();
+        Closed += (_, _) => Vm?.OnClosed();
     }
 
-    // DEMO E7 (temporario): smoke do PromptDialog escuro.
-    private async void Dialog_Click(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
-        => await Services.AppServices.Dialogs.PromptAsync("Renomear", "Nome da tarefa:", "Tarefa 1");
+    // Aplica a razão do divisor (0.15–0.85) e a altura do painel TAREFAS (140–600) salvas.
+    private void ApplyLayout()
+    {
+        var r = S.SplitRatio;
+        if (r < 0.15) r = 0.15; else if (r > 0.85) r = 0.85;
+        ColSrc.Width = new GridLength(r, GridUnitType.Star);
+        ColDst.Width = new GridLength(1 - r, GridUnitType.Star);
+
+        var h = S.TasksHeight;
+        if (double.IsNaN(h) || h < 140) h = 150;
+        if (h > 600) h = 600;
+        RowTasks.Height = new GridLength(h, GridUnitType.Pixel);
+    }
+
+    // ---------------- Geometria ----------------
+    private void TryRestoreBounds()
+    {
+        if (S.WindowWidth >= 400 && S.WindowHeight >= 400)
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Width = S.WindowWidth; Height = S.WindowHeight;
+            Position = new PixelPoint((int)S.WindowLeft, (int)S.WindowTop);
+        }
+        if (S.WindowMaximized) WindowState = WindowState.Maximized;
+    }
+
+    private void SaveBounds()
+    {
+        try
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                S.WindowLeft = Position.X; S.WindowTop = Position.Y;
+                S.WindowWidth = Width; S.WindowHeight = Height;
+                S.WindowMaximized = false;
+            }
+            else
+            {
+                if (_normalW > 0 && _normalH > 0)
+                {
+                    S.WindowLeft = _normalX; S.WindowTop = _normalY;
+                    S.WindowWidth = _normalW; S.WindowHeight = _normalH;
+                }
+                S.WindowMaximized = WindowState == WindowState.Maximized;
+            }
+            SettingsService.Save(S);
+        }
+        catch { }
+    }
+
+    // Reposiciona no centro da tela primária se a janela restaurada ficou fora de qualquer monitor.
+    private void EnsureOnScreen()
+    {
+        if (WindowState != WindowState.Normal) return;
+        var screens = Screens;
+        if (screens?.All == null || screens.All.Count == 0) return;
+        var p = Position;
+        bool visible = screens.All.Any(s =>
+        {
+            var b = s.Bounds;
+            return p.X < b.X + b.Width - 60 && p.X + 100 > b.X
+                && p.Y < b.Y + b.Height - 40 && p.Y + 40 > b.Y;
+        });
+        if (visible) return;
+        var wa = (screens.Primary ?? screens.All[0]).WorkingArea;
+        var scale = RenderScaling <= 0 ? 1 : RenderScaling;
+        int w = (int)(Width * scale), h = (int)(Height * scale);
+        Position = new PixelPoint(wa.X + Math.Max(0, (wa.Width - w) / 2), wa.Y + Math.Max(0, (wa.Height - h) / 2));
+    }
+
+    // ---------------- Splitters (persistência de layout) ----------------
+    private void Splitter_DragCompleted(object? sender, VectorEventArgs e)
+    {
+        var total = ColSrc.ActualWidth + ColDst.ActualWidth;
+        if (total > 0)
+        {
+            var r = ColSrc.ActualWidth / total;
+            if (r < 0.15) r = 0.15; else if (r > 0.85) r = 0.85;
+            S.SplitRatio = r;
+            SettingsService.Save(S);
+        }
+    }
+
+    private void TasksSplitter_DragCompleted(object? sender, VectorEventArgs e)
+    {
+        if (RowTasks.ActualHeight >= 52)
+        {
+            S.TasksHeight = RowTasks.ActualHeight;
+            SettingsService.Save(S);
+        }
+    }
+
+    // ---------------- Navegação (duplo-clique) ----------------
+    private void GridSrc_DoubleTapped(object? sender, TappedEventArgs e)
+        => Vm?.Source.NavigateCommand.Execute(GridSrc.SelectedItem as FileRow);
+
+    private void GridDst_DoubleTapped(object? sender, TappedEventArgs e)
+        => Vm?.Dest.NavigateCommand.Execute(GridDst.SelectedItem as FileRow);
+
+    private void Jobs_DoubleTapped(object? sender, TappedEventArgs e)
+        => Vm?.JobActivateCommand.Execute(null);
+
+    // ---------------- Teclado (F4/F5) ----------------
+    private void OnTunnelKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (Vm != null && Vm.HandleKey(e.Key.ToString())) e.Handled = true;
+    }
 }

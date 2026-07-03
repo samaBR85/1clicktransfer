@@ -1,30 +1,205 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:OneClickTransfer.Avalonia.ViewModels"
         x:Class="OneClickTransfer.Avalonia.Views.MainWindow"
-        Title="1-Click Transfer"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding Title}"
         Width="900" Height="810" MinWidth="740" MinHeight="700"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
 
-  <!-- DEMO E5 (temporario: sera substituido pela Home na E8) -->
-  <StackPanel Margin="24" Spacing="14">
-    <TextBlock Text="1-Click Transfer" FontSize="20" FontWeight="SemiBold"
-               Foreground="{DynamicResource TextBrush}"/>
-    <TextBlock Text="Demonstração de estilos (E5) — troca de tema em tempo real"
-               Foreground="{DynamicResource SubTextBrush}"/>
-    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
-            BorderThickness="1" CornerRadius="10" Padding="16">
-      <StackPanel Spacing="12">
-        <TextBox Watermark="Um TextBox" Width="320" HorizontalAlignment="Left"/>
-        <StackPanel Orientation="Horizontal" Spacing="10">
-          <Button Content="Botão flat"/>
-          <ToggleButton Classes="toggle-flat" Content="👁 Observar" Padding="14,6"/>
-          <Button Content="Trocar tema" Click="ToggleTheme_Click"/>
-          <Button Content="Dialog" Click="Dialog_Click"/>
-        </StackPanel>
-        <Button Classes="primary" Content="TRANSFERIR" Height="56" FontSize="18"/>
-      </StackPanel>
-    </Border>
-  </StackPanel>
+  <Window.Resources>
+    <!-- Ícones funcionais como StreamGeometry (Segoe MDL2/emoji não existem no Linux). -->
+    <StreamGeometry x:Key="IcoRefresh">M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z</StreamGeometry>
+    <StreamGeometry x:Key="IcoEye">M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z</StreamGeometry>
+  </Window.Resources>
 
+  <Grid x:Name="RootGrid" Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>                                   <!-- 0 top bar -->
+      <RowDefinition Height="150" MinHeight="140"/>                    <!-- 1 TAREFAS -->
+      <RowDefinition Height="Auto"/>                                   <!-- 2 splitter -->
+      <RowDefinition Height="*"/>                                      <!-- 3 cards -->
+      <RowDefinition Height="Auto"/>                                   <!-- 4 acao -->
+      <RowDefinition Height="Auto"/>                                   <!-- 5 TRANSFERIR -->
+      <RowDefinition Height="Auto"/>                                   <!-- 6 progress -->
+      <RowDefinition Height="Auto"/>                                   <!-- 7 status -->
+      <RowDefinition Height="Auto"/>                                   <!-- 8 taxa -->
+      <RowDefinition Height="Auto"/>                                   <!-- 9 rodape -->
+    </Grid.RowDefinitions>
+
+    <!-- Top bar -->
+    <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="20" FontWeight="SemiBold"
+               Foreground="{DynamicResource TextBrush}" Margin="0,0,0,10"/>
+
+    <!-- Tarefas -->
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="10" Padding="10,8">
+        <DockPanel>
+          <TextBlock Text="{Binding TasksHeader}" DockPanel.Dock="Top" FontWeight="Bold" FontSize="12"
+                     Foreground="{DynamicResource SubTextBrush}" Margin="2,0,0,6"/>
+          <ListBox x:Name="LstJobs" MinHeight="52" ItemsSource="{Binding Jobs}"
+                   SelectedIndex="{Binding SelectedJobIndex, Mode=TwoWay}"
+                   DoubleTapped="Jobs_DoubleTapped"
+                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:JobItemViewModel">
+                <Grid Margin="0,1">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <CheckBox Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
+                            IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Summary}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+                  <TextBlock Grid.Column="2" Text="{Binding WatchIcon}" VerticalAlignment="Center"
+                             Margin="8,0,6,0" FontSize="14"/>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </DockPanel>
+      </Border>
+
+      <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Top">
+        <Button Width="112" Height="30" Margin="0,0,0,6" Content="{Binding NewLabel}" Command="{Binding NewJobCommand}"/>
+        <Button Width="112" Height="30" Margin="0,0,0,6" Content="{Binding DuplicateLabel}" Command="{Binding DuplicateJobCommand}"/>
+        <Button Width="112" Height="30" Margin="0,0,0,6" Content="{Binding RenameLabel}" Command="{Binding RenameJobCommand}"/>
+        <Button Width="112" Height="30" Content="{Binding RemoveLabel}" Command="{Binding RemoveJobCommand}"/>
+      </StackPanel>
+    </Grid>
+
+    <!-- Divisor arrastavel: altura do painel TAREFAS -->
+    <GridSplitter Grid.Row="2" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                  Margin="0,0,0,6" Background="Transparent" ResizeDirection="Rows"
+                  Cursor="SizeNorthSouth" DragCompleted="TasksSplitter_DragCompleted"/>
+
+    <!-- Cards -->
+    <Grid x:Name="CardsGrid" Grid.Row="3">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" MinWidth="220"/>
+        <ColumnDefinition Width="18"/>
+        <ColumnDefinition Width="*" MinWidth="220"/>
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="1" Width="2" HorizontalAlignment="Center" Background="{DynamicResource LineBrush}" IsHitTestVisible="False"/>
+      <GridSplitter Grid.Column="1" Width="18" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Background="Transparent" ResizeDirection="Columns" DragCompleted="Splitter_DragCompleted"/>
+
+      <!-- Source card -->
+      <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="10" Padding="14">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top">
+            <TextBlock Text="{Binding SourceHeader}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+              <Button Width="30" Height="26" Padding="0" Command="{Binding Source.RefreshCommand}"
+                      IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}">
+                <PathIcon Data="{StaticResource IcoRefresh}" Width="15" Height="15"/>
+              </Button>
+              <ToggleButton Classes="toggle-flat" Width="34" Height="26"
+                            IsChecked="{Binding IsWatchChecked, Mode=TwoWay}" ToolTip.Tip="{Binding WatchTip}">
+                <PathIcon Data="{StaticResource IcoEye}" Width="16" Height="16"/>
+              </ToggleButton>
+            </StackPanel>
+          </Grid>
+          <TextBlock Text="{Binding Source.PathText}" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
+                     TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>
+          <DataGrid x:Name="GridSrc" ItemsSource="{Binding Source.Rows}" IsReadOnly="True"
+                    CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
+                    DoubleTapped="GridSrc_DoubleTapped">
+            <DataGrid.Styles>
+              <Style Selector="DataGridRow" x:DataType="vm:FileRow">
+                <Setter Property="Classes.hl" Value="{Binding Highlight}"/>
+              </Style>
+              <Style Selector="DataGridRow.hl">
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+              </Style>
+              <Style Selector="DataGridRow.hl DataGridCell TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+              </Style>
+            </DataGrid.Styles>
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="{Binding ColName}" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="90"/>
+              <DataGridTextColumn Header="{Binding ColModified}" Binding="{Binding Modified}" Width="120"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+      </Border>
+
+      <!-- Destination card -->
+      <Border Grid.Column="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="10" Padding="14">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top">
+            <TextBlock Text="{Binding DestHeader}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+            <Button Width="30" Height="26" Padding="0" HorizontalAlignment="Right" Command="{Binding Dest.RefreshCommand}"
+                    IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}">
+              <PathIcon Data="{StaticResource IcoRefresh}" Width="15" Height="15"/>
+            </Button>
+          </Grid>
+          <TextBlock Text="{Binding Dest.PathText}" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
+                     TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>
+          <DataGrid x:Name="GridDst" ItemsSource="{Binding Dest.Rows}" IsReadOnly="True"
+                    CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
+                    DoubleTapped="GridDst_DoubleTapped">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="{Binding ColName}" Binding="{Binding Name}" Width="*"/>
+              <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="90"/>
+              <DataGridTextColumn Header="{Binding ColModified}" Binding="{Binding Modified}" Width="120"/>
+            </DataGrid.Columns>
+          </DataGrid>
+        </DockPanel>
+      </Border>
+    </Grid>
+
+    <!-- Action -->
+    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="2,14,0,0">
+      <TextBlock Text="{Binding ActionLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,14,0"/>
+      <RadioButton GroupName="act" Content="{Binding ReplaceLabel}" VerticalAlignment="Center"
+                   IsChecked="{Binding OverwriteAlways, Mode=TwoWay}"/>
+      <RadioButton GroupName="act" Content="{Binding ReplaceIfNewerLabel}" VerticalAlignment="Center" Margin="20,0,0,0"
+                   IsChecked="{Binding OverwriteIfNewer, Mode=TwoWay}"/>
+      <RadioButton GroupName="act" Content="{Binding DontReplaceLabel}" VerticalAlignment="Center" Margin="20,0,0,0"
+                   IsChecked="{Binding OverwriteNever, Mode=TwoWay}"/>
+    </StackPanel>
+
+    <!-- Transfer -->
+    <Button Grid.Row="5" Classes="primary" Content="{Binding TransferLabel}"
+            Height="70" FontSize="20" Margin="0,14,0,0" HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Center" Command="{Binding TransferCommand}" IsEnabled="{Binding CanGo}"/>
+
+    <!-- Progress -->
+    <ProgressBar Grid.Row="6" Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
+                 Margin="0,10,0,0" Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+
+    <!-- Status -->
+    <TextBlock Grid.Row="7" Text="{Binding StatusText}" HorizontalAlignment="Center" FontWeight="SemiBold"
+               Margin="0,10,0,0" Foreground="{DynamicResource SubTextBrush}"
+               Classes.success="{Binding StatusSuccess}" Classes.error="{Binding StatusError}"/>
+
+    <!-- Taxa -->
+    <TextBlock Grid.Row="8" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="12"
+               Margin="0,4,0,0" Foreground="{DynamicResource SubTextBrush}"/>
+
+    <!-- Footer -->
+    <Grid Grid.Row="9" Margin="0,12,0,0">
+      <TextBlock Text="{Binding HintText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+      <Button Content="{Binding SettingsLabel}" Width="130" Height="34" HorizontalAlignment="Right"
+              Command="{Binding OpenSettingsCommand}" IsEnabled="{Binding NotTransferring}"/>
+    </Grid>
+  </Grid>
 </Window>

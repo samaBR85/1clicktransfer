@@ -72,6 +72,14 @@
     <Setter Property="Padding" Value="9,5"/>
   </Style>
 
+  <!-- ===== Status (cor por classe; substitui SetResourceReference do WPF) ===== -->
+  <Style Selector="TextBlock.success">
+    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+  </Style>
+  <Style Selector="TextBlock.error">
+    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+  </Style>
+
   <!-- ===== ListBox ===== -->
   <Style Selector="ListBox">
     <Setter Property="Background" Value="Transparent"/>
