@@ -10,6 +10,7 @@ public static class SecretProtector
     public static string Protect(string plain)
     {
         if (string.IsNullOrEmpty(plain)) return "";
+        if (!OperatingSystem.IsWindows()) return "";   // DPAPI e Windows-only (fachada multiplataforma na E2)
         try
         {
             var bytes = Encoding.UTF8.GetBytes(plain);
@@ -22,6 +23,7 @@ public static class SecretProtector
     public static string Unprotect(string enc)
     {
         if (string.IsNullOrEmpty(enc)) return "";
+        if (!OperatingSystem.IsWindows()) return "";   // DPAPI e Windows-only (fachada multiplataforma na E2)
         try
         {
             var bytes = Convert.FromBase64String(enc);

@@ -260,6 +260,20 @@ public static class TransferService
         _ => null
     };
 
+    /// <summary>A origem é mais nova que o arquivo homônimo no destino? (modo "Substituir se for mais recente")</summary>
+    public static bool IsSourceNewer(Destination d, string sourcePath, string fileName)
+    {
+        var srcT = File.GetLastWriteTime(sourcePath);
+        if (d.Type == DestType.Local)
+        {
+            var dst = Path.Combine(d.Folder, fileName);
+            if (!File.Exists(dst)) return true;
+            return srcT > File.GetLastWriteTime(dst);
+        }
+        var rt = DestModified(d, fileName);
+        return rt == null || srcT > rt.Value;
+    }
+
     public static List<RemoteEntry> ListPath(Destination d, string path) => d.Type switch
     {
         DestType.Local => new List<RemoteEntry>(LocalList(path)),

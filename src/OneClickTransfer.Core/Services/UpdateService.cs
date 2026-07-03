@@ -23,7 +23,13 @@ public static class UpdateService
 
     public static Version Current
     {
-        get { var v = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0); return Norm(v); }
+        get
+        {
+            // GetEntryAssembly: a versao vem do csproj do APP (exe), nao do Core.dll.
+            var asm = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+            var v = asm.GetName().Version ?? new Version(0, 0, 0);
+            return Norm(v);
+        }
     }
 
     private static Version Norm(Version v) => new(v.Major, Math.Max(v.Minor, 0), Math.Max(v.Build, 0));

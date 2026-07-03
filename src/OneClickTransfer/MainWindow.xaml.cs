@@ -682,7 +682,7 @@ public partial class MainWindow : Window
                                 if (exists)
                                 {
                                     if (mode == OverwriteMode.Never) { skipped++; continue; }
-                                    if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, src, fileName))) { skipped++; continue; }
+                                    if (mode == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, fileName))) { skipped++; continue; }
                                 }
                             }
                             await Task.Run(() => TransferService.Send(d, src, tp =>
@@ -723,19 +723,6 @@ public partial class MainWindow : Window
             TxtRate.Text = "";
             UpdateReadyState();
         }
-    }
-
-    private bool IsSourceNewer(Destination d, string sourcePath, string fileName)
-    {
-        var srcT = File.GetLastWriteTime(sourcePath);
-        if (d.Type == DestType.Local)
-        {
-            var dst = Path.Combine(d.Folder, fileName);
-            if (!File.Exists(dst)) return true;
-            return srcT > File.GetLastWriteTime(dst);
-        }
-        var rt = TransferService.DestModified(d, fileName);
-        return rt == null || srcT > rt.Value;
     }
 
     // ---------------- Auto-update ----------------

@@ -31,7 +31,8 @@ public static class CliRunner
 
     public static int Run(string[] args, AppSettings s)
     {
-        AttachConsole(ATTACH_PARENT_PROCESS);   // saída vai p/ o console que chamou (se houver)
+        // Windows (WinExe): religa o stdout ao console chamador. Em unix o stdout já é herdado.
+        if (OperatingSystem.IsWindows()) AttachConsole(ATTACH_PARENT_PROCESS);
         _silent = args.Any(a => a.Equals("--silent", StringComparison.OrdinalIgnoreCase)
                              || a.Equals("-s", StringComparison.OrdinalIgnoreCase));
 
@@ -108,7 +109,7 @@ public static class CliRunner
                         if (j.Overwrite != OverwriteMode.Always && TransferService.DestExists(d, fileName))
                         {
                             if (j.Overwrite == OverwriteMode.Never) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
-                            if (j.Overwrite == OverwriteMode.IfNewer && !SourceNewer(d, src, fileName)) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
+                            if (j.Overwrite == OverwriteMode.IfNewer && !TransferService.IsSourceNewer(d, src, fileName)) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
                         }
                         TransferService.Send(d, src, null);
                         sent++;
@@ -125,18 +126,6 @@ public static class CliRunner
 
     private static bool DestReady(Destination d)
         => d.Type == DestType.Local ? !string.IsNullOrEmpty(d.Folder) : !string.IsNullOrEmpty(d.Host);
-
-    private static bool SourceNewer(Destination d, string src, string fileName)
-    {
-        var srcT = File.GetLastWriteTime(src);
-        if (d.Type == DestType.Local)
-        {
-            var dst = Path.Combine(d.Folder, fileName);
-            return !File.Exists(dst) || srcT > File.GetLastWriteTime(dst);
-        }
-        var rt = TransferService.DestModified(d, fileName);
-        return rt == null || srcT > rt.Value;
-    }
 
     private static void PrintHelp()
     {
