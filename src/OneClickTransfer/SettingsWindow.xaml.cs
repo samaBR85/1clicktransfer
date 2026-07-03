@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -14,7 +14,7 @@ public partial class SettingsWindow : Window
 {
     private AppSettings S => App.Settings;
     private bool _profSync;
-    private List<Destination> _dests = new();
+    private readonly ObservableCollection<Destination> _dests = new();
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int val, int size);
@@ -24,8 +24,8 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         ApplyTexts();
         TxtSrc.Text = S.Source.Path;
-        _dests = S.Destinations.ConvertAll(d => d.Clone());
-        ReloadDests();
+        LstDests.ItemsSource = _dests;
+        LoadDests(S.Destinations);
         ReloadProfiles();
         Loaded += (_, _) =>
         {
@@ -74,26 +74,16 @@ public partial class SettingsWindow : Window
     }
 
     // ---------------- Destinos ----------------
-    public static string DestSummary(Destination d) => d.Type switch
+    private void LoadDests(System.Collections.Generic.IEnumerable<Destination> src)
     {
-        DestType.Local => "\U0001F4C1  " + d.Folder,
-        DestType.Ftp => "\U0001F310  FTP  " + d.Host + ":" + d.Port + d.Folder,
-        DestType.Sftp => "\U0001F310  SFTP  " + d.Host + ":" + d.Port + d.Folder,
-        _ => ""
-    };
-
-    private void ReloadDests()
-    {
-        var sel = LstDests.SelectedIndex;
-        LstDests.Items.Clear();
-        foreach (var d in _dests) LstDests.Items.Add(DestSummary(d));
-        if (sel >= 0 && sel < LstDests.Items.Count) LstDests.SelectedIndex = sel;
+        _dests.Clear();
+        foreach (var d in src) _dests.Add(d.Clone());
     }
 
     private void AddDest_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new DestinationEditorWindow(null) { Owner = this };
-        if (dlg.ShowDialog() == true && dlg.Result != null) { _dests.Add(dlg.Result); ReloadDests(); LstDests.SelectedIndex = _dests.Count - 1; }
+        if (dlg.ShowDialog() == true && dlg.Result != null) { _dests.Add(dlg.Result); LstDests.SelectedIndex = _dests.Count - 1; }
     }
 
     private void EditDest_Click(object sender, RoutedEventArgs e) => EditSelected();
@@ -103,8 +93,14 @@ public partial class SettingsWindow : Window
     {
         var idx = LstDests.SelectedIndex;
         if (idx < 0) return;
-        var dlg = new DestinationEditorWindow(_dests[idx].Clone()) { Owner = this };
-        if (dlg.ShowDialog() == true && dlg.Result != null) { _dests[idx] = dlg.Result; ReloadDests(); LstDests.SelectedIndex = idx; }
+        var old = _dests[idx];
+        var dlg = new DestinationEditorWindow(old.Clone()) { Owner = this };
+        if (dlg.ShowDialog() == true && dlg.Result != null)
+        {
+            dlg.Result.Enabled = old.Enabled;   // preserva o estado marcado/desmarcado
+            _dests[idx] = dlg.Result;
+            LstDests.SelectedIndex = idx;
+        }
     }
 
     private void RemoveDest_Click(object sender, RoutedEventArgs e)
@@ -112,7 +108,6 @@ public partial class SettingsWindow : Window
         var idx = LstDests.SelectedIndex;
         if (idx < 0) return;
         _dests.RemoveAt(idx);
-        ReloadDests();
     }
 
     private SourceSpec ReadSource() => new() { Path = TxtSrc.Text.Trim(), Kind = SourceKind.File };
@@ -142,8 +137,7 @@ public partial class SettingsWindow : Window
         if (prof != null)
         {
             TxtSrc.Text = prof.Source.Path;
-            _dests = prof.Destinations.ConvertAll(d => d.Clone());
-            ReloadDests();
+            LoadDests(prof.Destinations);
         }
     }
 
@@ -152,7 +146,7 @@ public partial class SettingsWindow : Window
         var suggest = CmbProfiles.SelectedIndex > 0 ? CmbProfiles.SelectedItem?.ToString() ?? "" : "";
         var name = PromptDialog.Ask(this, L.T("saveAs"), L.T("profSaved"), suggest);
         if (name == null) return;
-        var prof = new Profile { Name = name, Source = ReadSource(), Destinations = _dests.ConvertAll(d => d.Clone()) };
+        var prof = new Profile { Name = name, Source = ReadSource(), Destinations = _dests.Select(d => d.Clone()).ToList() };
         var existing = S.Profiles.FindIndex(p => p.Name == name);
         if (existing >= 0) S.Profiles[existing] = prof; else S.Profiles.Add(prof);
         SettingsService.Save(S);
@@ -185,13 +179,12 @@ public partial class SettingsWindow : Window
     {
         TxtSrc.Text = "";
         _dests.Clear();
-        ReloadDests();
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         S.Source = ReadSource();
-        S.Destinations = _dests.ConvertAll(d => d.Clone());
+        S.Destinations = _dests.Select(d => d.Clone()).ToList();
         S.Shortcut = CmbKey.SelectedIndex == 0 ? "None" : (CmbKey.SelectedItem?.ToString() ?? "F4");
         S.Theme = CmbTheme.SelectedIndex == 1 ? "light" : "dark";
         S.Language = CmbLang.SelectedIndex == 1 ? "en" : "pt";

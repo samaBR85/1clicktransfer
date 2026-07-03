@@ -20,7 +20,16 @@
 
             <!-- 2) Destinos -->
             <TextBlock x:Name="LblSec2" FontWeight="SemiBold" Margin="0,18,0,6"/>
-            <ListBox x:Name="LstDests" Height="130" MouseDoubleClick="Dests_DoubleClick"/>
+            <ListBox x:Name="LstDests" Height="130" MouseDoubleClick="Dests_DoubleClick">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="{Binding Summary}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                 <Button x:Name="BtnAddDest" Width="120" Height="30" Click="AddDest_Click"/>
                 <Button x:Name="BtnEditDest" Width="110" Height="30" Margin="8,0,0,0" Click="EditDest_Click"/>

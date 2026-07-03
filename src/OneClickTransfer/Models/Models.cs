@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace OneClickTransfer.Models;
 
@@ -16,11 +17,22 @@ public class Destination
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";     // criptografada (DPAPI)
     public bool UseTls { get; set; } = false;
+    public bool Enabled { get; set; } = true;       // marcado = recebe a transferencia
+
+    /// <summary>Resumo exibido nas listas (nao serializado).</summary>
+    [JsonIgnore]
+    public string Summary => Type switch
+    {
+        DestType.Local => "\U0001F4C1  " + Folder,
+        DestType.Ftp => "\U0001F310  FTP  " + Host + ":" + Port + Folder,
+        DestType.Sftp => "\U0001F310  SFTP  " + Host + ":" + Port + Folder,
+        _ => ""
+    };
 
     public Destination Clone() => new()
     {
         Type = Type, Folder = Folder, Host = Host, Port = Port,
-        Username = Username, Password = Password, UseTls = UseTls
+        Username = Username, Password = Password, UseTls = UseTls, Enabled = Enabled
     };
 }
 

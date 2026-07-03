@@ -37,6 +37,11 @@ public partial class MainWindow : Window
 
     private AppSettings S => App.Settings;
     private Destination? Dest0 => S.Destinations.FirstOrDefault();
+    // Destino usado para navegacao na home (so quando ha exatamente 1 ativo)
+    private Destination? SingleNavDest
+    {
+        get { var en = S.Destinations.Where(x => x.Enabled).ToList(); return en.Count == 1 ? en[0] : null; }
+    }
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int val, int size);
@@ -123,29 +128,31 @@ public partial class MainWindow : Window
         var dests = S.Destinations;
         _dst.Clear();
         if (dests.Count == 0) { TxtDstPath.Text = L.T("noDest"); return; }
-        if (dests.Count > 1)
+
+        var enabled = dests.Where(x => x.Enabled).ToList();
+        if (enabled.Count == 1)
         {
-            // Multiplos destinos: mostra a lista de resumos (sem navegacao)
-            TxtDstPath.Text = L.T("destCount", dests.Count);
-            foreach (var dd in dests)
-                _dst.Add(new FileRow { Name = SettingsWindow.DestSummary(dd) });
+            // Exatamente 1 destino ativo: listagem navegavel
+            var d = enabled[0];
+            _dstDir = d.Folder;
+            if (d.Type == DestType.Local)
+            {
+                RefillDestLocal();
+            }
+            else
+            {
+                var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
+                TxtDstPath.Text = prefix + d.Host + (_dstDir ?? "/");
+                if (fetchFtp) { _dst.Add(InfoRow("loadingFtp")); FetchRemoteAt(d, string.IsNullOrEmpty(_dstDir) ? "/" : _dstDir); }
+                else _dst.Add(InfoRow("clickRefreshFtp"));
+            }
             return;
         }
 
-        // Um destino: listagem navegavel
-        var d = dests[0];
-        _dstDir = d.Folder;
-        if (d.Type == DestType.Local)
-        {
-            RefillDestLocal();
-        }
-        else // remoto (FTP / SFTP)
-        {
-            var prefix = d.Type == DestType.Sftp ? L.T("sftpPrefix") : L.T("ftpPrefix");
-            TxtDstPath.Text = prefix + d.Host + (_dstDir ?? "/");
-            if (fetchFtp) { _dst.Add(InfoRow("loadingFtp")); FetchRemoteAt(d, string.IsNullOrEmpty(_dstDir) ? "/" : _dstDir); }
-            else _dst.Add(InfoRow("clickRefreshFtp"));
-        }
+        // 0 ou 2+ destinos ativos: lista de resumos com marcador de ativo
+        TxtDstPath.Text = L.T("destCount", enabled.Count);
+        foreach (var dd in dests)
+            _dst.Add(new FileRow { Name = (dd.Enabled ? "☑  " : "☐  ") + dd.Summary });
     }
 
     private void RefillSource()
@@ -213,7 +220,7 @@ public partial class MainWindow : Window
 
     private void GridDst_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        var d = Dest0;
+        var d = SingleNavDest;
         if (d == null || GridDst.SelectedItem is not FileRow it) return;
         if (!it.IsDir && !it.IsUp) return;   // arquivos no destino nao navegam
 
@@ -247,7 +254,7 @@ public partial class MainWindow : Window
 
     private void UpdateReadyState()
     {
-        var ok = !string.IsNullOrEmpty(S.Source.Path) && S.Destinations.Any(DestReady);
+        var ok = !string.IsNullOrEmpty(S.Source.Path) && S.Destinations.Any(d => d.Enabled && DestReady(d));
         BtnGo.IsEnabled = ok;
         BtnTheme.Content = S.Theme == "light" ? L.T("darkMode") : L.T("lightMode");
         var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
@@ -352,7 +359,7 @@ public partial class MainWindow : Window
             MessageBox.Show(this, S.Source.Path, L.T("errorTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
-        var dests = S.Destinations.Where(DestReady).ToList();
+        var dests = S.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
         if (dests.Count == 0) return;
         var fileName = Path.GetFileName(S.Source.Path);
         var mode = S.OverwriteMode;
@@ -365,7 +372,7 @@ public partial class MainWindow : Window
             for (int i = 0; i < dests.Count; i++)
             {
                 var d = dests[i];
-                var label = dests.Count > 1 ? SettingsWindow.DestSummary(d) : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
+                var label = dests.Count > 1 ? d.Summary : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
                 SetStatus(L.T("sendingTo", label, i + 1, dests.Count), StatusKind.Sub);
                 Prog.Value = 0;
                 try
