@@ -28,7 +28,6 @@
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <ToggleButton x:Name="BtnWatch" Style="{StaticResource ToggleFlat}" Height="32" Padding="14,0" Click="Watch_Toggled"/>
                 <Button x:Name="BtnRefresh" Content="Refresh" Width="120" Height="32" Margin="10,0,0,0" Click="BtnRefresh_Click"/>
-                <Button x:Name="BtnTheme" Content="Light mode" Width="150" Height="32" Margin="10,0,0,0" Click="BtnTheme_Click"/>
             </StackPanel>
         </Grid>
 

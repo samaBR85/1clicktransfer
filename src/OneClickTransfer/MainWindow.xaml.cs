@@ -199,15 +199,6 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    private void BtnTheme_Click(object sender, RoutedEventArgs e)
-    {
-        S.Theme = S.Theme == "light" ? "dark" : "light";
-        SettingsService.Save(S);
-        ThemeManager.Apply(S.Theme);
-        ApplyDwm();
-        UpdateReadyState();
-    }
-
     // ---------------- Tarefas ----------------
     private void RefreshJobs()
     {
@@ -491,7 +482,6 @@ public partial class MainWindow : Window
     {
         BtnGo.IsEnabled = S.Jobs.Any(JobReady);
         BtnWatch.IsChecked = S.WatchEnabled;
-        BtnTheme.Content = S.Theme == "light" ? L.T("darkMode") : L.T("lightMode");
         var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
         TxtHint.Text = hasSc
             ? L.T("shortcutHint", S.Shortcut) + "   ·   " + L.T("refreshHint")

@@ -53,15 +53,15 @@
             <!-- 3) Opcoes -->
             <TextBlock x:Name="LblSec3" FontWeight="SemiBold" Margin="0,18,0,6"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock x:Name="LblShortcut" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <ComboBox x:Name="CmbKey" Width="150" VerticalAlignment="Center"/>
-                <TextBlock x:Name="LblF5Note" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="14,0,0,0" FontSize="11.5"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal">
                 <TextBlock x:Name="LblTheme" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                 <ComboBox x:Name="CmbTheme" Width="140" VerticalAlignment="Center"/>
                 <TextBlock x:Name="LblLang" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="24,0,8,0"/>
                 <ComboBox x:Name="CmbLang" Width="150" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="LblShortcut" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <ComboBox x:Name="CmbKey" Width="150" VerticalAlignment="Center"/>
+                <TextBlock x:Name="LblF5Note" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="14,0,0,0" FontSize="11.5"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                 <Button x:Name="BtnCheckUpdate" Height="30" Padding="14,0" Click="CheckUpdate_Click"/>
