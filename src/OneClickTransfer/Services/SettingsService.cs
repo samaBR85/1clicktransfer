@@ -49,7 +49,7 @@ public static class SettingsService
     private static AppSettings Normalize(AppSettings s)
     {
         s.Theme ??= "dark";
-        s.Language ??= "pt";
+        s.Language ??= "en";
         L.Lang = s.Language == "en" ? "en" : "pt";   // p/ nomear tarefas no idioma certo
         s.Shortcut ??= "F4";
         if (s.Shortcut == "F5") s.Shortcut = "F4";   // F5 agora e fixo p/ Atualizar

@@ -5,7 +5,7 @@ namespace OneClickTransfer.I18n;
 /// <summary>Textos PT/EN (portado do v1). Use L.T("chave") ou L.T("chave", args).</summary>
 public static class L
 {
-    public static string Lang = "pt";
+    public static string Lang = "en";
 
     private static readonly Dictionary<string, (string pt, string en)> M = new()
     {
