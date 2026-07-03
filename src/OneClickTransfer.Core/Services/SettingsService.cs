@@ -46,30 +46,39 @@ public static class SettingsService
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static AppSettings Load()
+    public static AppSettings Load() => Load(SettingsPath);
+
+    /// <summary>Carrega+normaliza de um caminho específico (usado em testes).</summary>
+    public static AppSettings Load(string path)
     {
         try
         {
-            if (File.Exists(SettingsPath))
+            if (File.Exists(path))
             {
-                var json = File.ReadAllText(SettingsPath);
+                var json = File.ReadAllText(path);
                 var s = JsonSerializer.Deserialize<AppSettings>(json, _opts);
                 if (s != null) return Normalize(s);
             }
         }
         catch { /* ignora e usa padrao */ }
-        return new AppSettings();
+        return Normalize(new AppSettings());
     }
 
-    public static void Save(AppSettings s)
+    public static void Save(AppSettings s) => Save(s, SettingsPath);
+
+    /// <summary>Serializa para um caminho específico (usado em testes).</summary>
+    public static void Save(AppSettings s, string path)
     {
         try
         {
             var json = JsonSerializer.Serialize(s, _opts);
-            File.WriteAllText(SettingsPath, json);
+            File.WriteAllText(path, json);
         }
         catch { /* silencioso */ }
     }
+
+    /// <summary>Serializa o objeto para JSON (mesmas opções do arquivo). Para testes/diff.</summary>
+    public static string Serialize(AppSettings s) => JsonSerializer.Serialize(s, _opts);
 
     private static AppSettings Normalize(AppSettings s)
     {
