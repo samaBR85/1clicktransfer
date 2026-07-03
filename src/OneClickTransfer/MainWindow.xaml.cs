@@ -133,8 +133,8 @@ public partial class MainWindow : Window
     {
         Title = L.T("appTitle");
         TxtTitle.Text = L.T("appTitle");
-        BtnWatch.Content = L.T("watch");
-        BtnRefresh.Content = L.T("refresh");
+        BtnWatch.ToolTip = L.T("watch");                     // icone 👁 no cabecalho da ORIGEM
+        BtnSrcRefresh.ToolTip = BtnDstRefresh.ToolTip = L.T("refresh");   // icones ⟳ nos cabecalhos
         TxtTasksHdr.Text = L.T("tasks");
         BtnJobNew.Content = L.T("taskNew");
         BtnJobDup.Content = L.T("taskDuplicate");
@@ -323,7 +323,13 @@ public partial class MainWindow : Window
 
     private void RefreshHome(bool fetchFtp = false)
     {
-        // Origem da tarefa selecionada
+        RefreshSourcePanel();
+        RefreshDestPanel(fetchFtp);
+    }
+
+    // Re-lista apenas o painel ORIGEM da tarefa selecionada.
+    private void RefreshSourcePanel()
+    {
         var files = Job.Source.All;
         if (files.Count >= 2)
         {
@@ -340,8 +346,11 @@ public partial class MainWindow : Window
             _srcDir = files.Count == 1 ? (Path.GetDirectoryName(files[0]) ?? "") : "";
             RefillSource();
         }
+    }
 
-        // Destino(s) da tarefa selecionada
+    // Re-lista apenas o painel DESTINO da tarefa selecionada (busca o FTP se fetchFtp).
+    private void RefreshDestPanel(bool fetchFtp = false)
+    {
         var dests = Job.Destinations;
         _dst.Clear();
         if (dests.Count == 0) { TxtDstPath.Text = L.T("noDest"); return; }
@@ -511,20 +520,31 @@ public partial class MainWindow : Window
     }
 
     // ---------------- Botoes ----------------
-    private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+    // ⟳ no cabecalho da ORIGEM: re-lista so a origem.
+    private void SrcRefresh_Click(object sender, RoutedEventArgs e)
     {
+        if (_transferring) return;
         SetStatus(L.T("refreshing"), StatusKind.Sub);
-        RefreshHome(true);
+        RefreshSourcePanel();
+        SetStatus("", StatusKind.Sub);
+    }
+
+    // ⟳ no cabecalho do DESTINO: re-lista so o destino (busca o FTP).
+    private void DstRefresh_Click(object sender, RoutedEventArgs e)
+    {
+        if (_transferring) return;
+        SetStatus(L.T("refreshing"), StatusKind.Sub);
+        RefreshDestPanel(true);
         SetStatus("", StatusKind.Sub);
     }
 
     private void MainWindow_KeyDown(object sender, KeyEventArgs e)
     {
-        // F5 = Atualizar (fixo, nao trocavel)
+        // F5 = Atualizar (fixo, nao trocavel) — refresh completo dos dois paineis
         if (e.Key == Key.F5)
         {
             e.Handled = true;
-            if (BtnRefresh.IsEnabled) { SetStatus(L.T("refreshing"), StatusKind.Sub); RefreshHome(true); SetStatus("", StatusKind.Sub); }
+            if (!_transferring) { SetStatus(L.T("refreshing"), StatusKind.Sub); RefreshHome(true); SetStatus("", StatusKind.Sub); }
             return;
         }
         // Atalho configuravel = Transferir
@@ -625,7 +645,7 @@ public partial class MainWindow : Window
         jobs = withFile;
 
         _transferring = true;
-        BtnGo.IsEnabled = BtnCfg.IsEnabled = BtnRefresh.IsEnabled = false;
+        BtnGo.IsEnabled = BtnCfg.IsEnabled = BtnSrcRefresh.IsEnabled = BtnDstRefresh.IsEnabled = false;
         Prog.Value = 0;
         int sent = 0, skipped = 0, failed = 0;
         string? lastError = null;
@@ -699,7 +719,7 @@ public partial class MainWindow : Window
         finally
         {
             _transferring = false;
-            BtnCfg.IsEnabled = BtnRefresh.IsEnabled = true;
+            BtnCfg.IsEnabled = BtnSrcRefresh.IsEnabled = BtnDstRefresh.IsEnabled = true;
             TxtRate.Text = "";
             UpdateReadyState();
         }
