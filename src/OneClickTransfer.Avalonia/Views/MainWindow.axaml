@@ -4,7 +4,7 @@
         x:Class="OneClickTransfer.Avalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{Binding Title}"
-        Width="900" Height="810" MinWidth="740" MinHeight="700"
+        Width="820" Height="720" MinWidth="660" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
 
@@ -14,10 +14,10 @@
     <StreamGeometry x:Key="IcoEye">M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z</StreamGeometry>
   </Window.Resources>
 
-  <Grid x:Name="RootGrid" Margin="20">
+  <Grid x:Name="RootGrid" Margin="14">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>                                   <!-- 0 top bar -->
-      <RowDefinition Height="150" MinHeight="140"/>                    <!-- 1 TAREFAS -->
+      <RowDefinition Height="118" MinHeight="96"/>                     <!-- 1 TAREFAS -->
       <RowDefinition Height="Auto"/>                                   <!-- 2 splitter -->
       <RowDefinition Height="*"/>                                      <!-- 3 cards -->
       <RowDefinition Height="Auto"/>                                   <!-- 4 acao -->
@@ -29,8 +29,8 @@
     </Grid.RowDefinitions>
 
     <!-- Top bar -->
-    <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="20" FontWeight="SemiBold"
-               Foreground="{DynamicResource TextBrush}" Margin="0,0,0,10"/>
+    <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
+               Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
 
     <!-- Tarefas -->
     <Grid Grid.Row="1">
@@ -40,31 +40,37 @@
       </Grid.ColumnDefinitions>
 
       <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
-              BorderThickness="1" CornerRadius="10" Padding="10,8">
+              BorderThickness="1" CornerRadius="8" Padding="8,6">
         <DockPanel>
-          <TextBlock Text="{Binding TasksHeader}" DockPanel.Dock="Top" FontWeight="Bold" FontSize="12"
-                     Foreground="{DynamicResource SubTextBrush}" Margin="2,0,0,6"/>
-          <ListBox x:Name="LstJobs" MinHeight="52" ItemsSource="{Binding Jobs}"
+          <TextBlock Text="{Binding TasksHeader}" DockPanel.Dock="Top" FontWeight="Bold" FontSize="11"
+                     Foreground="{DynamicResource SubTextBrush}" Margin="2,0,0,4"/>
+          <ListBox x:Name="LstJobs" MinHeight="44" ItemsSource="{Binding Jobs}"
                    SelectedIndex="{Binding SelectedJobIndex, Mode=TwoWay}"
                    DoubleTapped="Jobs_DoubleTapped"
                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="6,3"/>
+                <Setter Property="MinHeight" Value="0"/>
+              </Style>
+            </ListBox.Styles>
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:JobItemViewModel">
-                <Grid Margin="0,1">
+                <Grid>
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                   </Grid.ColumnDefinitions>
-                  <CheckBox Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
+                  <CheckBox Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
                             IsChecked="{Binding Enabled, Mode=TwoWay}"/>
-                  <StackPanel Grid.Column="1">
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Text="{Binding Summary}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding Summary}" FontSize="10.5" Foreground="{DynamicResource SubTextBrush}"
                                TextTrimming="CharacterEllipsis"/>
                   </StackPanel>
                   <TextBlock Grid.Column="2" Text="{Binding WatchIcon}" VerticalAlignment="Center"
-                             Margin="8,0,6,0" FontSize="14"/>
+                             Margin="8,0,4,0" FontSize="13"/>
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>
@@ -72,50 +78,50 @@
         </DockPanel>
       </Border>
 
-      <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Top">
-        <Button Width="112" Height="30" Margin="0,0,0,6" Content="{Binding NewLabel}" Command="{Binding NewJobCommand}"/>
-        <Button Width="112" Height="30" Margin="0,0,0,6" Content="{Binding DuplicateLabel}" Command="{Binding DuplicateJobCommand}"/>
-        <Button Width="112" Height="30" Margin="0,0,0,6" Content="{Binding RenameLabel}" Command="{Binding RenameJobCommand}"/>
-        <Button Width="112" Height="30" Content="{Binding RemoveLabel}" Command="{Binding RemoveJobCommand}"/>
+      <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top">
+        <Button Width="94" Height="26" Margin="0,0,0,5" Content="{Binding NewLabel}" Command="{Binding NewJobCommand}"/>
+        <Button Width="94" Height="26" Margin="0,0,0,5" Content="{Binding DuplicateLabel}" Command="{Binding DuplicateJobCommand}"/>
+        <Button Width="94" Height="26" Margin="0,0,0,5" Content="{Binding RenameLabel}" Command="{Binding RenameJobCommand}"/>
+        <Button Width="94" Height="26" Content="{Binding RemoveLabel}" Command="{Binding RemoveJobCommand}"/>
       </StackPanel>
     </Grid>
 
     <!-- Divisor arrastavel: altura do painel TAREFAS -->
-    <GridSplitter Grid.Row="2" Height="8" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                  Margin="0,0,0,6" Background="Transparent" ResizeDirection="Rows"
+    <GridSplitter Grid.Row="2" Height="7" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                  Margin="0,0,0,5" Background="Transparent" ResizeDirection="Rows"
                   Cursor="SizeNorthSouth" DragCompleted="TasksSplitter_DragCompleted"/>
 
     <!-- Cards -->
     <Grid x:Name="CardsGrid" Grid.Row="3">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" MinWidth="220"/>
-        <ColumnDefinition Width="18"/>
-        <ColumnDefinition Width="*" MinWidth="220"/>
+        <ColumnDefinition Width="*" MinWidth="200"/>
+        <ColumnDefinition Width="14"/>
+        <ColumnDefinition Width="*" MinWidth="200"/>
       </Grid.ColumnDefinitions>
 
       <Border Grid.Column="1" Width="2" HorizontalAlignment="Center" Background="{DynamicResource LineBrush}" IsHitTestVisible="False"/>
-      <GridSplitter Grid.Column="1" Width="18" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+      <GridSplitter Grid.Column="1" Width="14" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     Background="Transparent" ResizeDirection="Columns" DragCompleted="Splitter_DragCompleted"/>
 
       <!-- Source card -->
       <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
-              BorderThickness="1" CornerRadius="10" Padding="14">
+              BorderThickness="1" CornerRadius="8" Padding="10">
         <DockPanel>
           <Grid DockPanel.Dock="Top">
-            <TextBlock Text="{Binding SourceHeader}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-              <Button Width="30" Height="26" Padding="0" Command="{Binding Source.RefreshCommand}"
+            <TextBlock Text="{Binding SourceHeader}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+              <Button Width="26" Height="24" Padding="0" Command="{Binding Source.RefreshCommand}"
                       IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}">
-                <PathIcon Data="{StaticResource IcoRefresh}" Width="15" Height="15"/>
+                <PathIcon Data="{StaticResource IcoRefresh}" Width="13" Height="13"/>
               </Button>
-              <ToggleButton Classes="toggle-flat" Width="34" Height="26"
+              <ToggleButton Classes="toggle-flat" Width="30" Height="24"
                             IsChecked="{Binding IsWatchChecked, Mode=TwoWay}" ToolTip.Tip="{Binding WatchTip}">
-                <PathIcon Data="{StaticResource IcoEye}" Width="16" Height="16"/>
+                <PathIcon Data="{StaticResource IcoEye}" Width="14" Height="14"/>
               </ToggleButton>
             </StackPanel>
           </Grid>
-          <TextBlock Text="{Binding Source.PathText}" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
-                     TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>
+          <TextBlock Text="{Binding Source.PathText}" DockPanel.Dock="Top" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
+                     TextTrimming="CharacterEllipsis" Margin="0,3,0,6"/>
           <DataGrid x:Name="GridSrc" ItemsSource="{Binding Source.Rows}" IsReadOnly="True"
                     CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
                     DoubleTapped="GridSrc_DoubleTapped">
@@ -133,8 +139,8 @@
             </DataGrid.Styles>
             <DataGrid.Columns>
               <DataGridTextColumn Header="{Binding ColName}" Binding="{Binding Name}" Width="*"/>
-              <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="90"/>
-              <DataGridTextColumn Header="{Binding ColModified}" Binding="{Binding Modified}" Width="120"/>
+              <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="80"/>
+              <DataGridTextColumn Header="{Binding ColModified}" Binding="{Binding Modified}" Width="115"/>
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>
@@ -142,24 +148,24 @@
 
       <!-- Destination card -->
       <Border Grid.Column="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
-              BorderThickness="1" CornerRadius="10" Padding="14">
+              BorderThickness="1" CornerRadius="8" Padding="10">
         <DockPanel>
           <Grid DockPanel.Dock="Top">
-            <TextBlock Text="{Binding DestHeader}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
-            <Button Width="30" Height="26" Padding="0" HorizontalAlignment="Right" Command="{Binding Dest.RefreshCommand}"
+            <TextBlock Text="{Binding DestHeader}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+            <Button Width="26" Height="24" Padding="0" HorizontalAlignment="Right" Command="{Binding Dest.RefreshCommand}"
                     IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}">
-              <PathIcon Data="{StaticResource IcoRefresh}" Width="15" Height="15"/>
+              <PathIcon Data="{StaticResource IcoRefresh}" Width="13" Height="13"/>
             </Button>
           </Grid>
-          <TextBlock Text="{Binding Dest.PathText}" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
-                     TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>
+          <TextBlock Text="{Binding Dest.PathText}" DockPanel.Dock="Top" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
+                     TextTrimming="CharacterEllipsis" Margin="0,3,0,6"/>
           <DataGrid x:Name="GridDst" ItemsSource="{Binding Dest.Rows}" IsReadOnly="True"
                     CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
                     DoubleTapped="GridDst_DoubleTapped">
             <DataGrid.Columns>
               <DataGridTextColumn Header="{Binding ColName}" Binding="{Binding Name}" Width="*"/>
-              <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="90"/>
-              <DataGridTextColumn Header="{Binding ColModified}" Binding="{Binding Modified}" Width="120"/>
+              <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="80"/>
+              <DataGridTextColumn Header="{Binding ColModified}" Binding="{Binding Modified}" Width="115"/>
             </DataGrid.Columns>
           </DataGrid>
         </DockPanel>
@@ -167,38 +173,38 @@
     </Grid>
 
     <!-- Action -->
-    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="2,14,0,0">
-      <TextBlock Text="{Binding ActionLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,14,0"/>
-      <RadioButton GroupName="act" Content="{Binding ReplaceLabel}" VerticalAlignment="Center"
+    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="2,10,0,0">
+      <TextBlock Text="{Binding ActionLabel}" FontSize="12" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+      <RadioButton GroupName="act" Content="{Binding ReplaceLabel}" FontSize="12" VerticalAlignment="Center"
                    IsChecked="{Binding OverwriteAlways, Mode=TwoWay}"/>
-      <RadioButton GroupName="act" Content="{Binding ReplaceIfNewerLabel}" VerticalAlignment="Center" Margin="20,0,0,0"
+      <RadioButton GroupName="act" Content="{Binding ReplaceIfNewerLabel}" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0"
                    IsChecked="{Binding OverwriteIfNewer, Mode=TwoWay}"/>
-      <RadioButton GroupName="act" Content="{Binding DontReplaceLabel}" VerticalAlignment="Center" Margin="20,0,0,0"
+      <RadioButton GroupName="act" Content="{Binding DontReplaceLabel}" FontSize="12" VerticalAlignment="Center" Margin="16,0,0,0"
                    IsChecked="{Binding OverwriteNever, Mode=TwoWay}"/>
     </StackPanel>
 
     <!-- Transfer -->
     <Button Grid.Row="5" Classes="primary" Content="{Binding TransferLabel}"
-            Height="70" FontSize="20" Margin="0,14,0,0" HorizontalAlignment="Stretch"
+            Height="46" FontSize="15" Margin="0,10,0,0" HorizontalAlignment="Stretch"
             HorizontalContentAlignment="Center" Command="{Binding TransferCommand}" IsEnabled="{Binding CanGo}"/>
 
     <!-- Progress -->
-    <ProgressBar Grid.Row="6" Height="8" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
-                 Margin="0,10,0,0" Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+    <ProgressBar Grid.Row="6" Height="6" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
+                 Margin="0,8,0,0" Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
 
     <!-- Status -->
-    <TextBlock Grid.Row="7" Text="{Binding StatusText}" HorizontalAlignment="Center" FontWeight="SemiBold"
-               Margin="0,10,0,0" Foreground="{DynamicResource SubTextBrush}"
+    <TextBlock Grid.Row="7" Text="{Binding StatusText}" HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="12"
+               Margin="0,8,0,0" Foreground="{DynamicResource SubTextBrush}"
                Classes.success="{Binding StatusSuccess}" Classes.error="{Binding StatusError}"/>
 
     <!-- Taxa -->
-    <TextBlock Grid.Row="8" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="12"
-               Margin="0,4,0,0" Foreground="{DynamicResource SubTextBrush}"/>
+    <TextBlock Grid.Row="8" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="11"
+               Margin="0,3,0,0" Foreground="{DynamicResource SubTextBrush}"/>
 
     <!-- Footer -->
-    <Grid Grid.Row="9" Margin="0,12,0,0">
-      <TextBlock Text="{Binding HintText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-      <Button Content="{Binding SettingsLabel}" Width="130" Height="34" HorizontalAlignment="Right"
+    <Grid Grid.Row="9" Margin="0,10,0,0">
+      <TextBlock Text="{Binding HintText}" FontSize="12" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+      <Button Content="{Binding SettingsLabel}" Width="112" Height="30" HorizontalAlignment="Right"
               Command="{Binding OpenSettingsCommand}" IsEnabled="{Binding NotTransferring}"/>
     </Grid>
   </Grid>

@@ -1,14 +1,20 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+  <!-- ===== Densidade base: fonte menor que o padrao do Fluent (mais proximo do WPF) ===== -->
+  <Style Selector="Window">
+    <Setter Property="FontFamily" Value="Segoe UI"/>
+    <Setter Property="FontSize" Value="12"/>
+  </Style>
+
   <!-- ===== Botao flat (padrao) ===== -->
   <Style Selector="Button">
     <Setter Property="Background" Value="{DynamicResource FlatBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
     <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="8"/>
-    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="CornerRadius" Value="6"/>
+    <Setter Property="Padding" Value="10,4"/>
     <Setter Property="HorizontalContentAlignment" Value="Center"/>
     <Setter Property="VerticalContentAlignment" Value="Center"/>
     <Setter Property="Cursor" Value="Hand"/>
@@ -89,17 +95,26 @@
     <Setter Property="Background" Value="{DynamicResource SelectionBrush}"/>
   </Style>
 
-  <!-- ===== DataGrid ===== -->
+  <!-- ===== DataGrid (compacto) ===== -->
   <Style Selector="DataGrid">
     <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
     <Setter Property="GridLinesVisibility" Value="Horizontal"/>
     <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource LineBrush}"/>
     <Setter Property="RowBackground" Value="Transparent"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="RowHeight" Value="26"/>
   </Style>
   <Style Selector="DataGridColumnHeader">
     <Setter Property="Background" Value="{DynamicResource GridHeaderBrush}"/>
     <Setter Property="Foreground" Value="{DynamicResource SubTextBrush}"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="MinHeight" Value="26"/>
+    <Setter Property="Padding" Value="8,3"/>
+  </Style>
+  <Style Selector="DataGridCell">
+    <Setter Property="Padding" Value="6,0"/>
+    <Setter Property="MinHeight" Value="26"/>
   </Style>
 
 </Styles>
