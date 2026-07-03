@@ -10,7 +10,7 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>                                  <!-- 0 top bar -->
-            <RowDefinition x:Name="RowTasks" Height="130" MinHeight="52"/>  <!-- 1 TAREFAS -->
+            <RowDefinition x:Name="RowTasks" Height="150" MinHeight="140"/> <!-- 1 TAREFAS -->
             <RowDefinition Height="Auto"/>                                  <!-- 2 splitter horizontal -->
             <RowDefinition Height="*"/>                                     <!-- 3 cards -->
             <RowDefinition Height="Auto"/>                                  <!-- 4 acao -->

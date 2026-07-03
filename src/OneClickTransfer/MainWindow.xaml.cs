@@ -55,6 +55,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyWindowBounds();   // reabre no tamanho/posicao da ultima vez
         GridSrc.ItemsSource = _src;
         GridDst.ItemsSource = _dst;
         LstJobs.ItemsSource = _jobs;
@@ -73,7 +74,57 @@ public partial class MainWindow : Window
                 SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
         };
         KeyDown += MainWindow_KeyDown;
+        Closing += (_, _) => SaveWindowBounds();
         Closed += (_, _) => StopAllWatchers();
+    }
+
+    // ---------------- Geometria da janela (reabrir igual) ----------------
+    private void ApplyWindowBounds()
+    {
+        if (S.WindowWidth >= 400 && S.WindowHeight >= 400 &&
+            IsOnScreen(S.WindowLeft, S.WindowTop, S.WindowWidth, S.WindowHeight))
+        {
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Left = S.WindowLeft; Top = S.WindowTop;
+            Width = S.WindowWidth; Height = S.WindowHeight;
+        }
+        if (S.WindowMaximized) WindowState = WindowState.Maximized;
+    }
+
+    private void SaveWindowBounds()
+    {
+        try
+        {
+            if (WindowState == WindowState.Normal)
+            {
+                S.WindowLeft = Left; S.WindowTop = Top;
+                S.WindowWidth = Width; S.WindowHeight = Height;
+                S.WindowMaximized = false;
+            }
+            else
+            {
+                // Maximizada/minimizada: RestoreBounds guarda o retangulo "normal".
+                var rb = RestoreBounds;
+                if (rb.Width > 0 && rb.Height > 0)
+                {
+                    S.WindowLeft = rb.Left; S.WindowTop = rb.Top;
+                    S.WindowWidth = rb.Width; S.WindowHeight = rb.Height;
+                }
+                S.WindowMaximized = WindowState == WindowState.Maximized;
+            }
+            SettingsService.Save(S);
+        }
+        catch { }
+    }
+
+    // Garante que a janela restaurada fique visivel (config de monitores pode ter mudado).
+    private static bool IsOnScreen(double l, double t, double w, double h)
+    {
+        var vl = SystemParameters.VirtualScreenLeft;
+        var vt = SystemParameters.VirtualScreenTop;
+        var vr = vl + SystemParameters.VirtualScreenWidth;
+        var vb = vt + SystemParameters.VirtualScreenHeight;
+        return l + w > vl + 60 && l < vr - 60 && t + h > vt + 40 && t < vb - 40;
     }
 
     // ---------------- i18n / tema ----------------
@@ -122,7 +173,7 @@ public partial class MainWindow : Window
     private void ApplyTasksHeight()
     {
         var h = S.TasksHeight;
-        if (double.IsNaN(h) || h < 52) h = 130;
+        if (double.IsNaN(h) || h < 140) h = 150;
         if (h > 600) h = 600;
         RowTasks.Height = new GridLength(h, GridUnitType.Pixel);
     }

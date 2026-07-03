@@ -140,7 +140,14 @@ public class AppSettings
     public string Language { get; set; } = "pt";      // pt | en
     public string Shortcut { get; set; } = "F4";   // atalho do TRANSFERIR (F5 e fixo p/ Atualizar)
     public double SplitRatio { get; set; } = 0.5;   // largura do card ORIGEM (0..1)
-    public double TasksHeight { get; set; } = 130;  // altura em px do painel TAREFAS
+    public double TasksHeight { get; set; } = 150;  // altura em px do painel TAREFAS
+
+    // Geometria da janela principal (reabrir igual da ultima vez). 0 = usar padrao.
+    public double WindowWidth { get; set; } = 0;
+    public double WindowHeight { get; set; } = 0;
+    public double WindowLeft { get; set; } = 0;
+    public double WindowTop { get; set; } = 0;
+    public bool WindowMaximized { get; set; } = false;
     public bool WatchEnabled { get; set; } = false; // envio automatico ao mudar o arquivo
     public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;  // legado (migrado p/ Jobs)
 

@@ -60,7 +60,7 @@ public static class SettingsService
         s.DestGroups ??= new();
         s.Jobs ??= new();
 
-        if (double.IsNaN(s.TasksHeight) || s.TasksHeight < 52) s.TasksHeight = 130;
+        if (double.IsNaN(s.TasksHeight) || s.TasksHeight < 140) s.TasksHeight = 150;
         if (s.TasksHeight > 600) s.TasksHeight = 600;
 
         // Migração: config antiga (Source/Destinations no topo) vira a 1ª tarefa.
