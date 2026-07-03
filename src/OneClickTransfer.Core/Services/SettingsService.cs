@@ -10,8 +10,33 @@ namespace OneClickTransfer.Services;
 /// <summary>Carrega/salva settings.json ao lado do exe (portatil), como no v1.</summary>
 public static class SettingsService
 {
-    public static string SettingsPath =>
-        Path.Combine(AppContext.BaseDirectory, "settings.json");
+    private static string? _settingsPath;
+
+    /// <summary>
+    /// Windows: sempre ao lado do exe (portátil). Linux/macOS: ao lado do binário SE a pasta
+    /// for gravável; senão ~/.config/1clicktransfer/ (o .app do macOS bloqueia escrita local).
+    /// </summary>
+    public static string SettingsPath => _settingsPath ??= ResolveSettingsPath();
+
+    private static string ResolveSettingsPath()
+    {
+        var local = Path.Combine(AppContext.BaseDirectory, "settings.json");
+        if (OperatingSystem.IsWindows()) return local;
+        try
+        {
+            var probe = Path.Combine(AppContext.BaseDirectory, ".writeprobe");
+            File.WriteAllText(probe, "");
+            File.Delete(probe);
+            return local;
+        }
+        catch
+        {
+            var cfg = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "1clicktransfer");
+            Directory.CreateDirectory(cfg);
+            return Path.Combine(cfg, "settings.json");
+        }
+    }
 
     private static readonly JsonSerializerOptions _opts = new()
     {
