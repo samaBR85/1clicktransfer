@@ -63,6 +63,7 @@ public partial class MainWindow : Window
             ApplyDwm();
             ApplyTexts();
             ApplySplit();
+            ApplyTasksHeight();
             RefreshJobs();
             RefreshHome();
             UpdateReadyState();
@@ -114,6 +115,23 @@ public partial class MainWindow : Window
         if (total > 0)
         {
             S.SplitRatio = ColSrc.ActualWidth / total;
+            SettingsService.Save(S);
+        }
+    }
+
+    private void ApplyTasksHeight()
+    {
+        var h = S.TasksHeight;
+        if (double.IsNaN(h) || h < 52) h = 130;
+        if (h > 600) h = 600;
+        RowTasks.Height = new GridLength(h, GridUnitType.Pixel);
+    }
+
+    private void TasksSplitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+    {
+        if (RowTasks.ActualHeight >= 52)
+        {
+            S.TasksHeight = RowTasks.ActualHeight;
             SettingsService.Save(S);
         }
     }
@@ -230,6 +248,24 @@ public partial class MainWindow : Window
 
     // ---------------- Home ----------------
     private static string FormatSize(long b) => b.ToString("#,0", PtBr);
+
+    // Velocidade adaptativa (B/s..GB/s) e tamanho adaptativo (B..TB), com virgula decimal pt-BR.
+    private static string FormatSpeed(double bytesPerSec)
+    {
+        if (bytesPerSec <= 0) return "";
+        string[] u = { "B/s", "KB/s", "MB/s", "GB/s" };
+        double v = bytesPerSec; int i = 0;
+        while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; }
+        return v.ToString(i == 0 ? "0" : "0.0", PtBr) + " " + u[i];
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] u = { "B", "KB", "MB", "GB", "TB" };
+        double v = bytes; int i = 0;
+        while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; }
+        return v.ToString(i == 0 ? "0" : "0.0", PtBr) + " " + u[i];
+    }
 
     private FileRow ToRow(RemoteEntry e, bool highlight) => new()
     {
@@ -571,6 +607,11 @@ public partial class MainWindow : Window
                             : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
                         SetStatus(L.T("sendingTo", label, step, steps), StatusKind.Sub);
                         Prog.Value = 0;
+                        TxtRate.Text = "";
+                        var rateSw = System.Diagnostics.Stopwatch.StartNew();
+                        double lastUiMs = -1000;   // forca a 1a atualizacao
+                        double lastPct = -1;
+                        double lastBps = 0;        // preserva ultima taxa nao-zero (janelas do SFTP)
                         try
                         {
                             if (mode != OverwriteMode.Always)
@@ -582,8 +623,22 @@ public partial class MainWindow : Window
                                     if (mode == OverwriteMode.IfNewer && await Task.Run(() => !IsSourceNewer(d, src, fileName))) { skipped++; continue; }
                                 }
                             }
-                            await Task.Run(() => TransferService.Send(d, src,
-                                pct => Dispatcher.Invoke(() => Prog.Value = pct)));
+                            await Task.Run(() => TransferService.Send(d, src, tp =>
+                            {
+                                if (tp.BytesPerSec > 0) lastBps = tp.BytesPerSec;
+                                double nowMs = rateSw.Elapsed.TotalMilliseconds;
+                                // Throttle: UI a cada ~200ms OU quando a % mudar >= 1 pt.
+                                if (nowMs - lastUiMs < 200 && Math.Abs(tp.Percent - lastPct) < 1) return;
+                                lastUiMs = nowMs; lastPct = tp.Percent;
+                                var bps = lastBps; var done = tp.Transferred; var total = tp.Total;
+                                Dispatcher.Invoke(() =>
+                                {
+                                    Prog.Value = tp.Percent;
+                                    TxtRate.Text = bps > 0
+                                        ? FormatSpeed(bps) + " — " + FormatBytes(done) + " / " + FormatBytes(total)
+                                        : (total > 0 ? FormatBytes(done) + " / " + FormatBytes(total) : "");
+                                });
+                            }));
                             Prog.Value = 100;
                             sent++;
                         }
@@ -603,6 +658,7 @@ public partial class MainWindow : Window
         {
             _transferring = false;
             BtnCfg.IsEnabled = BtnRefresh.IsEnabled = true;
+            TxtRate.Text = "";
             UpdateReadyState();
         }
     }

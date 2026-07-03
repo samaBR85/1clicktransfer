@@ -9,6 +9,9 @@ namespace OneClickTransfer.Services;
 
 public record RemoteEntry(string Name, bool IsDir, long Size, DateTime Modified);
 
+/// <summary>Progresso de uma transferência: % , bytes enviados, total e velocidade (bytes/seg).</summary>
+public readonly record struct TransferProgress(double Percent, long Transferred, long Total, double BytesPerSec);
+
 /// <summary>Transferencias local e FTP/FTPS. SFTP entra no v2.0 (SSH.NET).</summary>
 public static class TransferService
 {
@@ -66,14 +69,16 @@ public static class TransferService
         return baseP.TrimEnd('/') + "/" + fileName;
     }
 
-    public static void FtpUpload(Destination d, string srcFile, Action<double>? onProgress)
+    public static void FtpUpload(Destination d, string srcFile, Action<TransferProgress>? onProgress)
     {
+        long total = new FileInfo(srcFile).Length;
         using var c = MakeClient(d);
         c.Connect();
         var remote = RemoteFilePath(d, Path.GetFileName(srcFile));
         Action<FtpProgress> p = fp =>
         {
-            if (fp.Progress >= 0) onProgress?.Invoke(fp.Progress);
+            if (fp.Progress >= 0)
+                onProgress?.Invoke(new TransferProgress(fp.Progress, fp.TransferredBytes, total, fp.TransferSpeed));
         };
         c.UploadFile(srcFile, remote, FtpRemoteExists.Overwrite, true, FtpVerify.None, p);
         c.Disconnect();
@@ -151,7 +156,7 @@ public static class TransferService
         }
     }
 
-    public static void SftpUpload(Destination d, string srcFile, Action<double>? onProgress)
+    public static void SftpUpload(Destination d, string srcFile, Action<TransferProgress>? onProgress)
     {
         using var c = MakeSftp(d);
         c.Connect();
@@ -159,10 +164,18 @@ public static class TransferService
         EnsureSftpDir(c, folder);
         var remote = folder.TrimEnd('/') + "/" + Path.GetFileName(srcFile);
         using var fs = File.OpenRead(srcFile);
-        double total = fs.Length;
+        long total = fs.Length;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        long lastBytes = 0; double lastMs = 0;
         c.UploadFile(fs, remote, true, uploaded =>
         {
-            if (total > 0) onProgress?.Invoke(uploaded / total * 100.0);
+            long done = (long)uploaded;
+            double nowMs = sw.Elapsed.TotalMilliseconds;
+            double dt = nowMs - lastMs;
+            double bps = 0;
+            if (dt >= 250) { bps = (done - lastBytes) / (dt / 1000.0); lastBytes = done; lastMs = nowMs; }
+            double pct = total > 0 ? done / (double)total * 100.0 : 0;
+            onProgress?.Invoke(new TransferProgress(pct, done, total, bps));
         });
         c.Disconnect();
     }
@@ -216,11 +229,17 @@ public static class TransferService
     }
 
     // ---------------- Dispatchers por tipo ----------------
-    public static void Send(Destination d, string srcFile, Action<double>? onProgress)
+    public static void Send(Destination d, string srcFile, Action<TransferProgress>? onProgress)
     {
         switch (d.Type)
         {
-            case DestType.Local: LocalCopy(srcFile, d.Folder); onProgress?.Invoke(100); break;
+            case DestType.Local:
+            {
+                long size = new FileInfo(srcFile).Length;
+                LocalCopy(srcFile, d.Folder);
+                onProgress?.Invoke(new TransferProgress(100, size, size, 0));
+                break;
+            }
             case DestType.Ftp: FtpUpload(d, srcFile, onProgress); break;
             case DestType.Sftp: SftpUpload(d, srcFile, onProgress); break;
         }
