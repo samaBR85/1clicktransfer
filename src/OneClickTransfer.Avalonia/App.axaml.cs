@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using OneClickTransfer.Avalonia.Services;
 using OneClickTransfer.Avalonia.Views;
 using OneClickTransfer.Models;
 
@@ -16,7 +17,17 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow();
+        {
+            var window = new MainWindow();
+
+            // Composition root manual (sem container DI).
+            AppServices.Dispatcher = new AvaloniaUiDispatcher();
+            AppServices.App = new AppControl();
+            AppServices.Files = new AvaloniaFilePickerService(() => window);
+            // AppServices.Dialogs = ... (atribuido na E7, quando existirem os diálogos)
+
+            desktop.MainWindow = window;
+        }
 
         base.OnFrameworkInitializationCompleted();
     }
