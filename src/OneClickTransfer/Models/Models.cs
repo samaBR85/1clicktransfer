@@ -82,9 +82,14 @@ public class TransferJob
 {
     public string Name { get; set; } = "";
     public bool Enabled { get; set; } = true;
+    public bool Watch { get; set; } = false;       // vigia a origem desta tarefa (envio automatico)
     public SourceSpec Source { get; set; } = new();
     public List<Destination> Destinations { get; set; } = new();
     public OverwriteMode Overwrite { get; set; } = OverwriteMode.Always;
+
+    /// <summary>Selo 👁 exibido na lista quando a tarefa esta sendo vigiada.</summary>
+    [JsonIgnore]
+    public string WatchIcon => Watch ? "\U0001F441" : "";
 
     /// <summary>Rótulo da origem: nome do arquivo, ou "arquivo +N" se vários.</summary>
     [JsonIgnore]
@@ -119,7 +124,7 @@ public class TransferJob
 
     public TransferJob Clone() => new()
     {
-        Name = Name, Enabled = Enabled, Overwrite = Overwrite,
+        Name = Name, Enabled = Enabled, Watch = Watch, Overwrite = Overwrite,
         Source = Source.Clone(),
         Destinations = Destinations.ConvertAll(d => d.Clone())
     };
@@ -149,7 +154,6 @@ public class AppSettings
     public double WindowTop { get; set; } = 0;
     public bool WindowMaximized { get; set; } = false;
     public bool AutoUpdateCheck { get; set; } = true;   // procurar atualizacoes ao iniciar
-    public bool WatchEnabled { get; set; } = false; // envio automatico ao mudar o arquivo
     public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;  // legado (migrado p/ Jobs)
 
     // Tarefas: cada uma tem origem + destinos + modo próprios (v2.1)

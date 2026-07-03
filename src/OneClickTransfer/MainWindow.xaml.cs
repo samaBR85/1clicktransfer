@@ -69,7 +69,7 @@ public partial class MainWindow : Window
             RefreshHome();
             UpdateReadyState();
             StartOrStopWatch();
-            if (S.WatchEnabled) SetStatus(L.T("watchStatus"), StatusKind.Sub);
+            if (Job.Watch) SetStatus(L.T("watchStatus"), StatusKind.Sub);
             else if (Job.Source.Count == 0)
                 SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
             if (S.AutoUpdateCheck) _ = CheckUpdatesAtStartup();
@@ -133,8 +133,8 @@ public partial class MainWindow : Window
     {
         Title = L.T("appTitle");
         TxtTitle.Text = L.T("appTitle");
-        BtnWatch.ToolTip = L.T("watch");                     // icone 👁 no cabecalho da ORIGEM
-        BtnSrcRefresh.ToolTip = BtnDstRefresh.ToolTip = L.T("refresh");   // icones ⟳ nos cabecalhos
+        BtnWatch.ToolTip = L.T("watchTip");                  // icone 👁 no cabecalho da ORIGEM
+        BtnSrcRefresh.ToolTip = BtnDstRefresh.ToolTip = L.T("refreshTip");   // icones de refresh nos cabecalhos
         TxtTasksHdr.Text = L.T("tasks");
         BtnJobNew.Content = L.T("taskNew");
         BtnJobDup.Content = L.T("taskDuplicate");
@@ -490,7 +490,7 @@ public partial class MainWindow : Window
     private void UpdateReadyState()
     {
         BtnGo.IsEnabled = S.Jobs.Any(JobReady);
-        BtnWatch.IsChecked = S.WatchEnabled;
+        BtnWatch.IsChecked = Job.Watch;   // reflete a tarefa selecionada
         var hasSc = !string.IsNullOrEmpty(S.Shortcut) && S.Shortcut != "None" && S.Shortcut != "Nenhum";
         TxtHint.Text = hasSc
             ? L.T("shortcutHint", S.Shortcut) + "   ·   " + L.T("refreshHint")
@@ -554,13 +554,14 @@ public partial class MainWindow : Window
 
     private void BtnGo_Click(object sender, RoutedEventArgs e) => _ = DoTransferJobs(S.Jobs.ToList());
 
-    // ---------------- Watch (envio automatico) ----------------
+    // ---------------- Watch (envio automatico, por tarefa) ----------------
     private void Watch_Toggled(object sender, RoutedEventArgs e)
     {
-        S.WatchEnabled = BtnWatch.IsChecked == true;
+        Job.Watch = BtnWatch.IsChecked == true;   // vigia a tarefa selecionada
         SettingsService.Save(S);
+        LstJobs.Items.Refresh();                   // atualiza o selo 👁 na lista
         StartOrStopWatch();
-        SetStatus(S.WatchEnabled ? L.T("watchStatus") : "", StatusKind.Sub);
+        SetStatus(Job.Watch ? L.T("watchStatus") : "", StatusKind.Sub);
     }
 
     private void StopAllWatchers()
@@ -574,8 +575,7 @@ public partial class MainWindow : Window
     private void StartOrStopWatch()
     {
         StopAllWatchers();
-        if (!S.WatchEnabled) return;
-        foreach (var job in S.Jobs.Where(JobReady))
+        foreach (var job in S.Jobs.Where(j => j.Watch && JobReady(j)))
         {
             foreach (var path in job.Source.All)
             {
@@ -621,7 +621,7 @@ public partial class MainWindow : Window
 
     private void TriggerWatch(TransferJob job)
     {
-        if (!S.WatchEnabled || _transferring) return;
+        if (_transferring || !job.Watch) return;
         if (!JobReady(job) || !job.Source.All.Any(File.Exists)) return;
         _ = DoTransferJobs(new List<TransferJob> { job });
     }

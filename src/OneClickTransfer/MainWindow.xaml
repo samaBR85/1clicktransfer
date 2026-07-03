@@ -48,6 +48,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <CheckBox Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"
                                               IsChecked="{Binding Enabled, Mode=TwoWay}"
@@ -57,6 +58,8 @@
                                         <TextBlock Text="{Binding Summary}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
                                                    TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
+                                    <TextBlock Grid.Column="2" Text="{Binding WatchIcon}" VerticalAlignment="Center"
+                                               Margin="8,0,6,0" FontSize="14"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -98,7 +101,7 @@
                     <Grid DockPanel.Dock="Top">
                         <TextBlock x:Name="TxtSrcHdr" Text="SOURCE" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button x:Name="BtnSrcRefresh" Content="⟳" Width="30" Height="26" FontSize="17" Click="SrcRefresh_Click"/>
+                            <Button x:Name="BtnSrcRefresh" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" Width="30" Height="26" FontSize="14" Padding="0" Click="SrcRefresh_Click"/>
                             <ToggleButton x:Name="BtnWatch" Style="{StaticResource ToggleFlat}" Content="👁" Width="34" Height="26" FontSize="14" Margin="6,0,0,0" Click="Watch_Toggled"/>
                         </StackPanel>
                     </Grid>
@@ -139,7 +142,7 @@
                 <DockPanel>
                     <Grid DockPanel.Dock="Top">
                         <TextBlock x:Name="TxtDstHdr" Text="DESTINATION" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
-                        <Button x:Name="BtnDstRefresh" Content="⟳" Width="30" Height="26" FontSize="17" HorizontalAlignment="Right" Click="DstRefresh_Click"/>
+                        <Button x:Name="BtnDstRefresh" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" Width="30" Height="26" FontSize="14" Padding="0" HorizontalAlignment="Right" Click="DstRefresh_Click"/>
                     </Grid>
                     <TextBlock x:Name="TxtDstPath" DockPanel.Dock="Top" Foreground="{DynamicResource SubTextBrush}"
                                TextTrimming="CharacterEllipsis" Margin="0,4,0,8"/>

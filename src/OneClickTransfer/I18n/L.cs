@@ -12,6 +12,8 @@ public static class L
         ["appTitle"] = ("Transferência 1-Clique", "1-Click Transfer"),
         ["refresh"] = ("Atualizar", "Refresh"),
         ["watch"] = ("👁 Observar", "👁 Watch"),
+        ["watchTip"] = ("Observar esta tarefa (envia ao salvar o arquivo)", "Watch this task (send when the file is saved)"),
+        ["refreshTip"] = ("Atualizar esta lista", "Refresh this list"),
         ["watchStatus"] = ("Observando — envia automaticamente ao salvar o arquivo.", "Watching — auto-sends when the file is saved."),
         ["lightMode"] = ("Modo claro", "Light mode"),
         ["darkMode"] = ("Modo escuro", "Dark mode"),
