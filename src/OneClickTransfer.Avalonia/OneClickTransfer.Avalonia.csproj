@@ -9,10 +9,11 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- Nome provisorio ate o cutover de identidade (E12). -->
-    <AssemblyName>1clickTransfer.v3</AssemblyName>
+    <!-- Identidade v3 (cutover E12): asset Windows chama-se 1clickTransfer.exe (contrato do auto-update). -->
+    <AssemblyName>1clickTransfer</AssemblyName>
     <RootNamespace>OneClickTransfer.Avalonia</RootNamespace>
-    <Version>2.0.0</Version>
+    <Version>3.0.0</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

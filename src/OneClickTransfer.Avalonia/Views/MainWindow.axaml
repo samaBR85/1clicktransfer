@@ -4,6 +4,7 @@
         x:Class="OneClickTransfer.Avalonia.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{Binding Title}"
+        Icon="/Assets/app.ico"
         Width="820" Height="720" MinWidth="660" MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}">
