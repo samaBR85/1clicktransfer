@@ -59,6 +59,7 @@ public static class L
         ["destEditorTitle"] = ("Destino", "Destination"),
         ["addDest"] = ("Adicionar", "Add"),
         ["editDest"] = ("Editar", "Edit"),
+        ["duplicateDest"] = ("Duplicar", "Duplicate"),
         ["removeDest"] = ("Remover", "Remove"),
         ["noDestsYet"] = ("(nenhum destino - clique em Adicionar)", "(no destination - click Add)"),
         ["destCount"] = ("{0} destino(s)", "{0} destination(s)"),

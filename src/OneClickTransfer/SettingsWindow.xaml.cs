@@ -43,6 +43,7 @@ public partial class SettingsWindow : Window
         LblSec2.Text = L.T("sec2Where");
         BtnAddDest.Content = L.T("addDest");
         BtnEditDest.Content = L.T("editDest");
+        BtnDuplicateDest.Content = L.T("duplicateDest");
         BtnRemoveDest.Content = L.T("removeDest");
         LblGroup.Text = L.T("groupLabel");
         BtnGroupSave.Content = L.T("saveGroup");
@@ -105,6 +106,21 @@ public partial class SettingsWindow : Window
             dlg.Result.Enabled = old.Enabled;   // preserva o estado marcado/desmarcado
             _dests[idx] = dlg.Result;
             LstDests.SelectedIndex = idx;
+        }
+    }
+
+    private void DuplicateDest_Click(object sender, RoutedEventArgs e)
+    {
+        var idx = LstDests.SelectedIndex;
+        if (idx < 0) return;
+        var src = _dests[idx];
+        // Abre o editor ja preenchido com o destino selecionado; ao confirmar, cria um NOVO
+        var dlg = new DestinationEditorWindow(src.Clone()) { Owner = this };
+        if (dlg.ShowDialog() == true && dlg.Result != null)
+        {
+            dlg.Result.Enabled = src.Enabled;
+            _dests.Insert(idx + 1, dlg.Result);
+            LstDests.SelectedIndex = idx + 1;
         }
     }
 

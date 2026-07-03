@@ -31,9 +31,10 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                <Button x:Name="BtnAddDest" Width="120" Height="30" Click="AddDest_Click"/>
-                <Button x:Name="BtnEditDest" Width="110" Height="30" Margin="8,0,0,0" Click="EditDest_Click"/>
-                <Button x:Name="BtnRemoveDest" Width="110" Height="30" Margin="8,0,0,0" Click="RemoveDest_Click"/>
+                <Button x:Name="BtnAddDest" Width="110" Height="30" Click="AddDest_Click"/>
+                <Button x:Name="BtnEditDest" Width="100" Height="30" Margin="8,0,0,0" Click="EditDest_Click"/>
+                <Button x:Name="BtnDuplicateDest" Width="105" Height="30" Margin="8,0,0,0" Click="DuplicateDest_Click"/>
+                <Button x:Name="BtnRemoveDest" Width="100" Height="30" Margin="8,0,0,0" Click="RemoveDest_Click"/>
             </StackPanel>
             <DockPanel Margin="0,8,0,0">
                 <TextBlock x:Name="LblGroup" DockPanel.Dock="Left" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
