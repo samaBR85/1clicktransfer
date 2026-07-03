@@ -14,6 +14,7 @@ public partial class SettingsWindow : Window
 {
     private AppSettings S => App.Settings;
     private bool _profSync;
+    private bool _grpSync;
     private readonly ObservableCollection<Destination> _dests = new();
 
     [DllImport("dwmapi.dll")]
@@ -26,6 +27,7 @@ public partial class SettingsWindow : Window
         TxtSrc.Text = S.Source.Path;
         LstDests.ItemsSource = _dests;
         LoadDests(S.Destinations);
+        ReloadGroups();
         ReloadProfiles();
         Loaded += (_, _) =>
         {
@@ -42,6 +44,9 @@ public partial class SettingsWindow : Window
         BtnAddDest.Content = L.T("addDest");
         BtnEditDest.Content = L.T("editDest");
         BtnRemoveDest.Content = L.T("removeDest");
+        LblGroup.Text = L.T("groupLabel");
+        BtnGroupSave.Content = L.T("saveGroup");
+        BtnGroupDelete.Content = L.T("deleteGroup");
         LblF5Note.Text = L.T("f5RefreshNote");
         LblSec3.Text = L.T("sec3Options");
         LblShortcut.Text = L.T("shortcutLabel");
@@ -108,6 +113,49 @@ public partial class SettingsWindow : Window
         var idx = LstDests.SelectedIndex;
         if (idx < 0) return;
         _dests.RemoveAt(idx);
+    }
+
+    // ---------------- Grupos de destino ----------------
+    private void ReloadGroups()
+    {
+        _grpSync = true;
+        CmbGroups.Items.Clear();
+        CmbGroups.Items.Add(L.T("selectItem"));
+        foreach (var g in S.DestGroups) CmbGroups.Items.Add(g.Name);
+        CmbGroups.SelectedIndex = 0;
+        _grpSync = false;
+    }
+
+    private void Groups_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_grpSync || CmbGroups.SelectedIndex <= 0) return;
+        var name = CmbGroups.SelectedItem?.ToString() ?? "";
+        var g = S.DestGroups.FirstOrDefault(x => x.Name == name);
+        if (g != null) LoadDests(g.Destinations);
+    }
+
+    private void GroupSave_Click(object sender, RoutedEventArgs e)
+    {
+        if (_dests.Count == 0) return;
+        var suggest = CmbGroups.SelectedIndex > 0 ? CmbGroups.SelectedItem?.ToString() ?? "" : "";
+        var name = PromptDialog.Ask(this, L.T("saveGroup"), L.T("groupNamePrompt"), suggest);
+        if (name == null) return;
+        var grp = new DestGroup { Name = name, Destinations = _dests.Select(d => d.Clone()).ToList() };
+        var idx = S.DestGroups.FindIndex(x => x.Name == name);
+        if (idx >= 0) S.DestGroups[idx] = grp; else S.DestGroups.Add(grp);
+        SettingsService.Save(S);
+        ReloadGroups();
+        CmbGroups.SelectedItem = name;
+    }
+
+    private void GroupDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (CmbGroups.SelectedIndex <= 0) { MessageBox.Show(this, L.T("selectItem"), L.T("groupLabel"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        var name = CmbGroups.SelectedItem!.ToString()!;
+        if (MessageBox.Show(this, name, L.T("deleteGroup"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        S.DestGroups.RemoveAll(x => x.Name == name);
+        SettingsService.Save(S);
+        ReloadGroups();
     }
 
     private SourceSpec ReadSource() => new() { Path = TxtSrc.Text.Trim(), Kind = SourceKind.File };

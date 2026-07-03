@@ -55,6 +55,7 @@ public static class SettingsService
         s.Destinations ??= new();
         s.Profiles ??= new();
         s.ActiveProfile ??= "";
+        s.DestGroups ??= new();
         return s;
     }
 }

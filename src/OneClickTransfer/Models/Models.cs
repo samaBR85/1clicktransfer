@@ -62,6 +62,14 @@ public class Profile
     };
 }
 
+/// <summary>Conjunto nomeado de destinos (reutilizável).</summary>
+public class DestGroup
+{
+    public string Name { get; set; } = "";
+    public List<Destination> Destinations { get; set; } = new();
+    public DestGroup Clone() => new() { Name = Name, Destinations = Destinations.ConvertAll(d => d.Clone()) };
+}
+
 public class AppSettings
 {
     // Preferencias globais
@@ -74,7 +82,10 @@ public class AppSettings
     public SourceSpec Source { get; set; } = new();
     public List<Destination> Destinations { get; set; } = new();
 
-    // Perfis salvos
+    // Perfis salvos (origem + destinos)
     public List<Profile> Profiles { get; set; } = new();
     public string ActiveProfile { get; set; } = "";
+
+    // Grupos de destino salvos (conjuntos de destinos reutilizáveis)
+    public List<DestGroup> DestGroups { get; set; } = new();
 }
