@@ -31,13 +31,22 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
     [ObservableProperty] private bool _isFtp;
     [ObservableProperty] private bool _isSftp;
 
-    partial void OnIsLocalChanged(bool value) => ApplyTypeChange();
-    partial void OnIsFtpChanged(bool value) => ApplyTypeChange();
-    partial void OnIsSftpChanged(bool value) => ApplyTypeChange();
+    partial void OnIsLocalChanged(bool value) { if (_typeSync) return; if (value) ClearExcept(0); ApplyTypeChange(); }
+    partial void OnIsFtpChanged(bool value) { if (_typeSync) return; if (value) ClearExcept(1); ApplyTypeChange(); }
+    partial void OnIsSftpChanged(bool value) { if (_typeSync) return; if (value) ClearExcept(2); ApplyTypeChange(); }
+
+    // Exclusividade mútua sem depender do GroupName da UI (VM auto-consistente/testável).
+    private void ClearExcept(int keep)
+    {
+        _typeSync = true;
+        if (keep != 0) IsLocal = false;
+        if (keep != 1) IsFtp = false;
+        if (keep != 2) IsSftp = false;
+        _typeSync = false;
+    }
 
     private void ApplyTypeChange()
     {
-        if (_typeSync) return;
         if (IsSftp && (Port == "21" || string.IsNullOrWhiteSpace(Port))) Port = "22";
         else if (IsFtp && (Port == "22" || string.IsNullOrWhiteSpace(Port))) Port = "21";
         OnPropertyChanged(nameof(IsServer));
