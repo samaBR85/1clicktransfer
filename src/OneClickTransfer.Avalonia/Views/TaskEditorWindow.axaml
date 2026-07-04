@@ -16,11 +16,18 @@
       <Button Width="96" Height="32" Content="{Binding CancelLabel}" Command="{Binding CancelCommand}"/>
     </StackPanel>
 
+    <!-- Nome da tarefa (renomear aqui dentro) -->
+    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+      <TextBlock Text="{Binding TaskNameLabel}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+      <TextBox Height="30" Text="{Binding TaskName, Mode=TwoWay}"/>
+    </StackPanel>
+
     <Grid RowDefinitions="Auto,*,Auto,Auto,1.6*,Auto,Auto,Auto">
 
       <!-- Origem -->
       <TextBlock Grid.Row="0" Text="{Binding Sec1}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-      <ListBox Grid.Row="1" MinHeight="64" ItemsSource="{Binding SrcFiles}" SelectedIndex="{Binding SelectedSrcIndex, Mode=TwoWay}"
+      <ListBox Grid.Row="1" x:Name="LstSrc" MinHeight="64" SelectionMode="Multiple" ItemsSource="{Binding SrcFiles}"
+               SelectedIndex="{Binding SelectedSrcIndex, Mode=TwoWay}"
                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="3">
         <ListBox.Styles>
           <Style Selector="ListBoxItem"><Setter Property="Padding" Value="8,3"/><Setter Property="MinHeight" Value="0"/></Style>
@@ -33,12 +40,13 @@
       </ListBox>
       <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
         <Button Width="130" Height="30" Content="{Binding AddFileLabel}" Command="{Binding AddSrcCommand}"/>
-        <Button Width="110" Height="30" Content="{Binding RemoveFileLabel}" Command="{Binding RemoveSrcCommand}"/>
+        <Button Width="110" Height="30" Content="{Binding RemoveFileLabel}" Command="{Binding RemoveSrcCommand}"
+                CommandParameter="{Binding #LstSrc.SelectedItems}"/>
       </StackPanel>
 
       <!-- Destinos -->
       <TextBlock Grid.Row="3" Text="{Binding Sec2}" FontWeight="SemiBold" Margin="0,14,0,6"/>
-      <ListBox Grid.Row="4" x:Name="LstDests" MinHeight="90" ItemsSource="{Binding Dests}"
+      <ListBox Grid.Row="4" x:Name="LstDests" MinHeight="90" SelectionMode="Multiple" ItemsSource="{Binding Dests}"
                SelectedIndex="{Binding SelectedDestIndex, Mode=TwoWay}" DoubleTapped="Dests_DoubleTapped"
                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="3">
         <ListBox.Styles>
@@ -58,7 +66,8 @@
         <Button Width="106" Height="30" Content="{Binding AddDestLabel}" Command="{Binding AddDestCommand}"/>
         <Button Width="94" Height="30" Content="{Binding EditDestLabel}" Command="{Binding EditDestCommand}"/>
         <Button Width="104" Height="30" Content="{Binding DuplicateDestLabel}" Command="{Binding DuplicateDestCommand}"/>
-        <Button Width="98" Height="30" Content="{Binding RemoveDestLabel}" Command="{Binding RemoveDestCommand}"/>
+        <Button Width="98" Height="30" Content="{Binding RemoveDestLabel}" Command="{Binding RemoveDestCommand}"
+                CommandParameter="{Binding #LstDests.SelectedItems}"/>
       </StackPanel>
       <DockPanel Grid.Row="6" Margin="0,8,0,0">
         <TextBlock Text="{Binding GroupLabel}" DockPanel.Dock="Left" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>

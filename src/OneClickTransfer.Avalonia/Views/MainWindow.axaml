@@ -13,12 +13,18 @@
     <!-- Ícones funcionais como StreamGeometry (Segoe MDL2/emoji não existem no Linux). -->
     <StreamGeometry x:Key="IcoRefresh">M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z</StreamGeometry>
     <StreamGeometry x:Key="IcoEye">M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z</StreamGeometry>
+    <StreamGeometry x:Key="IcoPlus">M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z</StreamGeometry>
+    <StreamGeometry x:Key="IcoCopy">M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z</StreamGeometry>
+    <StreamGeometry x:Key="IcoPencil">M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z</StreamGeometry>
+    <StreamGeometry x:Key="IcoTrash">M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z</StreamGeometry>
+    <StreamGeometry x:Key="IcoGear">M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z</StreamGeometry>
+    <StreamGeometry x:Key="IcoPlay">M8 5v14l11-7z</StreamGeometry>
   </Window.Resources>
 
   <Grid x:Name="RootGrid" Margin="14">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>                                   <!-- 0 top bar -->
-      <RowDefinition Height="118" MinHeight="96"/>                     <!-- 1 TAREFAS -->
+      <RowDefinition Height="138" MinHeight="120"/>                    <!-- 1 TAREFAS -->
       <RowDefinition Height="Auto"/>                                   <!-- 2 splitter -->
       <RowDefinition Height="*"/>                                      <!-- 3 cards -->
       <RowDefinition Height="Auto"/>                                   <!-- 4 acao -->
@@ -29,22 +35,41 @@
       <RowDefinition Height="Auto"/>                                   <!-- 9 rodape -->
     </Grid.RowDefinitions>
 
-    <!-- Top bar -->
-    <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
-               Foreground="{DynamicResource TextBrush}" Margin="0,0,0,8"/>
+    <!-- Top bar: título + engrenagem de Configurações -->
+    <Grid Grid.Row="0" Margin="0,0,0,8" ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
+                 Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"/>
+      <Button Grid.Column="1" Width="30" Height="28" Padding="0" Command="{Binding OpenSettingsCommand}"
+              IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding SettingsLabel}"
+              AutomationProperties.Name="{Binding SettingsLabel}">
+        <PathIcon Data="{StaticResource IcoGear}" Width="16" Height="16"/>
+      </Button>
+    </Grid>
 
-    <!-- Tarefas -->
-    <Grid Grid.Row="1">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="Auto"/>
-      </Grid.ColumnDefinitions>
+    <!-- Tarefas: lista (esquerda) + painel de ações da selecionada (direita) -->
+    <Grid Grid.Row="1" ColumnDefinitions="1.45*,10,1*">
 
       <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
               BorderThickness="1" CornerRadius="8" Padding="8,6">
         <DockPanel>
-          <TextBlock Text="{Binding TasksHeader}" DockPanel.Dock="Top" FontWeight="Bold" FontSize="11"
-                     Foreground="{DynamicResource SubTextBrush}" Margin="2,0,0,4"/>
+          <Grid DockPanel.Dock="Top" Margin="2,0,0,4">
+            <TextBlock Text="{Binding TasksHeader}" FontWeight="Bold" FontSize="11"
+                       Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+              <Button Width="24" Height="24" Padding="0" Command="{Binding NewJobCommand}" IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding NewLabel}" AutomationProperties.Name="{Binding NewLabel}">
+                <PathIcon Data="{StaticResource IcoPlus}" Width="14" Height="14"/>
+              </Button>
+              <Button Width="24" Height="24" Padding="0" Command="{Binding DuplicateJobCommand}" IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding DuplicateLabel}" AutomationProperties.Name="{Binding DuplicateLabel}">
+                <PathIcon Data="{StaticResource IcoCopy}" Width="13" Height="13"/>
+              </Button>
+              <Button Width="24" Height="24" Padding="0" Command="{Binding RenameJobCommand}" IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RenameLabel}" AutomationProperties.Name="{Binding RenameLabel}">
+                <PathIcon Data="{StaticResource IcoPencil}" Width="13" Height="13"/>
+              </Button>
+              <Button Width="24" Height="24" Padding="0" Command="{Binding RemoveJobCommand}" IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RemoveLabel}" AutomationProperties.Name="{Binding RemoveLabel}">
+                <PathIcon Data="{StaticResource IcoTrash}" Width="13" Height="13"/>
+              </Button>
+            </StackPanel>
+          </Grid>
           <ListBox x:Name="LstJobs" MinHeight="44" ItemsSource="{Binding Jobs}"
                    SelectedIndex="{Binding SelectedJobIndex, Mode=TwoWay}"
                    DoubleTapped="Jobs_DoubleTapped"
@@ -79,12 +104,33 @@
         </DockPanel>
       </Border>
 
-      <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Top">
-        <Button Width="94" Height="26" Margin="0,0,0,5" Content="{Binding NewLabel}" Command="{Binding NewJobCommand}"/>
-        <Button Width="94" Height="26" Margin="0,0,0,5" Content="{Binding DuplicateLabel}" Command="{Binding DuplicateJobCommand}"/>
-        <Button Width="94" Height="26" Margin="0,0,0,5" Content="{Binding RenameLabel}" Command="{Binding RenameJobCommand}"/>
-        <Button Width="94" Height="26" Content="{Binding RemoveLabel}" Command="{Binding RemoveJobCommand}"/>
-      </StackPanel>
+      <!-- Painel da tarefa selecionada -->
+      <Border Grid.Column="2" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="8" Padding="12,10">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Bottom" Spacing="5">
+            <Button Classes="primary" Height="30" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Command="{Binding TransferSelectedCommand}" IsEnabled="{Binding CanTransferSelected}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Data="{StaticResource IcoPlay}" Width="13" Height="13"/>
+                <TextBlock Text="{Binding SendThisTaskLabel}" FontSize="12"/>
+              </StackPanel>
+            </Button>
+            <Button Height="28" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Command="{Binding EditTaskCommand}" IsEnabled="{Binding NotTransferring}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <PathIcon Data="{StaticResource IcoPencil}" Width="12" Height="12"/>
+                <TextBlock Text="{Binding EditTaskLabel}" FontSize="12"/>
+              </StackPanel>
+            </Button>
+          </StackPanel>
+          <StackPanel VerticalAlignment="Top">
+            <TextBlock Text="{Binding SelectedJobName}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Text="{Binding SelectedJobFilesText}" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,3,0,0"/>
+            <TextBlock Text="{Binding SelectedJobDestsText}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"/>
+          </StackPanel>
+        </DockPanel>
+      </Border>
     </Grid>
 
     <!-- Divisor arrastavel: altura do painel TAREFAS -->
@@ -203,10 +249,7 @@
                Margin="0,3,0,0" Foreground="{DynamicResource SubTextBrush}"/>
 
     <!-- Footer -->
-    <Grid Grid.Row="9" Margin="0,10,0,0">
-      <TextBlock Text="{Binding HintText}" FontSize="12" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-      <Button Content="{Binding SettingsLabel}" Width="112" Height="30" HorizontalAlignment="Right"
-              Command="{Binding OpenSettingsCommand}" IsEnabled="{Binding NotTransferring}"/>
-    </Grid>
+    <TextBlock Grid.Row="9" Text="{Binding HintText}" FontSize="12" Foreground="{DynamicResource SubTextBrush}"
+               VerticalAlignment="Center" Margin="0,10,0,0"/>
   </Grid>
 </Window>

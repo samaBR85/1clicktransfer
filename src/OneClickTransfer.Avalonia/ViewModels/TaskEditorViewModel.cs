@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -31,6 +32,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         _files = files;
 
         Title = L.T("taskEditorTitle", _s.CurrentJob.Name);
+        TaskName = _s.CurrentJob.Name;
         LoadSrc(_s.CurrentJob.Source.All);
         LoadDests(_s.CurrentJob.Destinations);
         ReloadGroups();
@@ -44,12 +46,14 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     public ObservableCollection<string> ProfileOptions { get; } = new();
 
     [ObservableProperty] private string _title = "";
+    [ObservableProperty] private string _taskName = "";
     [ObservableProperty] private int _selectedSrcIndex = -1;
     [ObservableProperty] private int _selectedDestIndex = -1;
     [ObservableProperty] private int _selectedGroupIndex;
     [ObservableProperty] private int _selectedProfileIndex;
 
     // ---------------- Textos ----------------
+    public string TaskNameLabel => L.T("taskNamePrompt");
     public string Sec1 => L.T("sec1File");
     public string AddFileLabel => L.T("addFile");
     public string RemoveFileLabel => L.T("removeFile");
@@ -93,8 +97,14 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void RemoveSrc()
+    private void RemoveSrc(IList? items)
     {
+        // Multi-seleção: remove todos os selecionados (copia antes de mexer na coleção).
+        if (items != null && items.Count > 0)
+        {
+            foreach (var s in items.Cast<object>().OfType<string>().ToList()) SrcFiles.Remove(s);
+            return;
+        }
         var idx = SelectedSrcIndex;
         if (idx >= 0 && idx < SrcFiles.Count) SrcFiles.RemoveAt(idx);
     }
@@ -134,8 +144,13 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void RemoveDest()
+    private void RemoveDest(IList? items)
     {
+        if (items != null && items.Count > 0)
+        {
+            foreach (var d in items.Cast<object>().OfType<Destination>().ToList()) Dests.Remove(d);
+            return;
+        }
         var idx = SelectedDestIndex;
         if (idx >= 0 && idx < Dests.Count) Dests.RemoveAt(idx);
     }
@@ -271,6 +286,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
+        if (!string.IsNullOrWhiteSpace(TaskName)) _s.CurrentJob.Name = TaskName.Trim();
         _s.CurrentJob.Source = ReadSource();
         _s.CurrentJob.Destinations = Dests.Select(d => d.Clone()).ToList();
         SettingsService.Save(_s);

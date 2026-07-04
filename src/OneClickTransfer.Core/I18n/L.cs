@@ -29,6 +29,8 @@ public static class L
         ["taskNamePrompt"] = ("Nome da tarefa:", "Task name:"),
         ["copySuffix"] = ("(cópia)", "(copy)"),
         ["taskRemoveConfirm"] = ("Remover a tarefa \"{0}\"?", "Remove task \"{0}\"?"),
+        ["sendThisTask"] = ("Enviar esta tarefa", "Send this task"),
+        ["editTaskBtn"] = ("Editar", "Edit"),
         ["noTasks"] = ("(nenhuma tarefa)", "(no tasks)"),
         ["editingTask"] = ("Editando: {0}", "Editing: {0}"),
         ["taskNotConfigured"] = ("Tarefa sem arquivo/destino — clique em Configurar.", "Task has no file/destination — click Settings."),

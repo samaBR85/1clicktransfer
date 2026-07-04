@@ -144,6 +144,36 @@ public class MainViewModelTests
         vm.OnClosed();
     }
 
+    // ---- Envio individual (topo, painel direito) ----
+    [Fact]
+    public async Task TransferSelected_sends_only_the_selected_job()
+    {
+        var (srcA, dstA) = MakeSrcAndDest(out var fileA);
+        var (srcB, dstB) = MakeSrcAndDest(out var fileB);
+        var s = WithJobs(ReadyJob("A", srcA, dstA), ReadyJob("B", srcB, dstB));
+        var vm = New(s);
+        vm.OnOpened();
+        vm.SelectedJobIndex = 1;   // B
+        await vm.TransferSelectedCommand.ExecuteAsync(null);
+        Assert.True(File.Exists(Path.Combine(dstB, fileB)));    // só B foi enviado
+        Assert.False(File.Exists(Path.Combine(dstA, fileA)));
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public void CanTransferSelected_reflects_selected_job_readiness()
+    {
+        var (src, dst) = MakeSrcAndDest(out _);
+        var s = WithJobs(Job("vazia"), ReadyJob("pronta", src, dst));
+        var vm = New(s);
+        vm.OnOpened();
+        vm.SelectedJobIndex = 0;   // vazia
+        Assert.False(vm.CanTransferSelected);
+        vm.SelectedJobIndex = 1;   // pronta
+        Assert.True(vm.CanTransferSelected);
+        vm.OnClosed();
+    }
+
     // ---- helpers ----
     private static (string src, string dstDir) MakeSrcAndDest(out string fileName)
     {

@@ -70,6 +70,27 @@ public class TaskEditorViewModelTests
     }
 
     [Fact]
+    public void Save_renames_the_task()
+    {
+        var s = SettingsWithJob(out var job);
+        var vm = New(s);
+        vm.TaskName = "Renomeada";
+        vm.SaveCommand.Execute(null);
+        Assert.Equal("Renomeada", job.Name);
+    }
+
+    [Fact]
+    public void RemoveSrc_multi_removes_all_selected()
+    {
+        var s = SettingsWithJob(out _);
+        var vm = New(s);
+        vm.SrcFiles.Clear();
+        vm.SrcFiles.Add("a"); vm.SrcFiles.Add("b"); vm.SrcFiles.Add("c");
+        vm.RemoveSrcCommand.Execute(new System.Collections.Generic.List<object> { "a", "c" });
+        Assert.Equal(new[] { "b" }, vm.SrcFiles.ToArray());
+    }
+
+    [Fact]
     public void Save_writes_source_and_dests_to_current_job_and_closes_true()
     {
         var s = SettingsWithJob(out var job);

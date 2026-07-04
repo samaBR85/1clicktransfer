@@ -74,6 +74,22 @@ public sealed partial class MainViewModel : ViewModelBase
     public bool CanGo => CanTransfer && !IsTransferring;
     public bool NotTransferring => !IsTransferring;
 
+    // Painel da tarefa selecionada (topo, coluna direita)
+    public string SelectedJobName => Job.Name;
+    public string SelectedJobFilesText => L.T("srcCount", Job.Source.Count);
+    public string SelectedJobDestsText => L.T("destCount", Job.Destinations.Count(d => d.Enabled));
+    public bool CanTransferSelected => JobReady(Job) && !IsTransferring;
+    public string SendThisTaskLabel => L.T("sendThisTask");
+    public string EditTaskLabel => L.T("editTaskBtn");
+
+    private void RaiseSelectedJobInfo()
+    {
+        OnPropertyChanged(nameof(SelectedJobName));
+        OnPropertyChanged(nameof(SelectedJobFilesText));
+        OnPropertyChanged(nameof(SelectedJobDestsText));
+        OnPropertyChanged(nameof(CanTransferSelected));
+    }
+
     partial void OnSelectedJobIndexChanged(int value)
     {
         if (_jobSync) return;
@@ -101,6 +117,7 @@ public sealed partial class MainViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(CanGo));
         OnPropertyChanged(nameof(NotTransferring));
+        OnPropertyChanged(nameof(CanTransferSelected));
     }
 
     partial void OnIsWatchCheckedChanged(bool value)
@@ -485,6 +502,7 @@ public sealed partial class MainViewModel : ViewModelBase
         OverwriteNever = Job.Overwrite == OverwriteMode.Never;
         _rbSync = false;
 
+        RaiseSelectedJobInfo();
         OnPropertyChanged(nameof(HintText));
     }
 
@@ -542,6 +560,10 @@ public sealed partial class MainViewModel : ViewModelBase
     // ---------------- Transferência ----------------
     [RelayCommand]
     private Task TransferAsync() => DoTransferJobs(S.Jobs.ToList());
+
+    /// <summary>Envia só a tarefa selecionada (botão do painel direito do topo).</summary>
+    [RelayCommand]
+    private Task TransferSelectedAsync() => DoTransferJobs(new List<TransferJob> { Job });
 
     private async Task DoTransferJobs(List<TransferJob> jobs)
     {
