@@ -40,25 +40,34 @@ time**, or let it **watch** a file and send it automatically when it changes.
 - **Multiple tasks** — each task is its own *source → destinations* pair. Toggle any on/off and
   transfer all the enabled ones with one click, or hit **Send this task** to fire just one.
 - **Multiple source files** per task, sent to **multiple destinations**: local/network folders,
-  **FTP/FTPS**, and **SFTP**. Destinations are a saved library with per-item checkboxes and
-  reusable **named groups** and **presets**.
+  **FTP/FTPS**, and **SFTP**. Destinations are a saved library with per-item checkboxes, reusable
+  **named groups**, **presets**, and a library of **saved FTP/SFTP servers**.
+- **Transfer queue** — a live panel shows what's queued, in progress, failed and succeeded, with
+  per-item progress and a configurable **parallel destinations** limit.
+- **Folder sources with exclude patterns** — pick a whole folder (recursive) as the source and
+  exclude subfolders/files with simple `.gitignore`-style patterns.
+- **Right-click on a destination** — create folder, rename, delete, or copy path, on local
+  *and* FTP/SFTP destinations.
 - **Watch (auto-send), per task** — when the source file changes, that task uploads automatically
   (great for build outputs).
+- **System tray icon** — open the window, send all enabled tasks, or exit from the tray; optional
+  **minimize to tray on close**.
+- **Desktop notifications** on transfer completion or failure (Windows, Linux, macOS).
 - **Command line** — run headless from a script, cron or Task Scheduler:
   `1clickTransfer --task "Name"`, `--all`, `--list`, `--silent`.
 - **Auto-update** — checks GitHub Releases; on Windows it downloads and swaps itself, on Linux/macOS
   it shows what's new and opens the release page.
 - **Action modes**: *Replace*, *Replace if newer*, *Don't replace*.
 - **Navigable Source/Destination browsers** (incl. an FTP/SFTP folder browser), resizable columns
-  and tasks panel; the window **remembers its size and position**.
+  and panels; the window **remembers its size and position**.
 - **Dark / light** theme, **Portuguese / English** UI (switch in Settings).
 - Passwords stored **encrypted** — Windows **DPAPI** (per user); Linux/macOS use a local AES key
   next to the settings (obfuscation, not strong security). Single **portable** executable per OS.
 
 <p align="center">
-  <img src="screenshots/v3.0/edit-task.png" width="380" alt="Edit task — files, destinations, presets">
+  <img src="screenshots/v3.0/edit-task.png" width="380" alt="Edit task — folder source with exclude patterns, destinations, presets">
   &nbsp;
-  <img src="screenshots/v3.0/settings.png" width="380" alt="Settings — language, theme, shortcut, updates">
+  <img src="screenshots/v3.0/settings.png" width="380" alt="Settings — parallel destinations, minimize to tray, language, theme, shortcut, updates">
 </p>
 
 ### Download & run
@@ -136,24 +145,33 @@ ou **uma de cada vez** — ou deixe o app **observar** um arquivo e enviá-lo so
   transfira todas as marcadas com um clique, ou use **Enviar esta tarefa** para disparar só uma.
 - **Vários arquivos de origem** por tarefa, para **vários destinos**: pastas local/rede,
   **FTP/FTPS** e **SFTP**. Os destinos ficam numa biblioteca salva, com checkbox por item,
-  **grupos** nomeados e **presets** reutilizáveis.
+  **grupos** nomeados, **presets** reutilizáveis e uma biblioteca de **servidores FTP/SFTP salvos**.
+- **Fila de transferência** — um painel ao vivo mostra o que está na fila, em andamento, com falha
+  e concluído, com progresso por item e um limite configurável de **destinos em paralelo**.
+- **Origem em pasta com padrões de exclusão** — escolha uma pasta inteira (recursiva) como origem e
+  exclua subpastas/arquivos com padrões simples no estilo `.gitignore`.
+- **Botão direito num destino** — criar pasta, renomear, excluir ou copiar o caminho, tanto local
+  quanto em destinos FTP/SFTP.
 - **Observar (envio automático), por tarefa** — quando o arquivo de origem muda, a tarefa envia
   sozinha (ótimo para saídas de build).
+- **Ícone na bandeja do sistema** — abrir a janela, enviar todas as tarefas habilitadas ou sair
+  direto da bandeja; opção de **minimizar para a bandeja ao fechar**.
+- **Notificações do sistema** ao concluir ou falhar uma transferência (Windows, Linux, macOS).
 - **Linha de comando** — rode sem janela por script, cron ou Agendador de Tarefas:
   `1clickTransfer --task "Nome"`, `--all`, `--list`, `--silent`.
 - **Auto-update** — verifica os Releases do GitHub; no Windows baixa e se substitui, no Linux/macOS
   mostra as novidades e abre a página do release.
 - **Ações**: *Substituir*, *Substituir se for mais recente*, *Não Substituir*.
-- **Navegadores de Origem/Destino** (com navegador de pastas FTP/SFTP), colunas e painel de tarefas
+- **Navegadores de Origem/Destino** (com navegador de pastas FTP/SFTP), colunas e painéis
   redimensionáveis; a janela **lembra tamanho e posição**.
 - Tema **escuro / claro**, interface **Português / Inglês** (troca em Configurações).
 - Senhas guardadas **criptografadas** — **DPAPI** do Windows (por usuário); no Linux/macOS uma chave
   AES local ao lado das configurações (ofuscação, não segurança forte). Um executável **portátil** por SO.
 
 <p align="center">
-  <img src="screenshots/v3.0/edit-task.png" width="380" alt="Editar tarefa — arquivos, destinos, presets">
+  <img src="screenshots/v3.0/edit-task.png" width="380" alt="Editar tarefa — origem em pasta com padrões de exclusão, destinos, presets">
   &nbsp;
-  <img src="screenshots/v3.0/settings.png" width="380" alt="Configurações — idioma, tema, atalho, updates">
+  <img src="screenshots/v3.0/settings.png" width="380" alt="Configurações — destinos em paralelo, minimizar para bandeja, idioma, tema, atalho, updates">
 </p>
 
 ### Baixar e usar
