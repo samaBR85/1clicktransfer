@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -155,6 +156,7 @@ public class AppSettings
     public bool WindowMaximized { get; set; } = false;
     public bool AutoUpdateCheck { get; set; } = true;   // procurar atualizacoes ao iniciar
     public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;  // legado (migrado p/ Jobs)
+    public DateTime? LastTransferAt { get; set; } = null;   // ultimo envio bem-sucedido (rodape)
 
     // Tarefas: cada uma tem origem + destinos + modo próprios (v2.1)
     public List<TransferJob> Jobs { get; set; } = new();

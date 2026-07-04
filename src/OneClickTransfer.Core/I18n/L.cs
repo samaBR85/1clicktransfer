@@ -94,6 +94,8 @@ public static class L
         ["groupNamePrompt"] = ("Nome do grupo:", "Group name:"),
         ["sendingTo"] = ("Enviando para {0} ({1}/{2})...", "Sending to {0} ({1}/{2})..."),
         ["transferDone"] = ("Concluído: {0} enviado(s), {1} pulado(s), {2} com falha", "Done: {0} sent, {1} skipped, {2} failed"),
+        ["lastTransferToday"] = ("Último envio: hoje, {0}", "Last transfer: today, {0}"),
+        ["lastTransferOther"] = ("Último envio: {0}, {1}", "Last transfer: {0}, {1}"),
         ["localFolder"] = ("Pasta local / rede", "Local / network folder"),
         ["ftpServer"] = ("Servidor FTP", "FTP server"),
         ["sftpServer"] = ("Servidor SFTP", "SFTP server"),

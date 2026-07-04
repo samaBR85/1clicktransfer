@@ -162,13 +162,27 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
+    public bool HasLastTransfer => S.LastTransferAt.HasValue;
+
+    public string LastTransferText
+    {
+        get
+        {
+            if (S.LastTransferAt is not DateTime dt) return "";
+            var now = DateTime.Now;
+            return dt.Date == now.Date
+                ? L.T("lastTransferToday", dt.ToString("HH:mm"))
+                : L.T("lastTransferOther", dt.ToString("dd/MM"), dt.ToString("HH:mm"));
+        }
+    }
+
     private void Retranslate()
     {
         foreach (var p in new[] { nameof(Title), nameof(TasksHeader), nameof(NewLabel), nameof(DuplicateLabel),
             nameof(RenameLabel), nameof(RemoveLabel), nameof(SourceHeader), nameof(DestHeader), nameof(WatchTip),
             nameof(RefreshTip), nameof(ColName), nameof(ColSize), nameof(ColModified), nameof(ActionLabel),
             nameof(ReplaceLabel), nameof(ReplaceIfNewerLabel), nameof(DontReplaceLabel), nameof(TransferLabel),
-            nameof(SettingsLabel), nameof(HintText) })
+            nameof(SettingsLabel), nameof(HintText), nameof(LastTransferText) })
             OnPropertyChanged(p);
     }
 
@@ -664,6 +678,13 @@ public sealed partial class MainViewModel : ViewModelBase
 
             var kind = failed > 0 ? StatusKind.Error : (sent > 0 ? StatusKind.Success : StatusKind.Sub);
             SetStatus(L.T("transferDone", sent, skipped, failed), kind);
+            if (sent > 0)
+            {
+                S.LastTransferAt = DateTime.Now;
+                SettingsService.Save(S);
+                OnPropertyChanged(nameof(LastTransferText));
+                OnPropertyChanged(nameof(HasLastTransfer));
+            }
             if (failed == 0) ProgressValue = sent > 0 ? 100 : 0;
             _ = lastError;   // detalhe do erro fica disponível p/ tooltip (E9 refina)
             RefreshHome(true);

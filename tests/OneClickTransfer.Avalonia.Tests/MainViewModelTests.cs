@@ -118,6 +118,33 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task Transfer_success_sets_last_transfer_text()
+    {
+        var (src, dstDir) = MakeSrcAndDest(out _);
+        var s = WithJobs(ReadyJob("A", src, dstDir, OverwriteMode.Always));
+        var vm = New(s);
+        vm.OnOpened();
+        Assert.False(vm.HasLastTransfer);
+        await vm.TransferCommand.ExecuteAsync(null);
+        Assert.True(vm.HasLastTransfer);
+        Assert.Contains("Last transfer:", vm.LastTransferText);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public async Task Transfer_all_skipped_does_not_set_last_transfer()
+    {
+        var (src, dstDir) = MakeSrcAndDest(out var fileName);
+        File.WriteAllText(Path.Combine(dstDir, fileName), "já existe");
+        var s = WithJobs(ReadyJob("A", src, dstDir, OverwriteMode.Never));
+        var vm = New(s);
+        vm.OnOpened();
+        await vm.TransferCommand.ExecuteAsync(null);
+        Assert.False(vm.HasLastTransfer);
+        vm.OnClosed();
+    }
+
+    [Fact]
     public async Task Transfer_never_overwrite_reports_skipped()
     {
         var (src, dstDir) = MakeSrcAndDest(out var fileName);
