@@ -37,6 +37,7 @@ public sealed class FakeDialogService : IDialogService
     public bool ConfirmResult { get; set; }
     public Destination? EditResult { get; set; }
     public string? BrowseResult { get; set; }
+    public bool TaskEditorResult { get; set; }
     public bool SettingsResult { get; set; }
     public int MessageCount { get; private set; }
 
@@ -45,6 +46,7 @@ public sealed class FakeDialogService : IDialogService
     public Task ShowMessageAsync(string title, string message, bool error = false) { MessageCount++; return Task.CompletedTask; }
     public Task<Destination?> EditDestinationAsync(Destination? existing) => Task.FromResult(EditResult);
     public Task<string?> BrowseRemoteFolderAsync(Destination d, string startPath) => Task.FromResult(BrowseResult);
+    public Task<bool> ShowTaskEditorAsync() => Task.FromResult(TaskEditorResult);
     public Task<bool> ShowSettingsAsync() => Task.FromResult(SettingsResult);
     public Task ShowUpdateAsync(UpdateInfo info) => Task.CompletedTask;
 }

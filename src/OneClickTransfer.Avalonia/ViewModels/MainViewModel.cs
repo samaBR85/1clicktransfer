@@ -193,9 +193,21 @@ public sealed partial class MainViewModel : ViewModelBase
         _watch.Restart(WatchedJobs());
     }
 
-    /// <summary>Duplo-clique numa tarefa: abre Configurar.</summary>
+    /// <summary>Duplo-clique numa tarefa: abre o editor da tarefa.</summary>
     [RelayCommand]
-    private Task JobActivateAsync() => OpenSettingsAsync();
+    private Task JobActivateAsync() => EditTaskAsync();
+
+    [RelayCommand]
+    private async Task EditTaskAsync()
+    {
+        await _dialogs.ShowTaskEditorAsync();
+        // O editor mutou o mesmo App.Settings; basta refrescar (idioma/tema não mudam aqui).
+        RefreshJobs();
+        RefreshHome();
+        UpdateReadyState();
+        _watch.Restart(WatchedJobs());
+        SetStatus(L.T("settingsSaved"), StatusKind.Sub);
+    }
 
     [RelayCommand]
     private async Task NewJobAsync()
@@ -207,7 +219,20 @@ public sealed partial class MainViewModel : ViewModelBase
         RefreshJobs();
         RefreshHome();
         UpdateReadyState();
-        await OpenSettingsAsync();   // guia o usuário a escolher arquivo + destino
+
+        var saved = await _dialogs.ShowTaskEditorAsync();   // configura arquivo + destino da nova tarefa
+        // Cancelou e a tarefa nova ficou vazia -> remove (não polui a lista).
+        if (!saved && job.Source.Count == 0 && job.Destinations.Count == 0)
+        {
+            S.Jobs.Remove(job);
+            if (S.Jobs.Count == 0) S.Jobs.Add(new TransferJob { Name = SettingsService.DefaultJobName(0) });
+            if (S.SelectedJob >= S.Jobs.Count) S.SelectedJob = S.Jobs.Count - 1;
+            SettingsService.Save(S);
+        }
+        RefreshJobs();
+        RefreshHome();
+        UpdateReadyState();
+        _watch.Restart(WatchedJobs());
     }
 
     [RelayCommand]

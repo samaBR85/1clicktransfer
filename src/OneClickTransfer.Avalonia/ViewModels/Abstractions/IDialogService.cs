@@ -13,6 +13,7 @@ public interface IDialogService
 
     Task<Destination?> EditDestinationAsync(Destination? existing);
     Task<string?> BrowseRemoteFolderAsync(Destination d, string startPath);
+    Task<bool> ShowTaskEditorAsync();
     Task<bool> ShowSettingsAsync();
     Task ShowUpdateAsync(UpdateInfo info);
 }

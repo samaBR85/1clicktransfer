@@ -71,6 +71,8 @@ public static class L
         ["transferErrorTitle"] = ("Erro na transferência", "Transfer error"),
         // Dialogo de configuracoes
         ["settingsTitle"] = ("Configurações", "Settings"),
+        ["taskEditorTitle"] = ("Editar tarefa: {0}", "Edit task: {0}"),
+        ["newTaskTitle"] = ("Nova tarefa", "New task"),
         ["sec1File"] = ("Arquivo(s) a transferir", "File(s) to transfer"),
         ["browse"] = ("Procurar", "Browse"),
         ["addFile"] = ("Adicionar...", "Add..."),

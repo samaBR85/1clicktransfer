@@ -1,105 +1,44 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:OneClickTransfer.Avalonia.ViewModels"
-        xmlns:models="clr-namespace:OneClickTransfer.Models;assembly=OneClickTransfer.Core"
         x:Class="OneClickTransfer.Avalonia.Views.SettingsWindow"
         x:DataType="vm:SettingsViewModel"
         Title="{Binding Title}"
-        Width="600" Height="800" MinWidth="560" MinHeight="600"
-        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/app.ico"
+        Width="470" Height="330"
+        WindowStartupLocation="CenterOwner" CanResize="False"
         Background="{DynamicResource BgBrush}">
 
   <DockPanel Margin="16">
-    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,14,0,0">
       <Button Classes="primary" Width="108" Height="32" Content="{Binding SaveLabel}" Command="{Binding SaveCommand}"/>
       <Button Width="96" Height="32" Content="{Binding CancelLabel}" Command="{Binding CancelCommand}"/>
     </StackPanel>
 
-    <!-- Listas de origem e destino em linhas '*' -> crescem quando a janela aumenta -->
-    <Grid RowDefinitions="Auto,*,Auto,Auto,1.6*,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+    <StackPanel>
+      <TextBlock Text="{Binding Sec3}" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
-      <!-- Origem -->
-      <TextBlock Grid.Row="0" Text="{Binding Sec1}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-      <ListBox Grid.Row="1" MinHeight="64" ItemsSource="{Binding SrcFiles}" SelectedIndex="{Binding SelectedSrcIndex, Mode=TwoWay}">
-        <ListBox.Styles>
-          <Style Selector="ListBoxItem"><Setter Property="Padding" Value="8,3"/><Setter Property="MinHeight" Value="0"/></Style>
-        </ListBox.Styles>
-        <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="x:String">
-            <TextBlock Text="{Binding}" FontSize="11.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding}"/>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-      <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-        <Button Width="130" Height="30" Content="{Binding AddFileLabel}" Command="{Binding AddSrcCommand}"/>
-        <Button Width="110" Height="30" Content="{Binding RemoveFileLabel}" Command="{Binding RemoveSrcCommand}"/>
-      </StackPanel>
-
-      <!-- Destinos -->
-      <TextBlock Grid.Row="3" Text="{Binding Sec2}" FontWeight="SemiBold" Margin="0,14,0,6"/>
-      <ListBox Grid.Row="4" x:Name="LstDests" MinHeight="90" ItemsSource="{Binding Dests}"
-               SelectedIndex="{Binding SelectedDestIndex, Mode=TwoWay}" DoubleTapped="Dests_DoubleTapped">
-        <ListBox.Styles>
-          <Style Selector="ListBoxItem"><Setter Property="Padding" Value="8,3"/><Setter Property="MinHeight" Value="0"/></Style>
-        </ListBox.Styles>
-        <ListBox.ItemTemplate>
-          <DataTemplate x:DataType="models:Destination">
-            <DockPanel>
-              <CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-              <TextBlock Text="{Binding Summary}" FontSize="11.5" VerticalAlignment="Center"
-                         TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Summary}"/>
-            </DockPanel>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
-      <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-        <Button Width="106" Height="30" Content="{Binding AddDestLabel}" Command="{Binding AddDestCommand}"/>
-        <Button Width="94" Height="30" Content="{Binding EditDestLabel}" Command="{Binding EditDestCommand}"/>
-        <Button Width="104" Height="30" Content="{Binding DuplicateDestLabel}" Command="{Binding DuplicateDestCommand}"/>
-        <Button Width="98" Height="30" Content="{Binding RemoveDestLabel}" Command="{Binding RemoveDestCommand}"/>
-      </StackPanel>
-      <DockPanel Grid.Row="6" Margin="0,8,0,0">
-        <TextBlock Text="{Binding GroupLabel}" DockPanel.Dock="Left" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-        <Button DockPanel.Dock="Right" Width="120" Height="30" Margin="8,0,0,0" Content="{Binding DeleteGroupLabel}" Command="{Binding GroupDeleteCommand}"/>
-        <Button DockPanel.Dock="Right" Width="130" Height="30" Margin="8,0,0,0" Content="{Binding SaveGroupLabel}" Command="{Binding GroupSaveCommand}"/>
-        <ComboBox Height="30" HorizontalAlignment="Stretch" ItemsSource="{Binding GroupOptions}" SelectedIndex="{Binding SelectedGroupIndex, Mode=TwoWay}"/>
-      </DockPanel>
-
-      <!-- Opções -->
-      <TextBlock Grid.Row="7" Text="{Binding Sec3}" FontWeight="SemiBold" Margin="0,14,0,6"/>
-      <StackPanel Grid.Row="8" Orientation="Horizontal" Margin="0,0,0,10">
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
         <TextBlock Text="{Binding LangLabelText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
         <ComboBox Width="150" ItemsSource="{Binding LangOptions}" SelectedIndex="{Binding SelectedLangIndex, Mode=TwoWay}"/>
         <TextBlock Text="{Binding ThemeLabelText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="24,0,8,0"/>
         <ComboBox Width="140" ItemsSource="{Binding ThemeOptions}" SelectedIndex="{Binding SelectedThemeIndex, Mode=TwoWay}"/>
       </StackPanel>
-      <StackPanel Grid.Row="9" Orientation="Horizontal">
+
+      <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
         <TextBlock Text="{Binding ShortcutLabelText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
         <ComboBox Width="150" ItemsSource="{Binding KeyOptions}" SelectedItem="{Binding SelectedKey, Mode=TwoWay}"/>
         <TextBlock Text="{Binding F5Note}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="14,0,0,0" FontSize="11"/>
       </StackPanel>
-      <StackPanel Grid.Row="10" Orientation="Horizontal" Margin="0,12,0,0">
-        <Button Height="30" Padding="14,0" Content="{Binding CheckUpdateLabel}" Command="{Binding CheckUpdateCommand}" IsEnabled="{Binding !CheckingUpdate}"/>
-        <CheckBox VerticalAlignment="Center" Margin="14,0,0,0" Content="{Binding AutoUpdateLabel}" IsChecked="{Binding AutoUpdateCheck, Mode=TwoWay}"/>
-        <TextBlock Text="{Binding VersionText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="16,0,0,0" FontSize="11"/>
-      </StackPanel>
 
-      <!-- Perfis -->
-      <Border Grid.Row="11" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
-              BorderThickness="1" CornerRadius="8" Padding="14,12,14,14" Margin="0,14,0,0">
-        <StackPanel>
-          <DockPanel Margin="0,0,0,8">
-            <TextBlock Text="{Binding ProfilesLabel}" DockPanel.Dock="Left" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <Button DockPanel.Dock="Right" Width="150" Height="30" Margin="8,0,0,0" Content="{Binding SaveAsLabel}" Command="{Binding ProfSaveCommand}"/>
-            <ComboBox Height="30" HorizontalAlignment="Stretch" ItemsSource="{Binding ProfileOptions}" SelectedIndex="{Binding SelectedProfileIndex, Mode=TwoWay}"/>
-          </DockPanel>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Width="110" Height="30" Content="{Binding RenameLabel}" Command="{Binding ProfRenameCommand}"/>
-            <Button Width="110" Height="30" Content="{Binding DeleteLabel}" Command="{Binding ProfDeleteCommand}"/>
-            <Button Width="150" Height="30" Content="{Binding ResetLabel}" Command="{Binding ResetCommand}"/>
-          </StackPanel>
+      <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="8" Padding="12">
+        <StackPanel Orientation="Horizontal">
+          <Button Height="30" Padding="14,0" Content="{Binding CheckUpdateLabel}" Command="{Binding CheckUpdateCommand}" IsEnabled="{Binding !CheckingUpdate}"/>
+          <CheckBox VerticalAlignment="Center" Margin="14,0,0,0" Content="{Binding AutoUpdateLabel}" IsChecked="{Binding AutoUpdateCheck, Mode=TwoWay}"/>
+          <TextBlock Text="{Binding VersionText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="16,0,0,0" FontSize="11"/>
         </StackPanel>
       </Border>
-    </Grid>
+    </StackPanel>
   </DockPanel>
 </Window>

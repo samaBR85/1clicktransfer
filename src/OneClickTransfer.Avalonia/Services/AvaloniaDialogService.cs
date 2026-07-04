@@ -48,11 +48,19 @@ public sealed class AvaloniaDialogService : IDialogService
         return await new FtpBrowserWindow(vm).ShowDialog<string?>(o);
     }
 
+    public async Task<bool> ShowTaskEditorAsync()
+    {
+        var o = _owner();
+        if (o is null) return false;
+        var vm = new TaskEditorViewModel(App.Settings, this, AppServices.Files);
+        return await new TaskEditorWindow(vm).ShowDialog<bool>(o);
+    }
+
     public async Task<bool> ShowSettingsAsync()
     {
         var o = _owner();
         if (o is null) return false;
-        var vm = new SettingsViewModel(App.Settings, this, AppServices.Files);
+        var vm = new SettingsViewModel(App.Settings, this);
         return await new SettingsWindow(vm).ShowDialog<bool>(o);
     }
 
