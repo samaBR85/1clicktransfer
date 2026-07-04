@@ -12,16 +12,31 @@ public sealed partial class TransferQueueItem : ObservableObject
     public string FileName { get; init; } = "";
     public string DestSummary { get; init; } = "";
     public long SizeBytes { get; init; }
-    public DateTime? FinishedAt { get; set; }
-    public string? ErrorMessage { get; set; }
+
+    private DateTime? _finishedAt;
+    public DateTime? FinishedAt
+    {
+        get => _finishedAt;
+        set { _finishedAt = value; OnPropertyChanged(nameof(TimeText)); }
+    }
+
+    private string? _errorMessage;
+    public string? ErrorMessage
+    {
+        get => _errorMessage;
+        set { _errorMessage = value; OnPropertyChanged(nameof(TooltipText)); }
+    }
 
     [ObservableProperty] private double _progress;
     [ObservableProperty] private string _statusText = "";
     [ObservableProperty] private QueueItemState _state;
 
     public string DisplayName => string.IsNullOrEmpty(DestSummary) ? FileName : FileName + "  →  " + DestSummary;
+    public string TooltipText => ErrorMessage ?? DisplayName;
+    public string TimeText => FinishedAt?.ToString("dd/MM HH:mm") ?? "-";
 
     public bool IsActive => State is QueueItemState.Queued or QueueItemState.Running;
+    public bool IsFailed => State == QueueItemState.Failed;
 
     public string SizeText
     {
@@ -34,5 +49,9 @@ public sealed partial class TransferQueueItem : ObservableObject
         }
     }
 
-    partial void OnStateChanged(QueueItemState value) => OnPropertyChanged(nameof(IsActive));
+    partial void OnStateChanged(QueueItemState value)
+    {
+        OnPropertyChanged(nameof(IsActive));
+        OnPropertyChanged(nameof(IsFailed));
+    }
 }

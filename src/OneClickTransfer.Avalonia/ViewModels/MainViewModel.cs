@@ -66,10 +66,20 @@ public sealed partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsQueueTabActive));
         OnPropertyChanged(nameof(IsFailedTabActive));
         OnPropertyChanged(nameof(IsSucceededTabActive));
+        OnPropertyChanged(nameof(ActiveQueueItems));
     }
     public bool IsQueueTabActive => SelectedQueueTabIndex == 0;
     public bool IsFailedTabActive => SelectedQueueTabIndex == 1;
     public bool IsSucceededTabActive => SelectedQueueTabIndex == 2;
+
+    /// <summary>Coleção da aba ativa — mesmo DataGrid da View pra todas as abas, então as
+    /// larguras de coluna redimensionadas pelo usuário ficam automaticamente compartilhadas.</summary>
+    public ObservableCollection<TransferQueueItem> ActiveQueueItems => SelectedQueueTabIndex switch
+    {
+        1 => FailedItems,
+        2 => SucceededItems,
+        _ => QueuedItems,
+    };
 
     [RelayCommand] private void SelectQueueQueuedTab() => SelectedQueueTabIndex = 0;
     [RelayCommand] private void SelectQueueFailedTab() => SelectedQueueTabIndex = 1;
@@ -81,6 +91,10 @@ public sealed partial class MainViewModel : ViewModelBase
     public string QueueTabFailedLabel => L.T("queueTabFailed", FailedItems.Count);
     public string QueueTabSucceededLabel => L.T("queueTabSucceeded", SucceededItems.Count);
     public string QueueClearCompletedLabel => L.T("queueClearCompleted");
+    public string QueueColName => L.T("queueColName");
+    public string QueueColProgress => L.T("queueColProgress");
+    public string QueueColSize => L.T("queueColSize");
+    public string QueueColTime => L.T("queueColTime");
     public bool CanClearCompletedQueue => FailedItems.Count > 0 || SucceededItems.Count > 0;
 
     public string QueueTotalText
@@ -247,7 +261,8 @@ public sealed partial class MainViewModel : ViewModelBase
             nameof(RefreshTip), nameof(ColName), nameof(ColSize), nameof(ColModified), nameof(ActionLabel),
             nameof(ReplaceLabel), nameof(ReplaceIfNewerLabel), nameof(DontReplaceLabel), nameof(TransferLabel),
             nameof(SettingsLabel), nameof(HintText), nameof(LastTransferText), nameof(QueuePanelTitle),
-            nameof(QueueClearCompletedLabel) })
+            nameof(QueueClearCompletedLabel), nameof(QueueColName), nameof(QueueColProgress),
+            nameof(QueueColSize), nameof(QueueColTime) })
             OnPropertyChanged(p);
         RaiseQueueInfo();
     }
@@ -857,7 +872,6 @@ public sealed partial class MainViewModel : ViewModelBase
                             qi.Progress = 100;
                             qi.State = QueueItemState.Success;
                             qi.FinishedAt = DateTime.Now;
-                            qi.StatusText = qi.FinishedAt.Value.ToString("dd/MM HH:mm");
                             QueuedItems.Remove(qi);
                             SucceededItems.Insert(0, qi);
                             RaiseQueueInfo();
@@ -874,7 +888,6 @@ public sealed partial class MainViewModel : ViewModelBase
                             qi.State = QueueItemState.Failed;
                             qi.FinishedAt = DateTime.Now;
                             qi.ErrorMessage = ex.Message;
-                            qi.StatusText = qi.FinishedAt.Value.ToString("dd/MM HH:mm");
                             QueuedItems.Remove(qi);
                             FailedItems.Insert(0, qi);
                             RaiseQueueInfo();

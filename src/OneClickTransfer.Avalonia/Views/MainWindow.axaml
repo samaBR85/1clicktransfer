@@ -296,60 +296,41 @@
                      Foreground="{DynamicResource SubTextBrush}"/>
         </DockPanel>
 
-        <StackPanel MaxHeight="140">
-          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding QueuedItems}" IsVisible="{Binding IsQueueTabActive}">
-              <ItemsControl.ItemTemplate>
+        <DataGrid x:Name="GridQueue" ItemsSource="{Binding ActiveQueueItems}" IsReadOnly="True"
+                  CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
+                  SelectionMode="Single" SelectionChanged="Grid_SelectionCleared" MaxHeight="140">
+          <DataGrid.Styles>
+            <Style Selector="DataGridRow" x:DataType="vm:TransferQueueItem">
+              <Setter Property="Classes.failed" Value="{Binding IsFailed}"/>
+            </Style>
+            <Style Selector="DataGridRow.failed DataGridCell TextBlock">
+              <Setter Property="Foreground" Value="#E24B4A"/>
+            </Style>
+          </DataGrid.Styles>
+          <DataGrid.Columns>
+            <DataGridTemplateColumn Header="{Binding QueueColName}" Width="*">
+              <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TransferQueueItem">
-                  <Grid ColumnDefinitions="*,70,150" Margin="0,3">
-                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="11.5"
-                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayName}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
-                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
-                    <StackPanel Grid.Column="2" Margin="10,0,0,0">
-                      <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding Progress}"
-                                   Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
-                      <TextBlock Text="{Binding StatusText}" FontSize="10" Foreground="{DynamicResource SubTextBrush}"
-                                 HorizontalAlignment="Right" Margin="0,2,0,0"/>
-                    </StackPanel>
-                  </Grid>
+                  <TextBlock Text="{Binding DisplayName}" FontSize="11.5" VerticalAlignment="Center"
+                             TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding TooltipText}"/>
                 </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
-          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding FailedItems}" IsVisible="{Binding IsFailedTabActive}">
-              <ItemsControl.ItemTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTemplateColumn Header="{Binding QueueColProgress}" Width="180">
+              <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TransferQueueItem">
-                  <Grid ColumnDefinitions="*,70,110" Margin="0,3">
-                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="11.5" Foreground="#E24B4A"
-                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ErrorMessage}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
-                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="11"
-                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
-                  </Grid>
+                  <StackPanel VerticalAlignment="Center" IsVisible="{Binding IsActive}" Spacing="2">
+                    <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding Progress}"
+                                 Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+                    <TextBlock Text="{Binding StatusText}" FontSize="10" Foreground="{DynamicResource SubTextBrush}"/>
+                  </StackPanel>
                 </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
-          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding SucceededItems}" IsVisible="{Binding IsSucceededTabActive}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:TransferQueueItem">
-                  <Grid ColumnDefinitions="*,70,110" Margin="0,3">
-                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="11.5"
-                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayName}"/>
-                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
-                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="11"
-                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
-                  </Grid>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
-        </StackPanel>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="{Binding QueueColSize}" Binding="{Binding SizeText}" Width="80"/>
+            <DataGridTextColumn Header="{Binding QueueColTime}" Binding="{Binding TimeText}" Width="90"/>
+          </DataGrid.Columns>
+        </DataGrid>
       </DockPanel>
     </Border>
 
