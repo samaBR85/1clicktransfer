@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using OneClickTransfer.Avalonia.Services;
 using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Models;
@@ -145,14 +146,24 @@ public partial class MainWindow : Window
     }
 
     // ---------------- Navegação (duplo-clique) ----------------
+    // Resolve a linha pela árvore visual (não depende de seleção — as grades não selecionam).
+    private static FileRow? RowUnder(TappedEventArgs e)
+        => (e.Source as Visual)?.GetSelfAndVisualAncestors().OfType<DataGridRow>().FirstOrDefault()?.DataContext as FileRow;
+
     private void GridSrc_DoubleTapped(object? sender, TappedEventArgs e)
-        => Vm?.Source.NavigateCommand.Execute(GridSrc.SelectedItem as FileRow);
+        => Vm?.Source.NavigateCommand.Execute(RowUnder(e));
 
     private void GridDst_DoubleTapped(object? sender, TappedEventArgs e)
-        => Vm?.Dest.NavigateCommand.Execute(GridDst.SelectedItem as FileRow);
+        => Vm?.Dest.NavigateCommand.Execute(RowUnder(e));
 
     private void Jobs_DoubleTapped(object? sender, TappedEventArgs e)
         => Vm?.JobActivateCommand.Execute(null);
+
+    // Painéis SOURCE/DESTINATION são navegadores por duplo-clique: sem seleção persistente.
+    private void Grid_SelectionCleared(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is DataGrid g && g.SelectedIndex != -1) g.SelectedIndex = -1;
+    }
 
     // ---------------- Teclado (F4/F5) ----------------
     private void OnTunnelKeyDown(object? sender, KeyEventArgs e)

@@ -171,6 +171,7 @@
                      TextTrimming="CharacterEllipsis" Margin="0,3,0,6"/>
           <DataGrid x:Name="GridSrc" ItemsSource="{Binding Source.Rows}" IsReadOnly="True"
                     CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
+                    SelectionMode="Single" SelectionChanged="Grid_SelectionCleared"
                     DoubleTapped="GridSrc_DoubleTapped">
             <DataGrid.Styles>
               <Style Selector="DataGridRow" x:DataType="vm:FileRow">
@@ -208,6 +209,7 @@
                      TextTrimming="CharacterEllipsis" Margin="0,3,0,6"/>
           <DataGrid x:Name="GridDst" ItemsSource="{Binding Dest.Rows}" IsReadOnly="True"
                     CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
+                    SelectionMode="Single" SelectionChanged="Grid_SelectionCleared"
                     DoubleTapped="GridDst_DoubleTapped">
             <DataGrid.Columns>
               <DataGridTextColumn Header="{Binding ColName}" Binding="{Binding Name}" Width="*"/>

@@ -432,7 +432,7 @@ public sealed partial class MainViewModel : ViewModelBase
     // ---------------- Navegação (duplo-clique) ----------------
     private void NavigateSource(FileRow? it)
     {
-        if (Job.Source.Count >= 2) { _ = OpenSettingsAsync(); return; }
+        if (Job.Source.Count >= 2) { _ = EditTaskAsync(); return; }   // múltiplas origens: edita no editor da tarefa
         if (it is null || string.IsNullOrEmpty(_srcDir)) return;
         if (it.IsUp) { _srcDir = Directory.GetParent(_srcDir)?.FullName ?? _srcDir; RefillSource(); }
         else if (it.IsDir) { _srcDir = Path.Combine(_srcDir, it.RealName); RefillSource(); }
