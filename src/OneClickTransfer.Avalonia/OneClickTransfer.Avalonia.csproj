@@ -12,7 +12,7 @@
     <!-- Identidade v3 (cutover E12): asset Windows chama-se 1clickTransfer.exe (contrato do auto-update). -->
     <AssemblyName>1clickTransfer</AssemblyName>
     <RootNamespace>OneClickTransfer.Avalonia</RootNamespace>
-    <Version>3.2.0</Version>
+    <Version>3.2.1</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
