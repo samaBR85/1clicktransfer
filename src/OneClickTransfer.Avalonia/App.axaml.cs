@@ -30,11 +30,12 @@ public partial class App : Application
             AppServices.App = new AppControl();
             AppServices.Files = new AvaloniaFilePickerService(() => window);
             AppServices.Clipboard = new AvaloniaClipboardService(() => window);
+            AppServices.Notifications = new PlatformNotificationService(() => window.TryGetPlatformHandle()?.Handle ?? System.IntPtr.Zero);
             // Owner = janela ativa (p/ um diálogo aberto de dentro de outro ser modal ao pai correto).
             AppServices.Dialogs = new AvaloniaDialogService(
                 () => desktop.Windows.LastOrDefault(w => w.IsActive) ?? desktop.MainWindow);
 
-            var vm = new MainViewModel(Settings, AppServices.Dialogs, AppServices.Dispatcher, AppServices.Clipboard);
+            var vm = new MainViewModel(Settings, AppServices.Dialogs, AppServices.Dispatcher, AppServices.Clipboard, AppServices.Notifications);
             // Ao salvar Configurar (E9): troca App.Settings, tema e a barra de título.
             vm.SettingsReloaded += s =>
             {

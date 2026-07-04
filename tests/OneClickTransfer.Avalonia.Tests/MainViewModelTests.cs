@@ -4,13 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Models;
+using OneClickTransfer.Services;
 
 namespace OneClickTransfer.Avalonia.Tests;
 
 public class MainViewModelTests
 {
     private static MainViewModel New(AppSettings s, FakeDialogService? dlg = null, FakeClipboard? clipboard = null)
-        => new(s, dlg ?? new FakeDialogService(), new FakeUiDispatcher(), clipboard ?? new FakeClipboard());
+        => new(s, dlg ?? new FakeDialogService(), new FakeUiDispatcher(), clipboard ?? new FakeClipboard(), new NullNotificationService());
 
     private static AppSettings WithJobs(params TransferJob[] jobs)
     {

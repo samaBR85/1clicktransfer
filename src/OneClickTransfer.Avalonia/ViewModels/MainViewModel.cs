@@ -24,6 +24,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private readonly IDialogService _dialogs;
     private readonly IUiDispatcher _ui;
     private readonly IClipboardService _clipboard;
+    private readonly INotificationService _notifications;
     private readonly WatchCoordinator _watch;
 
     private AppSettings _s;
@@ -37,12 +38,13 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>Disparado após reabrir Configurar (E9): permite ao root recarregar App.Settings.</summary>
     public event Action<AppSettings>? SettingsReloaded;
 
-    public MainViewModel(AppSettings settings, IDialogService dialogs, IUiDispatcher ui, IClipboardService clipboard)
+    public MainViewModel(AppSettings settings, IDialogService dialogs, IUiDispatcher ui, IClipboardService clipboard, INotificationService notifications)
     {
         _s = settings;
         _dialogs = dialogs;
         _ui = ui;
         _clipboard = clipboard;
+        _notifications = notifications;
         _watch = new WatchCoordinator(ui, TriggerWatch);
         Source = new FilePanelViewModel(RefreshSource, NavigateSource);
         Dest = new FilePanelViewModel(RefreshDest, NavigateDest);
@@ -887,6 +889,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
             var kind = failed > 0 ? StatusKind.Error : (sent > 0 ? StatusKind.Success : StatusKind.Sub);
             SetStatus(L.T("transferDone", sent, skipped, failed), kind);
+            _notifications.Notify(L.T("appTitle"), L.T("transferDone", sent, skipped, failed), failed > 0);
             if (sent > 0)
             {
                 S.LastTransferAt = DateTime.Now;

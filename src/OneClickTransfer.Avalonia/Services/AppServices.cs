@@ -1,4 +1,5 @@
 using OneClickTransfer.Avalonia.ViewModels.Abstractions;
+using OneClickTransfer.Services;
 
 namespace OneClickTransfer.Avalonia.Services;
 
@@ -13,4 +14,5 @@ public static class AppServices
     public static IAppControl App { get; set; } = null!;
     public static IDialogService Dialogs { get; set; } = null!;   // atribuido na E7 (diálogos)
     public static IClipboardService Clipboard { get; set; } = null!;
+    public static INotificationService Notifications { get; set; } = null!;
 }
