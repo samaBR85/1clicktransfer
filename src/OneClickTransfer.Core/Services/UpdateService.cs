@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -20,6 +21,7 @@ public static class UpdateService
 {
     public const string Repo = "samaBR85/1clicktransfer";
     private const string ExeName = "1clickTransfer.exe";
+    private const string WinZipMarker = "win-x64";
 
     public static Version Current
     {
@@ -44,7 +46,7 @@ public static class UpdateService
         return h;
     }
 
-    /// <summary>Consulta a última release. Retorna info se houver versão MAIS NOVA (com .exe anexado), senão null.</summary>
+    /// <summary>Consulta a última release. Retorna info se houver versão MAIS NOVA (com o .zip do win-x64 anexado), senão null.</summary>
     public static async Task<UpdateInfo?> CheckAsync()
     {
         using var http = MakeHttp();
@@ -67,14 +69,15 @@ public static class UpdateService
             foreach (var a in assets.EnumerateArray())
             {
                 var name = a.TryGetProperty("name", out var n) ? (n.GetString() ?? "") : "";
-                if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                    name.Contains(WinZipMarker, StringComparison.OrdinalIgnoreCase))
                 {
                     url = a.TryGetProperty("browser_download_url", out var u) ? (u.GetString() ?? "") : "";
                     size = a.TryGetProperty("size", out var sz) && sz.TryGetInt64(out var s) ? s : 0;
                     break;
                 }
             }
-        if (string.IsNullOrEmpty(url)) return null;   // release sem exe anexado
+        if (string.IsNullOrEmpty(url)) return null;   // release sem zip do win-x64 anexado
         return new UpdateInfo(Norm(ver), tag, url, notes, size);
     }
 
@@ -104,19 +107,33 @@ public static class UpdateService
         }
     }
 
-    /// <summary>Baixa, valida o tamanho e troca o exe em execução; deixa pronto p/ reiniciar.</summary>
+    /// <summary>Baixa o zip, valida o tamanho, extrai o exe de dentro e troca o exe em execução; deixa pronto p/ reiniciar.</summary>
     public static async Task DownloadAndSwapAsync(UpdateInfo info, IProgress<double>? progress)
     {
-        var newp = ExePath + ".new";
-        try { if (File.Exists(newp)) File.Delete(newp); } catch { }
-        await DownloadAsync(info, newp, progress);
+        var zipPath = ExePath + ".zip.tmp";
+        try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { }
+        await DownloadAsync(info, zipPath, progress);
 
-        // Sanidade: se a release informou o tamanho, o baixado precisa bater.
-        var len = new FileInfo(newp).Length;
+        // Sanidade: se a release informou o tamanho, o zip baixado precisa bater.
+        var len = new FileInfo(zipPath).Length;
         if (info.Size > 0 && len != info.Size)
             throw new IOException($"Download incompleto ({len}/{info.Size} bytes).");
 
+        var newp = ExePath + ".new";
+        try { if (File.Exists(newp)) File.Delete(newp); } catch { }
+        ExtractExeFromZip(zipPath, newp);
+        try { File.Delete(zipPath); } catch { }
+
         SwapExe(newp);
+    }
+
+    /// <summary>Extrai o 1clickTransfer.exe de dentro do zip da release para destExePath.</summary>
+    private static void ExtractExeFromZip(string zipPath, string destExePath)
+    {
+        using var archive = ZipFile.OpenRead(zipPath);
+        var entry = archive.Entries.FirstOrDefault(e => e.Name.Equals(ExeName, StringComparison.OrdinalIgnoreCase))
+            ?? throw new IOException($"Zip da release não contém {ExeName}.");
+        entry.ExtractToFile(destExePath, overwrite: true);
     }
 
     /// <summary>Renomeia o exe em execução para .old e coloca o novo no lugar (permitido no Windows).</summary>
@@ -142,7 +159,7 @@ public static class UpdateService
         try
         {
             var exe = ExePath;
-            foreach (var p in new[] { exe + ".old", exe + ".new" })
+            foreach (var p in new[] { exe + ".old", exe + ".new", exe + ".zip.tmp" })
                 if (File.Exists(p)) { try { File.Delete(p); } catch { } }
         }
         catch { }

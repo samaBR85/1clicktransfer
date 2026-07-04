@@ -31,7 +31,10 @@ App desktop: envia arquivos pré-escolhidos a destinos (local/FTP/FTPS/SFTP) em 
 - settings.json: chaves camelCase atuais, JsonSerializerOptions e migrações de SettingsService.Normalize.
 - CLI: --task/-t --all/-a --list/-l --silent/-s --help; exit codes 0 ok / 1 falha / 2 uso;
   --all = só tarefas marcadas; --task roda mesmo desmarcada. Não trocar por System.CommandLine.
-- Releases: asset Windows chama-se exatamente 1clickTransfer.exe (auto-update v2 em campo filtra .exe).
+- Releases: assets são .zip por RID (1clickTransfer-win-x64.zip / -linux-x64.zip / -osx-x64.zip /
+  -osx-arm64.zip), cada um com o executável dentro (1clickTransfer.exe no Windows). Auto-update busca
+  o asset .zip cujo nome contém "win-x64" e extrai o 1clickTransfer.exe de dentro dele
+  (UpdateService.ExtractExeFromZip) — não trocar essa convenção de nome sem atualizar as duas pontas.
 - UpdateService.Current usa GetEntryAssembly (versão vem do csproj do APP, não do Core).
 - Números fixos: debounce watch 1200ms; throttle progresso 200ms/1pt; TasksHeight 140–600; SplitRatio 0.15–0.85.
 - Versões lockadas: FluentFTP 52.1.0, SSH.NET 2024.2.0, ProtectedData 8.0.0; sem upgrades "de carona".

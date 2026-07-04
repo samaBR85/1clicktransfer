@@ -63,14 +63,14 @@ time**, or let it **watch** a file and send it automatically when it changes.
 
 ### Download & run
 Grab the latest **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** for your OS —
-each file is a single **self-contained** executable, no runtime or install needed:
+each asset is a `.zip` containing a single **self-contained** executable, no runtime or install needed:
 
-| OS | File | How to run |
+| OS | Download | How to run |
 |---|---|---|
-| **Windows 10/11** | `1clickTransfer.exe` | double-click. SmartScreen may warn (not code-signed): *More info → Run anyway* |
-| **Linux (x64)** | `1clickTransfer-linux-x64` | `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
-| **macOS (Intel)** | `1clickTransfer-osx-x64` | `chmod +x …` then, if Gatekeeper blocks it: `xattr -d com.apple.quarantine …` |
-| **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64` | same as Intel, arm64 build |
+| **Windows 10/11** | `1clickTransfer-win-x64.zip` | unzip, double-click `1clickTransfer.exe`. SmartScreen may warn (not code-signed): *More info → Run anyway* |
+| **Linux (x64)** | `1clickTransfer-linux-x64.zip` | unzip, then `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
+| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | unzip, `chmod +x …`, and if Gatekeeper blocks it: `xattr -d com.apple.quarantine …` |
+| **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64.zip` | same as Intel, arm64 build |
 
 `settings.json` is created **next to the executable** (portable). On Linux/macOS, if that folder
 isn't writable it falls back to `~/.config/1clicktransfer/settings.json`.
@@ -155,14 +155,14 @@ ou **uma de cada vez** — ou deixe o app **observar** um arquivo e enviá-lo so
 
 ### Baixar e usar
 Baixe o **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** mais recente do seu
-SO — cada arquivo é um executável **self-contained**, sem runtime nem instalação:
+SO — cada asset é um `.zip` com um executável **self-contained** dentro, sem runtime nem instalação:
 
-| SO | Arquivo | Como rodar |
+| SO | Download | Como rodar |
 |---|---|---|
-| **Windows 10/11** | `1clickTransfer.exe` | duplo-clique. O SmartScreen pode alertar (não é assinado): *Mais informações → Executar assim mesmo* |
-| **Linux (x64)** | `1clickTransfer-linux-x64` | `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
-| **macOS (Intel)** | `1clickTransfer-osx-x64` | `chmod +x …` e, se o Gatekeeper bloquear: `xattr -d com.apple.quarantine …` |
-| **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64` | igual ao Intel, build arm64 |
+| **Windows 10/11** | `1clickTransfer-win-x64.zip` | descompacte e duplo-clique em `1clickTransfer.exe`. O SmartScreen pode alertar (não é assinado): *Mais informações → Executar assim mesmo* |
+| **Linux (x64)** | `1clickTransfer-linux-x64.zip` | descompacte e `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
+| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | descompacte, `chmod +x …` e, se o Gatekeeper bloquear: `xattr -d com.apple.quarantine …` |
+| **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64.zip` | igual ao Intel, build arm64 |
 
 O `settings.json` é criado **ao lado do executável** (portátil). No Linux/macOS, se a pasta não for
 gravável, ele usa `~/.config/1clicktransfer/settings.json`.

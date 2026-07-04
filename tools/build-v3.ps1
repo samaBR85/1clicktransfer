@@ -1,8 +1,10 @@
 # Publica o app v3 (Avalonia) single-file self-contained por RID -> dist-v3/.
 # Uso:  powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-v3.ps1 [-Rid win-x64]
 #       -Rid all  publica os 4 RIDs (win-x64, linux-x64, osx-x64, osx-arm64).
-# Nomes contratuais: Windows = 1clickTransfer.exe (o auto-update v2 filtra por .exe);
-#                    demais  = 1clickTransfer-<rid>.
+# Nomes contratuais: Windows = 1clickTransfer.exe; demais = 1clickTransfer-<rid>.
+# Cada executavel tambem eh empacotado em 1clickTransfer-<rid>.zip -> sao esses .zip
+# que viram os assets da release (o auto-update busca um .zip com "win-x64" no nome
+# e extrai o .exe de dentro; ver UpdateService.ExtractExeFromZip).
 # NUNCA usar PublishTrimmed/AOT (Avalonia quebra).
 
 param([string]$Rid = 'win-x64')
@@ -43,6 +45,13 @@ foreach ($r in $rids) {
     $mb = [Math]::Round((Get-Item $final).Length / 1MB, 1)
     if ((Get-Item $final).Length -lt 1MB) { throw "artefato $final < 1MB (guard do SwapExe)" }
     Write-Output "OK: $final ($mb MB)"
+
+    # Asset de release: zip contendo o executavel (nome do zip carrega o RID).
+    $zip = Join-Path $dist "1clickTransfer-$r.zip"
+    if (Test-Path $zip) { Remove-Item $zip -Force }
+    Compress-Archive -Path $final -DestinationPath $zip -CompressionLevel Optimal
+    $zipMb = [Math]::Round((Get-Item $zip).Length / 1MB, 1)
+    Write-Output "OK: $zip ($zipMb MB)"
 }
 
 Write-Output ""
