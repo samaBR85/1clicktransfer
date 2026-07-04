@@ -75,6 +75,22 @@
     <Setter Property="TextElement.Foreground" Value="{DynamicResource AccentTextBrush}"/>
   </Style>
 
+  <!-- ===== Botao-aba (fila de transferência) ===== -->
+  <Style Selector="Button.tab">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="8,4"/>
+    <Setter Property="FontSize" Value="11.5"/>
+    <Setter Property="Foreground" Value="{DynamicResource SubTextBrush}"/>
+  </Style>
+  <Style Selector="Button.tab.active">
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+  </Style>
+
   <!-- ===== TextBox ===== -->
   <Style Selector="TextBox">
     <Setter Property="Background" Value="{DynamicResource InputBrush}"/>

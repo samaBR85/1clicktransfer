@@ -190,6 +190,57 @@ public class MainViewModelTests
         vm.OnClosed();
     }
 
+    // ---- Fila de transferência + paralelismo ----
+    [Fact]
+    public async Task Transfer_multiple_destinations_respects_max_parallel_and_counts_correctly()
+    {
+        var (src, _) = MakeSrcAndDest(out var fileName);
+        var dstA = Path.Combine(Path.GetTempPath(), "oct-dst-" + Guid.NewGuid().ToString("N"));
+        var dstB = Path.Combine(Path.GetTempPath(), "oct-dst-" + Guid.NewGuid().ToString("N"));
+        var job = Job("A");
+        job.Source.Files.Add(src);
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = dstA, Enabled = true });
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = dstB, Enabled = true });
+        var s = WithJobs(job);
+        s.MaxParallelDestinations = 1;   // forca sequencial
+        var vm = New(s);
+        vm.OnOpened();
+
+        await vm.TransferCommand.ExecuteAsync(null);
+
+        Assert.True(File.Exists(Path.Combine(dstA, fileName)));
+        Assert.True(File.Exists(Path.Combine(dstB, fileName)));
+        Assert.Contains("2 sent", vm.StatusText);
+        vm.OnClosed();
+        Directory.Delete(dstA, true); Directory.Delete(dstB, true);
+    }
+
+    [Fact]
+    public async Task Transfer_populates_queue_items_success_and_failure()
+    {
+        var (src, _) = MakeSrcAndDest(out var fileName);
+        var goodDst = Path.Combine(Path.GetTempPath(), "oct-dst-" + Guid.NewGuid().ToString("N"));
+        var badDst = Path.Combine(Path.GetTempPath(), "oct-" + Guid.NewGuid().ToString("N") + ".file");
+        File.WriteAllText(badDst, "sou um arquivo, não pasta");   // CreateDirectory sobre arquivo -> falha
+        var job = Job("A");
+        job.Source.Files.Add(src);
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = goodDst, Enabled = true });
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = badDst, Enabled = true });
+        var s = WithJobs(job);
+        s.MaxParallelDestinations = 3;
+        var vm = New(s);
+        vm.OnOpened();
+
+        await vm.TransferCommand.ExecuteAsync(null);
+
+        Assert.Empty(vm.QueuedItems);
+        Assert.Single(vm.SucceededItems);
+        Assert.Single(vm.FailedItems);
+        Assert.True(vm.HasQueueActivity);
+        vm.OnClosed();
+        Directory.Delete(goodDst, true); File.Delete(badDst);
+    }
+
     // ---- Envio individual (topo, painel direito) ----
     [Fact]
     public async Task TransferSelected_sends_only_the_selected_job()

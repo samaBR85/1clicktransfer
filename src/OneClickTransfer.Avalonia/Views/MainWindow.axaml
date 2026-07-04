@@ -33,7 +33,8 @@
       <RowDefinition Height="Auto"/>                                   <!-- 6 progress -->
       <RowDefinition Height="Auto"/>                                   <!-- 7 status -->
       <RowDefinition Height="Auto"/>                                   <!-- 8 taxa -->
-      <RowDefinition Height="Auto"/>                                   <!-- 9 rodape -->
+      <RowDefinition Height="Auto"/>                                   <!-- 9 fila de transferencia -->
+      <RowDefinition Height="Auto"/>                                   <!-- 10 rodape -->
     </Grid.RowDefinitions>
 
     <!-- Top bar: título + engrenagem de Configurações -->
@@ -254,8 +255,89 @@
     <TextBlock Grid.Row="8" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="11"
                Margin="0,3,0,0" Foreground="{DynamicResource SubTextBrush}"/>
 
+    <!-- Fila de transferência -->
+    <Border Grid.Row="9" Margin="0,10,0,0" Padding="12,10" IsVisible="{Binding HasQueueActivity}"
+            Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AccentBrush}"
+            BorderThickness="1" CornerRadius="8">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="{Binding QueuePanelTitle}" FontWeight="Bold" FontSize="11"
+                   Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,6"/>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,6">
+          <Button Classes="tab" Content="{Binding QueueTabQueuedLabel}" Command="{Binding SelectQueueQueuedTabCommand}"
+                  Classes.active="{Binding IsQueueTabActive}"/>
+          <Button Classes="tab" Content="{Binding QueueTabFailedLabel}" Command="{Binding SelectQueueFailedTabCommand}"
+                  Classes.active="{Binding IsFailedTabActive}"/>
+          <Button Classes="tab" Content="{Binding QueueTabSucceededLabel}" Command="{Binding SelectQueueSucceededTabCommand}"
+                  Classes.active="{Binding IsSucceededTabActive}"/>
+        </StackPanel>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+          <Button DockPanel.Dock="Right" Content="{Binding QueueClearCompletedLabel}" FontSize="11"
+                  Command="{Binding ClearCompletedQueueCommand}" IsEnabled="{Binding CanClearCompletedQueue}"/>
+          <TextBlock Text="{Binding QueueTotalText}" FontSize="11" VerticalAlignment="Center"
+                     Foreground="{DynamicResource SubTextBrush}"/>
+        </DockPanel>
+
+        <StackPanel MaxHeight="140">
+          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding QueuedItems}" IsVisible="{Binding IsQueueTabActive}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:TransferQueueItem">
+                  <Grid ColumnDefinitions="*,70,150" Margin="0,3">
+                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="11.5"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayName}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
+                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
+                    <StackPanel Grid.Column="2" Margin="10,0,0,0">
+                      <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding Progress}"
+                                   Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+                      <TextBlock Text="{Binding StatusText}" FontSize="10" Foreground="{DynamicResource SubTextBrush}"
+                                 HorizontalAlignment="Right" Margin="0,2,0,0"/>
+                    </StackPanel>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding FailedItems}" IsVisible="{Binding IsFailedTabActive}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:TransferQueueItem">
+                  <Grid ColumnDefinitions="*,70,110" Margin="0,3">
+                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="11.5" Foreground="#E24B4A"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ErrorMessage}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
+                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="11"
+                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding SucceededItems}" IsVisible="{Binding IsSucceededTabActive}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:TransferQueueItem">
+                  <Grid ColumnDefinitions="*,70,110" Margin="0,3">
+                    <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="11.5"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayName}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
+                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="11"
+                               Foreground="{DynamicResource SubTextBrush}" HorizontalAlignment="Right"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
     <!-- Footer -->
-    <Grid Grid.Row="9" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+    <Grid Grid.Row="10" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
       <TextBlock Grid.Column="0" Text="{Binding HintText}" FontSize="12"
                  Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -49,6 +50,62 @@ public sealed partial class MainViewModel : ViewModelBase
     public ObservableCollection<JobItemViewModel> Jobs { get; } = new();
     public FilePanelViewModel Source { get; }
     public FilePanelViewModel Dest { get; }
+
+    // ---------------- Fila de transferência ----------------
+    public ObservableCollection<TransferQueueItem> QueuedItems { get; } = new();
+    public ObservableCollection<TransferQueueItem> FailedItems { get; } = new();
+    public ObservableCollection<TransferQueueItem> SucceededItems { get; } = new();
+
+    [ObservableProperty] private int _selectedQueueTabIndex;
+    partial void OnSelectedQueueTabIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsQueueTabActive));
+        OnPropertyChanged(nameof(IsFailedTabActive));
+        OnPropertyChanged(nameof(IsSucceededTabActive));
+    }
+    public bool IsQueueTabActive => SelectedQueueTabIndex == 0;
+    public bool IsFailedTabActive => SelectedQueueTabIndex == 1;
+    public bool IsSucceededTabActive => SelectedQueueTabIndex == 2;
+
+    [RelayCommand] private void SelectQueueQueuedTab() => SelectedQueueTabIndex = 0;
+    [RelayCommand] private void SelectQueueFailedTab() => SelectedQueueTabIndex = 1;
+    [RelayCommand] private void SelectQueueSucceededTab() => SelectedQueueTabIndex = 2;
+
+    public bool HasQueueActivity => QueuedItems.Count > 0 || FailedItems.Count > 0 || SucceededItems.Count > 0;
+    public string QueuePanelTitle => L.T("queuePanelTitle");
+    public string QueueTabQueuedLabel => L.T("queueTabQueued", QueuedItems.Count);
+    public string QueueTabFailedLabel => L.T("queueTabFailed", FailedItems.Count);
+    public string QueueTabSucceededLabel => L.T("queueTabSucceeded", SucceededItems.Count);
+    public string QueueClearCompletedLabel => L.T("queueClearCompleted");
+    public bool CanClearCompletedQueue => FailedItems.Count > 0 || SucceededItems.Count > 0;
+
+    public string QueueTotalText
+    {
+        get
+        {
+            if (QueuedItems.Count == 0) return L.T("queueEmpty");
+            var totalBytes = QueuedItems.Sum(i => i.SizeBytes);
+            return L.T("queueTotal", FormatBytes(totalBytes));
+        }
+    }
+
+    [RelayCommand]
+    private void ClearCompletedQueue()
+    {
+        FailedItems.Clear();
+        SucceededItems.Clear();
+        RaiseQueueInfo();
+    }
+
+    private void RaiseQueueInfo()
+    {
+        OnPropertyChanged(nameof(HasQueueActivity));
+        OnPropertyChanged(nameof(QueueTabQueuedLabel));
+        OnPropertyChanged(nameof(QueueTabFailedLabel));
+        OnPropertyChanged(nameof(QueueTabSucceededLabel));
+        OnPropertyChanged(nameof(QueueTotalText));
+        OnPropertyChanged(nameof(CanClearCompletedQueue));
+    }
 
     private AppSettings S => _s;
     private TransferJob Job => _s.CurrentJob;
@@ -182,8 +239,10 @@ public sealed partial class MainViewModel : ViewModelBase
             nameof(RenameLabel), nameof(RemoveLabel), nameof(SourceHeader), nameof(DestHeader), nameof(WatchTip),
             nameof(RefreshTip), nameof(ColName), nameof(ColSize), nameof(ColModified), nameof(ActionLabel),
             nameof(ReplaceLabel), nameof(ReplaceIfNewerLabel), nameof(DontReplaceLabel), nameof(TransferLabel),
-            nameof(SettingsLabel), nameof(HintText), nameof(LastTransferText) })
+            nameof(SettingsLabel), nameof(HintText), nameof(LastTransferText), nameof(QueuePanelTitle),
+            nameof(QueueClearCompletedLabel) })
             OnPropertyChanged(p);
+        RaiseQueueInfo();
     }
 
     // ---------------- Ciclo de vida ----------------
@@ -601,6 +660,19 @@ public sealed partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private Task TransferSelectedAsync() => DoTransferJobs(new List<TransferJob> { Job });
 
+    private sealed class WorkItem
+    {
+        public TransferJob Job = null!;
+        public string Src = "";
+        public Destination Dest = null!;
+        public TransferQueueItem QueueItem = null!;
+    }
+
+    private static long SafeFileLength(string path)
+    {
+        try { return new FileInfo(path).Length; } catch { return 0; }
+    }
+
     private async Task DoTransferJobs(List<TransferJob> jobs)
     {
         if (_transferring) return;
@@ -622,64 +694,125 @@ public sealed partial class MainViewModel : ViewModelBase
         ProgressValue = 0;
         int sent = 0, skipped = 0, failed = 0;
         string? lastError = null;
-        var steps = jobs.Sum(j => j.Source.All.Count(File.Exists) * j.Destinations.Count(d => d.Enabled && DestReady(d)));
-        int step = 0;
-        try
+
+        // Monta a lista de work-items (arquivo x destino) ANTES de transferir; modo de sobrescrita
+        // ja decide aqui quem entra na fila ou e pulado direto (skip nao aparece na fila visualmente).
+        var workItems = new List<WorkItem>();
+        foreach (var j in jobs)
         {
-            foreach (var j in jobs)
+            var dests = j.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
+            var files = j.Source.All.Where(File.Exists).ToList();
+            foreach (var src in files)
             {
-                var mode = j.Overwrite;
-                var dests = j.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
-                var files = j.Source.All.Where(File.Exists).ToList();
-                foreach (var src in files)
+                var fileName = Path.GetFileName(src);
+                foreach (var d in dests)
                 {
-                    var fileName = Path.GetFileName(src);
-                    foreach (var d in dests)
+                    if (j.Overwrite != OverwriteMode.Always)
                     {
-                        step++;
-                        var label = steps > 1
-                            ? j.Name + " · " + fileName + " → " + d.Summary
-                            : (d.Type == DestType.Local ? L.T("copying") : L.T("uploading"));
-                        SetStatus(L.T("sendingTo", label, step, steps), StatusKind.Sub);
-                        ProgressValue = 0;
-                        RateText = "";
-                        var rateSw = Stopwatch.StartNew();
-                        double lastUiMs = -1000;
-                        double lastPct = -1;
-                        double lastBps = 0;
-                        try
+                        bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
+                        if (exists)
                         {
-                            if (mode != OverwriteMode.Always)
-                            {
-                                bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
-                                if (exists)
-                                {
-                                    if (mode == OverwriteMode.Never) { skipped++; continue; }
-                                    if (mode == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, fileName))) { skipped++; continue; }
-                                }
-                            }
-                            await Task.Run(() => TransferService.Send(d, src, tp =>
-                            {
-                                if (tp.BytesPerSec > 0) lastBps = tp.BytesPerSec;
-                                double nowMs = rateSw.Elapsed.TotalMilliseconds;
-                                if (nowMs - lastUiMs < 200 && Math.Abs(tp.Percent - lastPct) < 1) return;
-                                lastUiMs = nowMs; lastPct = tp.Percent;
-                                var bps = lastBps; var done = tp.Transferred; var total = tp.Total;
-                                _ui.Post(() =>
-                                {
-                                    ProgressValue = tp.Percent;
-                                    RateText = bps > 0
-                                        ? FormatSpeed(bps) + " — " + FormatBytes(done) + " / " + FormatBytes(total)
-                                        : (total > 0 ? FormatBytes(done) + " / " + FormatBytes(total) : "");
-                                });
-                            }));
-                            ProgressValue = 100;
-                            sent++;
+                            if (j.Overwrite == OverwriteMode.Never) { skipped++; continue; }
+                            if (j.Overwrite == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, fileName))) { skipped++; continue; }
                         }
-                        catch (Exception ex) { failed++; lastError = ex.Message; }
                     }
+                    var qi = new TransferQueueItem
+                    {
+                        FileName = fileName,
+                        DestSummary = d.Summary,
+                        SizeBytes = SafeFileLength(src),
+                        State = QueueItemState.Queued,
+                        StatusText = L.T("queueWaiting")
+                    };
+                    workItems.Add(new WorkItem { Job = j, Src = src, Dest = d, QueueItem = qi });
                 }
             }
+        }
+
+        _ui.Post(() =>
+        {
+            foreach (var w in workItems) QueuedItems.Add(w.QueueItem);
+            RaiseQueueInfo();
+        });
+
+        var steps = workItems.Count;
+        int started = 0;
+        int completed = 0;
+
+        try
+        {
+            var maxParallel = Math.Max(1, S.MaxParallelDestinations);
+            using var gate = new SemaphoreSlim(maxParallel);
+
+            var tasks = workItems.Select(async w =>
+            {
+                await gate.WaitAsync();
+                try
+                {
+                    var d = w.Dest; var src = w.Src; var qi = w.QueueItem;
+                    var startedNow = Interlocked.Increment(ref started);
+                    _ui.Post(() =>
+                    {
+                        qi.State = QueueItemState.Running;
+                        qi.StatusText = d.Type == DestType.Local ? L.T("copying") : L.T("uploading");
+                        SetStatus(L.T("sendingTo", w.Job.Name + " · " + qi.FileName + " → " + qi.DestSummary, startedNow, steps), StatusKind.Sub);
+                    });
+
+                    var rateSw = Stopwatch.StartNew();
+                    double lastUiMs = -1000, lastPct = -1, lastBps = 0;
+                    try
+                    {
+                        await Task.Run(() => TransferService.Send(d, src, tp =>
+                        {
+                            if (tp.BytesPerSec > 0) lastBps = tp.BytesPerSec;
+                            double nowMs = rateSw.Elapsed.TotalMilliseconds;
+                            if (nowMs - lastUiMs < 200 && Math.Abs(tp.Percent - lastPct) < 1) return;
+                            lastUiMs = nowMs; lastPct = tp.Percent;
+                            var bps = lastBps; var done = tp.Transferred; var total = tp.Total;
+                            _ui.Post(() =>
+                            {
+                                qi.Progress = tp.Percent;
+                                qi.StatusText = bps > 0
+                                    ? FormatSpeed(bps) + " — " + FormatBytes(done) + " / " + FormatBytes(total)
+                                    : (total > 0 ? FormatBytes(done) + " / " + FormatBytes(total) : "");
+                            });
+                        }));
+                        Interlocked.Increment(ref sent);
+                        var doneNow = Interlocked.Increment(ref completed);
+                        _ui.Post(() =>
+                        {
+                            qi.Progress = 100;
+                            qi.State = QueueItemState.Success;
+                            qi.FinishedAt = DateTime.Now;
+                            qi.StatusText = qi.FinishedAt.Value.ToString("dd/MM HH:mm");
+                            QueuedItems.Remove(qi);
+                            SucceededItems.Insert(0, qi);
+                            RaiseQueueInfo();
+                            ProgressValue = steps > 0 ? doneNow * 100.0 / steps : 0;
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Interlocked.Increment(ref failed);
+                        lastError = ex.Message;
+                        var doneNow = Interlocked.Increment(ref completed);
+                        _ui.Post(() =>
+                        {
+                            qi.State = QueueItemState.Failed;
+                            qi.FinishedAt = DateTime.Now;
+                            qi.ErrorMessage = ex.Message;
+                            qi.StatusText = qi.FinishedAt.Value.ToString("dd/MM HH:mm");
+                            QueuedItems.Remove(qi);
+                            FailedItems.Insert(0, qi);
+                            RaiseQueueInfo();
+                            ProgressValue = steps > 0 ? doneNow * 100.0 / steps : 0;
+                        });
+                    }
+                }
+                finally { gate.Release(); }
+            });
+
+            await Task.WhenAll(tasks);
 
             var kind = failed > 0 ? StatusKind.Error : (sent > 0 ? StatusKind.Success : StatusKind.Sub);
             SetStatus(L.T("transferDone", sent, skipped, failed), kind);
