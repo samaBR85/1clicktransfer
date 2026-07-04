@@ -344,7 +344,16 @@ public sealed partial class MainViewModel : ViewModelBase
             Source.Rows.Clear();
             Source.PathText = L.T("srcCount", files.Count);
             foreach (var f in files)
-                Source.Rows.Add(new FileRow { Name = "\U0001F4C4  " + Path.GetFileName(f) });
+            {
+                var fi = new FileInfo(f);
+                Source.Rows.Add(new FileRow
+                {
+                    Name = "\U0001F4C4  " + Path.GetFileName(f),
+                    Size = fi.Exists ? FormatSize(fi.Length) : "",
+                    Modified = fi.Exists ? fi.LastWriteTime.ToString("dd/MM/yyyy HH:mm") : "",
+                    RealName = Path.GetFileName(f)
+                });
+            }
         }
         else
         {
