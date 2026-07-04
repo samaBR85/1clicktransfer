@@ -57,6 +57,7 @@ public static class L
         ["shortcutHint"] = ("Atalho do teclado: {0}", "Keyboard shortcut: {0}"),
         ["clickSettingsStart"] = ("Clique em \"Configurar\" para começar.", "Click \"Settings\" to start."),
         ["refreshing"] = ("Atualizando...", "Refreshing..."),
+        ["refreshedOk"] = ("✓ Lista atualizada", "✓ List refreshed"),
         ["profileLoaded"] = ("Perfil carregado: {0}", "Profile loaded: {0}"),
         ["fieldsCleared"] = ("Campos limpos.", "Fields cleared."),
         ["settingsSaved"] = ("Configurações salvas.", "Settings saved."),

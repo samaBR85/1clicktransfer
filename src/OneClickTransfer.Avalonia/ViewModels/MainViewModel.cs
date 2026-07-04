@@ -515,29 +515,37 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     // ---------------- Comandos de refresh ----------------
+    // Feedback: uma confirmação verde que some sozinha (o refresh local é instantâneo e "invisível").
+    private System.Threading.Timer? _flashTimer;
+    private void FlashStatus(string text)
+    {
+        SetStatus(text, StatusKind.Success);
+        _flashTimer?.Dispose();
+        _flashTimer = new System.Threading.Timer(
+            _ => _ui.Post(() => { if (StatusText == text) SetStatus("", StatusKind.Sub); }),
+            null, 1600, System.Threading.Timeout.Infinite);
+    }
+
     private void RefreshSource()
     {
         if (_transferring) return;
-        SetStatus(L.T("refreshing"), StatusKind.Sub);
         RefreshSourcePanel();
-        SetStatus("", StatusKind.Sub);
+        FlashStatus(L.T("refreshedOk"));
     }
 
     private void RefreshDest()
     {
         if (_transferring) return;
-        SetStatus(L.T("refreshing"), StatusKind.Sub);
         RefreshDestPanel(true);
-        SetStatus("", StatusKind.Sub);
+        FlashStatus(L.T("refreshedOk"));
     }
 
     /// <summary>F5: refresh completo dos dois painéis (busca o FTP).</summary>
     public void RefreshAll()
     {
         if (_transferring) return;
-        SetStatus(L.T("refreshing"), StatusKind.Sub);
         RefreshHome(true);
-        SetStatus("", StatusKind.Sub);
+        FlashStatus(L.T("refreshedOk"));
     }
 
     /// <summary>Trata F5 (refresh) e o atalho configurável (transferir). Retorna true se consumiu a tecla.</summary>
