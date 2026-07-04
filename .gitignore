@@ -5,6 +5,7 @@ settings.json
 # Artefatos de build / distribuicao
 dist/
 dist-v2/
+dist-v3/
 *.exe
 *.zip
 

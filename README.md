@@ -8,8 +8,9 @@
   <a href="https://github.com/samaBR85/1clicktransfer/releases/latest"><img src="https://img.shields.io/github/v/release/samaBR85/1clicktransfer?label=download" alt="Release"></a>
   <img src="https://img.shields.io/github/downloads/samaBR85/1clicktransfer/total?label=downloads&color=success" alt="Downloads">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
-  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4" alt="Windows 10/11">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4" alt="Windows | Linux | macOS">
   <img src="https://img.shields.io/badge/.NET-8-512BD4" alt=".NET 8">
+  <img src="https://img.shields.io/badge/UI-Avalonia%2011-8B3FE8" alt="Avalonia 11">
   <img src="https://img.shields.io/badge/i18n-PT%20%2B%20EN-success" alt="PT + EN">
 </p>
 
@@ -25,53 +26,57 @@
 
 ## 🇬🇧 English
 
-A native Windows app (**C# / .NET 8, WPF**). One big **TRANSFER** button sends your pre-chosen
-**file(s)** to your pre-chosen **destination(s)** — a **local/network folder**, an **FTP/FTPS**
-server, or **SFTP**. Set up multiple independent **tasks** (each with its own source and
-destinations) and fire them all with a single click — or let it **watch** a file and send it
-automatically when it changes.
+A **cross-platform** desktop app (**C# / .NET 8, Avalonia UI**) for **Windows, Linux and macOS**.
+One big **TRANSFER** button sends your pre-chosen **file(s)** to your pre-chosen **destination(s)** —
+a **local/network folder**, an **FTP/FTPS** server, or **SFTP**. Set up multiple independent
+**tasks** (each with its own source and destinations), send them all with one click or **one at a
+time**, or let it **watch** a file and send it automatically when it changes.
 
 <p align="center">
-  <img src="screenshots/v2.0/01-hero-v2.png" width="820" alt="1-Click Transfer — app window">
+  <img src="screenshots/v3.0/home.png" width="860" alt="1-Click Transfer — main window">
 </p>
 
 ### Features
 - **Multiple tasks** — each task is its own *source → destinations* pair. Toggle any on/off and
-  transfer all the enabled ones with one click.
+  transfer all the enabled ones with one click, or hit **Send this task** to fire just one.
 - **Multiple source files** per task, sent to **multiple destinations**: local/network folders,
   **FTP/FTPS**, and **SFTP**. Destinations are a saved library with per-item checkboxes and
-  reusable **named groups**.
-- **Watch (auto-send), per task** — when the source file changes, that task uploads automatically.
-- **Command line** — run headless from a script or Windows Task Scheduler:
+  reusable **named groups** and **presets**.
+- **Watch (auto-send), per task** — when the source file changes, that task uploads automatically
+  (great for build outputs).
+- **Command line** — run headless from a script, cron or Task Scheduler:
   `1clickTransfer --task "Name"`, `--all`, `--list`, `--silent`.
-- **Auto-update** — checks GitHub for new releases and updates itself.
+- **Auto-update** — checks GitHub Releases; on Windows it downloads and swaps itself, on Linux/macOS
+  it shows what's new and opens the release page.
 - **Action modes**: *Replace*, *Replace if newer*, *Don't replace*.
-- **Navigable Source/Destination panels** (incl. an FTP/SFTP folder browser), resizable columns
+- **Navigable Source/Destination browsers** (incl. an FTP/SFTP folder browser), resizable columns
   and tasks panel; the window **remembers its size and position**.
 - **Dark / light** theme, **Portuguese / English** UI (switch in Settings).
-- Passwords stored **encrypted** (Windows DPAPI, per user). Single **portable** `.exe`.
+- Passwords stored **encrypted** — Windows **DPAPI** (per user); Linux/macOS use a local AES key
+  next to the settings (obfuscation, not strong security). Single **portable** executable per OS.
 
 <p align="center">
-  <img src="screenshots/v2.0/04-multi_folder-v2.png" width="820" alt="Multiple tasks and FTP destinations">
-</p>
-
-<p align="center">
-  <img src="screenshots/v2.0/02-config-v2.png" width="380" alt="Settings">
+  <img src="screenshots/v3.0/edit-task.png" width="380" alt="Edit task — files, destinations, presets">
   &nbsp;
-  <img src="screenshots/v2.0/03-destination-v2.png" width="380" alt="Destination editor (Local / FTP / SFTP)">
+  <img src="screenshots/v3.0/settings.png" width="380" alt="Settings — language, theme, shortcut, updates">
 </p>
 
 ### Download & run
-1. Grab the latest **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** and
-   download **`1clickTransfer.exe`**.
-2. Run it. No installation needed — it's a single portable executable.
-3. First launch may trigger Windows **SmartScreen** (the app isn't code-signed): click
-   *More info → Run anyway*. It's safe — the full source is here.
+Grab the latest **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** for your OS —
+each file is a single **self-contained** executable, no runtime or install needed:
 
-`settings.json` is created **next to the .exe** (portable).
+| OS | File | How to run |
+|---|---|---|
+| **Windows 10/11** | `1clickTransfer.exe` | double-click. SmartScreen may warn (not code-signed): *More info → Run anyway* |
+| **Linux (x64)** | `1clickTransfer-linux-x64` | `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
+| **macOS (Intel)** | `1clickTransfer-osx-x64` | `chmod +x …` then, if Gatekeeper blocks it: `xattr -d com.apple.quarantine …` |
+| **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64` | same as Intel, arm64 build |
+
+`settings.json` is created **next to the executable** (portable). On Linux/macOS, if that folder
+isn't writable it falls back to `~/.config/1clicktransfer/settings.json`.
 
 ### Command line
-Run a transfer without opening the window — handy for scripts and Task Scheduler:
+Run a transfer without opening the window — handy for scripts, cron and Task Scheduler:
 
 | Command | What it does |
 |---|---|
@@ -83,21 +88,21 @@ Run a transfer without opening the window — handy for scripts and Task Schedul
 
 No arguments → opens the normal window. Exit codes: `0` = ok, `1` = some failure, `2` = usage error.
 
-### Auto-update
-The app checks GitHub Releases on startup (toggle in Settings, or **Check for updates**), shows
-what's new, downloads the new version, and restarts itself.
-
 ### Run from source / build
 Requires the **.NET 8 SDK**.
-```powershell
-dotnet run --project src\OneClickTransfer          # run from source
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-v2.ps1   # -> dist-v2\1clickTransfer.exe
+```bash
+dotnet run --project src/OneClickTransfer.Avalonia        # run from source
+dotnet test 1clickTransfer.sln -c Release                 # run the tests
+# publish self-contained single-file binaries into dist-v3/ :
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-v3.ps1 -Rid all
 ```
-`build-v2.ps1` publishes a single-file, self-contained `win-x64` executable.
+`build-v3.ps1` produces `win-x64`, `linux-x64`, `osx-x64` and `osx-arm64` binaries with the
+contractual names above.
 
-> **Legacy (v1).** The root `TransferApp.ps1`, `Iniciar.vbs` and `Criar atalho na Area de Trabalho.vbs`
-> are the original v1 (PowerShell/VBScript). They are kept for history only and are **not part of the
-> v2/v3 distribution** — don't run or ship them. The current app is the C# build above.
+> **Project layout.** `src/OneClickTransfer.Core` holds all the logic (models, services, i18n) with
+> no UI; `src/OneClickTransfer.Avalonia` is the cross-platform UI (v3). `src/OneClickTransfer` is the
+> frozen Windows-only WPF v2. The root `TransferApp.ps1` and the two `.vbs` files are the original
+> **v1** (PowerShell/VBScript) — kept for history only and **not part of the distribution**.
 
 ### License
 [MIT](LICENSE) © 2026 samaBR85.
@@ -113,53 +118,57 @@ licensed under MIT.
 
 ## 🇧🇷 Português
 
-Um app nativo para Windows (**C# / .NET 8, WPF**). Um botão grande **TRANSFERIR** envia seu(s)
-**arquivo(s)** pré-escolhido(s) para o(s) **destino(s)** pré-escolhido(s) — uma **pasta local/rede**,
-um servidor **FTP/FTPS** ou **SFTP**. Monte várias **tarefas** independentes (cada uma com sua
-origem e seus destinos) e dispare todas com um clique — ou deixe o app **observar** um arquivo e
-enviá-lo automaticamente quando ele mudar.
+Um app de desktop **multiplataforma** (**C# / .NET 8, Avalonia UI**) para **Windows, Linux e macOS**.
+Um botão grande **TRANSFERIR** envia seu(s) **arquivo(s)** pré-escolhido(s) para o(s) **destino(s)**
+pré-escolhido(s) — uma **pasta local/rede**, um servidor **FTP/FTPS** ou **SFTP**. Monte várias
+**tarefas** independentes (cada uma com sua origem e seus destinos) e dispare todas com um clique
+ou **uma de cada vez** — ou deixe o app **observar** um arquivo e enviá-lo sozinho quando ele mudar.
 
 <p align="center">
-  <img src="screenshots/v2.0/01-hero-v2.png" width="820" alt="Transferência 1-Clique — janela do app">
+  <img src="screenshots/v3.0/home.png" width="860" alt="Transferência 1-Clique — janela principal">
 </p>
 
 ### Recursos
 - **Várias tarefas** — cada tarefa é um par *origem → destinos*. Ligue/desligue quais quiser e
-  transfira todas as marcadas com um clique.
+  transfira todas as marcadas com um clique, ou use **Enviar esta tarefa** para disparar só uma.
 - **Vários arquivos de origem** por tarefa, para **vários destinos**: pastas local/rede,
-  **FTP/FTPS** e **SFTP**. Os destinos ficam numa biblioteca salva, com checkbox por item e
-  **grupos** nomeados reutilizáveis.
-- **Observar (envio automático), por tarefa** — quando o arquivo de origem muda, a tarefa envia sozinha.
-- **Linha de comando** — rode sem janela por script ou Agendador de Tarefas:
+  **FTP/FTPS** e **SFTP**. Os destinos ficam numa biblioteca salva, com checkbox por item,
+  **grupos** nomeados e **presets** reutilizáveis.
+- **Observar (envio automático), por tarefa** — quando o arquivo de origem muda, a tarefa envia
+  sozinha (ótimo para saídas de build).
+- **Linha de comando** — rode sem janela por script, cron ou Agendador de Tarefas:
   `1clickTransfer --task "Nome"`, `--all`, `--list`, `--silent`.
-- **Auto-update** — verifica novas versões no GitHub e se atualiza sozinho.
+- **Auto-update** — verifica os Releases do GitHub; no Windows baixa e se substitui, no Linux/macOS
+  mostra as novidades e abre a página do release.
 - **Ações**: *Substituir*, *Substituir se for mais recente*, *Não Substituir*.
-- **Painéis de Origem/Destino naveg&aacute;veis** (com navegador de pastas FTP/SFTP), colunas e painel
-  de tarefas redimension&aacute;veis; a janela **lembra tamanho e posição**.
-- Tema **escuro / claro**, interface **Português / Inglês** (troca no Configurar).
-- Senhas guardadas **criptografadas** (DPAPI do Windows, por usuário). Um `.exe` **portátil**.
+- **Navegadores de Origem/Destino** (com navegador de pastas FTP/SFTP), colunas e painel de tarefas
+  redimensionáveis; a janela **lembra tamanho e posição**.
+- Tema **escuro / claro**, interface **Português / Inglês** (troca em Configurações).
+- Senhas guardadas **criptografadas** — **DPAPI** do Windows (por usuário); no Linux/macOS uma chave
+  AES local ao lado das configurações (ofuscação, não segurança forte). Um executável **portátil** por SO.
 
 <p align="center">
-  <img src="screenshots/v2.0/04-multi_folder-v2.png" width="820" alt="Várias tarefas e destinos FTP">
-</p>
-
-<p align="center">
-  <img src="screenshots/v2.0/02-config-v2.png" width="380" alt="Configurações">
+  <img src="screenshots/v3.0/edit-task.png" width="380" alt="Editar tarefa — arquivos, destinos, presets">
   &nbsp;
-  <img src="screenshots/v2.0/03-destination-v2.png" width="380" alt="Editor de destino (Local / FTP / SFTP)">
+  <img src="screenshots/v3.0/settings.png" width="380" alt="Configurações — idioma, tema, atalho, updates">
 </p>
 
 ### Baixar e usar
-1. Baixe o **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** mais recente e
-   pegue o **`1clickTransfer.exe`**.
-2. Execute. Não precisa instalar — é um único executável portátil.
-3. Na primeira execução o **SmartScreen** pode alertar (o app não é assinado): clique em
-   *Mais informações → Executar assim mesmo*. É seguro — o código está todo aqui.
+Baixe o **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** mais recente do seu
+SO — cada arquivo é um executável **self-contained**, sem runtime nem instalação:
 
-O `settings.json` é criado **ao lado do .exe** (portátil).
+| SO | Arquivo | Como rodar |
+|---|---|---|
+| **Windows 10/11** | `1clickTransfer.exe` | duplo-clique. O SmartScreen pode alertar (não é assinado): *Mais informações → Executar assim mesmo* |
+| **Linux (x64)** | `1clickTransfer-linux-x64` | `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
+| **macOS (Intel)** | `1clickTransfer-osx-x64` | `chmod +x …` e, se o Gatekeeper bloquear: `xattr -d com.apple.quarantine …` |
+| **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64` | igual ao Intel, build arm64 |
+
+O `settings.json` é criado **ao lado do executável** (portátil). No Linux/macOS, se a pasta não for
+gravável, ele usa `~/.config/1clicktransfer/settings.json`.
 
 ### Linha de comando
-Dispare uma transferência sem abrir a janela — ótimo para scripts e Agendador de Tarefas:
+Dispare uma transferência sem abrir a janela — ótimo para scripts, cron e Agendador de Tarefas:
 
 | Comando | O que faz |
 |---|---|
@@ -171,21 +180,21 @@ Dispare uma transferência sem abrir a janela — ótimo para scripts e Agendado
 
 Sem argumentos → abre a janela normal. Códigos de saída: `0` = ok, `1` = alguma falha, `2` = erro de uso.
 
-### Auto-update
-O app verifica os Releases do GitHub ao iniciar (ligável no Configurar, ou botão **Procurar
-atualizações**), mostra as novidades, baixa a nova versão e reinicia sozinho.
-
 ### Rodar pelo código / compilar
 Requer o **SDK do .NET 8**.
-```powershell
-dotnet run --project src\OneClickTransfer          # roda pelo código-fonte
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-v2.ps1   # -> dist-v2\1clickTransfer.exe
+```bash
+dotnet run --project src/OneClickTransfer.Avalonia        # roda pelo código-fonte
+dotnet test 1clickTransfer.sln -c Release                 # roda os testes
+# publica os binários single-file self-contained em dist-v3/ :
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-v3.ps1 -Rid all
 ```
-O `build-v2.ps1` publica um executável único, self-contained, para `win-x64`.
+O `build-v3.ps1` gera os binários `win-x64`, `linux-x64`, `osx-x64` e `osx-arm64` com os nomes
+contratuais acima.
 
-> **Legado (v1).** Os arquivos `TransferApp.ps1`, `Iniciar.vbs` e `Criar atalho na Area de Trabalho.vbs`
-> na raiz são a versão v1 original (PowerShell/VBScript). Ficam só por histórico e **não fazem parte da
-> distribuição v2/v3** — não execute nem distribua. O app atual é o build C# acima.
+> **Organização.** `src/OneClickTransfer.Core` tem toda a lógica (modelos, serviços, i18n), sem UI;
+> `src/OneClickTransfer.Avalonia` é a UI multiplataforma (v3). `src/OneClickTransfer` é o WPF v2
+> (Windows, congelado). Os arquivos `TransferApp.ps1` e os dois `.vbs` na raiz são a versão **v1**
+> original (PowerShell/VBScript) — ficam só por histórico e **não fazem parte da distribuição**.
 
 ### Licença
 [MIT](LICENSE) © 2026 samaBR85.
