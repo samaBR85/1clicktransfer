@@ -1,11 +1,15 @@
+using System;
 using System.Linq;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform;
 using Avalonia.Styling;
 using OneClickTransfer.Avalonia.Services;
 using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Avalonia.Views;
+using OneClickTransfer.I18n;
 using OneClickTransfer.Models;
 
 namespace OneClickTransfer.Avalonia;
@@ -14,6 +18,9 @@ public partial class App : Application
 {
     /// <summary>Settings carregados no Program.Main (antes da UI).</summary>
     public static AppSettings Settings { get; set; } = new();
+
+    /// <summary>Setada pelo item "Sair" da bandeja antes do Shutdown — bypassa o minimizar-ao-fechar.</summary>
+    public static bool IsReallyExiting { get; set; }
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -46,8 +53,45 @@ public partial class App : Application
             window.DataContext = vm;
 
             desktop.MainWindow = window;
+            SetupTrayIcon(window, vm, desktop);
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    // Ícone na bandeja: Abrir / Enviar todas as tarefas / Sair (Sair bypassa minimizar-ao-fechar).
+    private static void SetupTrayIcon(MainWindow window, MainViewModel vm, IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var openItem = new NativeMenuItem(L.T("trayOpen"));
+        openItem.Click += (_, _) => ShowMainWindow(window);
+
+        var sendAllItem = new NativeMenuItem(L.T("traySendAll"));
+        sendAllItem.Click += (_, _) => vm.TransferCommand.Execute(null);
+
+        var exitItem = new NativeMenuItem(L.T("trayExit"));
+        exitItem.Click += (_, _) =>
+        {
+            IsReallyExiting = true;
+            desktop.Shutdown();
+        };
+
+        var menu = new NativeMenu { openItem, sendAllItem, exitItem };
+
+        var tray = new TrayIcon
+        {
+            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://1clickTransfer/Assets/app.ico"))),
+            ToolTipText = L.T("appTitle"),
+            Menu = menu,
+        };
+        tray.Clicked += (_, _) => ShowMainWindow(window);
+
+        TrayIcon.SetIcons(Current!, new TrayIcons { tray });
+    }
+
+    private static void ShowMainWindow(MainWindow window)
+    {
+        window.Show();
+        window.WindowState = window.WindowState == WindowState.Minimized ? WindowState.Normal : window.WindowState;
+        window.Activate();
     }
 }

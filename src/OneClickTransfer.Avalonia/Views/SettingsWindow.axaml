@@ -30,6 +30,7 @@
               <TextBlock Text="{Binding MaxParallelDestinations}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
             </Border>
           </StackPanel>
+          <CheckBox Margin="0,10,0,0" Content="{Binding MinimizeToTrayLabel}" IsChecked="{Binding MinimizeToTrayOnClose, Mode=TwoWay}"/>
         </StackPanel>
       </Border>
 

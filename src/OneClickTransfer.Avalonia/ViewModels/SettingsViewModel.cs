@@ -42,6 +42,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         AutoUpdateCheck = _s.AutoUpdateCheck;
         VersionText = "v" + UpdateService.Current;
         MaxParallelDestinations = _s.MaxParallelDestinations;
+        MinimizeToTrayOnClose = _s.MinimizeToTrayOnClose;
     }
 
     public ObservableCollection<string> KeyOptions { get; } = new();
@@ -55,6 +56,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string _versionText = "";
     [ObservableProperty] private bool _checkingUpdate;
     [ObservableProperty] private int _maxParallelDestinations;
+    [ObservableProperty] private bool _minimizeToTrayOnClose;
 
     // ---------------- About ----------------
     public const string GithubUrl = "https://github.com/samaBR85/1clicktransfer";
@@ -71,6 +73,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     public string GeneralSection => L.T("generalSection");
     public string MaxParallelLabel => L.T("maxParallelLabel");
     public string MaxParallelHint => L.T("maxParallelHint");
+    public string MinimizeToTrayLabel => L.T("minimizeToTrayLabel");
     public string Sec3 => L.T("sec3Options");
     public string LangLabelText => L.T("langLabel");
     public string ThemeLabelText => L.T("themeLabel");
@@ -110,6 +113,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _s.Language = SelectedLangIndex == 1 ? "en" : "pt";
         _s.AutoUpdateCheck = AutoUpdateCheck;
         _s.MaxParallelDestinations = MaxParallelDestinations;
+        _s.MinimizeToTrayOnClose = MinimizeToTrayOnClose;
         SettingsService.Save(_s);
         CloseRequested?.Invoke(true);
     }

@@ -49,7 +49,7 @@ public partial class MainWindow : Window
             EnsureOnScreen();
             Vm?.OnOpened();
         };
-        Closing += (_, _) => SaveBounds();
+        Closing += OnClosing;
         Closed += (_, _) => Vm?.OnClosed();
     }
 
@@ -101,6 +101,18 @@ public partial class MainWindow : Window
             SettingsService.Save(S);
         }
         catch { }
+    }
+
+    // Fechar de verdade sempre encerra; minimizar-pra-bandeja é opt-in (checkbox em Configurações).
+    private void OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (S.MinimizeToTrayOnClose && !App.IsReallyExiting)
+        {
+            e.Cancel = true;
+            Hide();
+            return;
+        }
+        SaveBounds();
     }
 
     // Reposiciona no centro da tela primária se a janela restaurada ficou fora de qualquer monitor.
