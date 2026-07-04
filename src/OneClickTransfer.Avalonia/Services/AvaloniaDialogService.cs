@@ -36,7 +36,7 @@ public sealed class AvaloniaDialogService : IDialogService
     {
         var o = _owner();
         if (o is null) return null;
-        var vm = new DestinationEditorViewModel(existing, this, AppServices.Files);
+        var vm = new DestinationEditorViewModel(existing, App.Settings, this, AppServices.Files);
         return await new DestinationEditorWindow(vm).ShowDialog<Destination?>(o);
     }
 

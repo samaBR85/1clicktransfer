@@ -6,8 +6,8 @@ namespace OneClickTransfer.Avalonia.Tests;
 
 public class DestinationEditorViewModelTests
 {
-    private static DestinationEditorViewModel New(Destination? d = null)
-        => new(d, new FakeDialogService(), new FakeFilePicker());
+    private static DestinationEditorViewModel New(Destination? d = null, AppSettings? s = null, FakeDialogService? dlg = null)
+        => new(d, s ?? new AppSettings(), dlg ?? new FakeDialogService(), new FakeFilePicker());
 
     [Fact]
     public void New_defaults_to_local_port_21()
@@ -103,6 +103,57 @@ public class DestinationEditorViewModelTests
         Assert.True(result.UseTls);
         Assert.NotEqual("pw", result.Password);                 // guardada criptografada
         Assert.Equal("pw", SecretProtector.Unprotect(result.Password));
+    }
+
+    // ---- Servidores FTP/SFTP salvos ----
+    [Fact]
+    public async System.Threading.Tasks.Task SavedServerSave_adds_to_settings_and_selects_it()
+    {
+        var s = new AppSettings();
+        var vm = New(s: s, dlg: new FakeDialogService { PromptResult = "NAS" });
+        vm.IsFtp = true;
+        vm.Host = "ftp.example.com";
+        vm.Port = "21";
+        vm.Username = "u";
+        vm.Password = "pw";
+
+        await vm.SavedServerSaveCommand.ExecuteAsync(null);
+
+        Assert.Single(s.SavedServers);
+        Assert.Equal("NAS", s.SavedServers[0].Name);
+        Assert.Equal("ftp.example.com", s.SavedServers[0].Host);
+        Assert.Equal("pw", SecretProtector.Unprotect(s.SavedServers[0].Password));
+        Assert.Contains("NAS", vm.SavedServerOptions);
+    }
+
+    [Fact]
+    public void SelectingSavedServer_fills_fields()
+    {
+        var s = new AppSettings
+        {
+            SavedServers = { new SavedServer { Name = "NAS", Type = DestType.Sftp, Host = "h", Port = 22, Username = "bob", Password = SecretProtector.Protect("s3cret") } }
+        };
+        var vm = New(s: s);
+
+        vm.SelectedSavedServerIndex = vm.SavedServerOptions.IndexOf("NAS");
+
+        Assert.True(vm.IsSftp);
+        Assert.Equal("h", vm.Host);
+        Assert.Equal("22", vm.Port);
+        Assert.Equal("bob", vm.Username);
+        Assert.Equal("s3cret", vm.Password);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task SavedServerDelete_removes_from_settings()
+    {
+        var s = new AppSettings { SavedServers = { new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h" } } };
+        var vm = New(s: s, dlg: new FakeDialogService { ConfirmResult = true });
+
+        vm.SelectedSavedServerIndex = vm.SavedServerOptions.IndexOf("NAS");
+        await vm.SavedServerDeleteCommand.ExecuteAsync(null);
+
+        Assert.Empty(s.SavedServers);
     }
 
     [Fact]

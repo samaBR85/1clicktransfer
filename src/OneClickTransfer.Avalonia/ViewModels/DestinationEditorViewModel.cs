@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,18 +14,22 @@ namespace OneClickTransfer.Avalonia.ViewModels;
 /// <summary>Editor de um destino (local / FTP / SFTP). ShowDialog&lt;Destination?&gt; via CloseRequested.</summary>
 public sealed partial class DestinationEditorViewModel : ViewModelBase
 {
+    private readonly AppSettings _s;
     private readonly IDialogService _dialogs;
     private readonly IFilePickerService _files;
     private bool _typeSync;
+    private bool _svrSync;
 
     /// <summary>View fecha com este payload (Destination = salvar, null = cancelar).</summary>
     public event Action<Destination?>? CloseRequested;
 
-    public DestinationEditorViewModel(Destination? existing, IDialogService dialogs, IFilePickerService files)
+    public DestinationEditorViewModel(Destination? existing, AppSettings s, IDialogService dialogs, IFilePickerService files)
     {
+        _s = s;
         _dialogs = dialogs;
         _files = files;
         LoadFields(existing ?? new Destination());
+        ReloadSavedServers();
     }
 
     // ---------------- Tipo (rádios) ----------------
@@ -91,6 +97,77 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
     public string TestLabel => L.T("testConn");
     public string SaveLabel => L.T("save");
     public string CancelLabel => L.T("cancel");
+    public string SavedServerLabel => L.T("savedServerLabel");
+    public string SaveServerLabel => L.T("saveServer");
+    public string DeleteServerLabel => L.T("deleteServer");
+
+    // ---------------- Servidores FTP/SFTP salvos ----------------
+    public ObservableCollection<string> SavedServerOptions { get; } = new();
+    [ObservableProperty] private int _selectedSavedServerIndex;
+
+    private void ReloadSavedServers()
+    {
+        _svrSync = true;
+        SavedServerOptions.Clear();
+        SavedServerOptions.Add(L.T("selectItem"));
+        foreach (var srv in _s.SavedServers) SavedServerOptions.Add(srv.Name);
+        SelectedSavedServerIndex = 0;
+        _svrSync = false;
+    }
+
+    partial void OnSelectedSavedServerIndexChanged(int value)
+    {
+        if (_svrSync || value <= 0 || value >= SavedServerOptions.Count) return;
+        var name = SavedServerOptions[value];
+        var srv = _s.SavedServers.FirstOrDefault(x => x.Name == name);
+        if (srv == null) return;
+        _typeSync = true;
+        if (srv.Type == DestType.Sftp) { IsSftp = true; IsFtp = false; IsLocal = false; }
+        else { IsFtp = true; IsSftp = false; IsLocal = false; }
+        Host = srv.Host;
+        Port = srv.Port.ToString();
+        Username = srv.Username;
+        Password = SecretProtector.Unprotect(srv.Password);
+        UseTls = srv.UseTls;
+        _typeSync = false;
+        ApplyTypeChange();
+    }
+
+    [RelayCommand]
+    private async Task SavedServerSaveAsync()
+    {
+        if (!IsFtp && !IsSftp) return;
+        var suggest = SelectedSavedServerIndex > 0 ? SavedServerOptions[SelectedSavedServerIndex] : "";
+        var name = await _dialogs.PromptAsync(L.T("saveServer"), L.T("serverNamePrompt"), suggest);
+        if (string.IsNullOrWhiteSpace(name)) return;
+        var srv = new SavedServer
+        {
+            Name = name.Trim(),
+            Type = IsSftp ? DestType.Sftp : DestType.Ftp,
+            Host = Host.Trim(),
+            Port = int.TryParse(Port, out var p) && p > 0 ? p : (IsSftp ? 22 : 21),
+            Username = Username.Trim(),
+            Password = SecretProtector.Protect(Password),
+            UseTls = IsFtp && UseTls
+        };
+        var idx = _s.SavedServers.FindIndex(x => x.Name == srv.Name);
+        if (idx >= 0) _s.SavedServers[idx] = srv; else _s.SavedServers.Add(srv);
+        SettingsService.Save(_s);
+        ReloadSavedServers();
+        var i = SavedServerOptions.IndexOf(srv.Name);
+        if (i >= 0) { _svrSync = true; SelectedSavedServerIndex = i; _svrSync = false; }
+    }
+
+    [RelayCommand]
+    private async Task SavedServerDeleteAsync()
+    {
+        if (SelectedSavedServerIndex <= 0) { await _dialogs.ShowMessageAsync(L.T("savedServerLabel"), L.T("selectItem")); return; }
+        var name = SavedServerOptions[SelectedSavedServerIndex];
+        if (!await _dialogs.ConfirmAsync(L.T("deleteServer"), name)) return;
+        _s.SavedServers.RemoveAll(x => x.Name == name);
+        SettingsService.Save(_s);
+        ReloadSavedServers();
+    }
 
     private void LoadFields(Destination d)
     {

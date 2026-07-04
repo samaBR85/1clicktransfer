@@ -4,7 +4,7 @@
         x:Class="OneClickTransfer.Avalonia.Views.DestinationEditorWindow"
         x:DataType="vm:DestinationEditorViewModel"
         Title="{Binding WindowTitle}"
-        Width="540" Height="430"
+        Width="540" Height="470"
         WindowStartupLocation="CenterOwner" CanResize="False" ShowInTaskbar="False"
         Background="{DynamicResource BgBrush}">
 
@@ -52,28 +52,37 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
 
-          <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding HostLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-          <TextBox Grid.Row="0" Grid.Column="1" Height="30" Text="{Binding Host, Mode=TwoWay}"/>
-          <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding PortLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-          <TextBox Grid.Row="0" Grid.Column="3" Height="30" Text="{Binding Port, Mode=TwoWay}"/>
+          <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding SavedServerLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+          <ComboBox Grid.Row="0" Grid.Column="1" Height="30" ItemsSource="{Binding SavedServerOptions}"
+                    SelectedIndex="{Binding SelectedSavedServerIndex, Mode=TwoWay}"/>
+          <Button Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="1" Height="30" Padding="4,0" FontSize="11"
+                  Content="{Binding SaveServerLabel}" Command="{Binding SavedServerSaveCommand}"/>
+          <Button Grid.Row="0" Grid.Column="3" Height="30" Padding="4,0" FontSize="11"
+                  Content="{Binding DeleteServerLabel}" Command="{Binding SavedServerDeleteCommand}"/>
 
-          <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding RemoteLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-          <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Height="30" Text="{Binding RemoteFolder, Mode=TwoWay}"/>
-          <Button Grid.Row="1" Grid.Column="3" Height="30" Content="{Binding BrowseRemoteLabel}" Command="{Binding BrowseRemoteCommand}"/>
+          <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding HostLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="1" Grid.Column="1" Height="30" Text="{Binding Host, Mode=TwoWay}"/>
+          <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding PortLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="1" Grid.Column="3" Height="30" Text="{Binding Port, Mode=TwoWay}"/>
 
-          <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding UserLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-          <TextBox Grid.Row="2" Grid.Column="1" Height="30" Text="{Binding Username, Mode=TwoWay}"/>
-          <CheckBox Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"
+          <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding RemoteLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Height="30" Text="{Binding RemoteFolder, Mode=TwoWay}"/>
+          <Button Grid.Row="2" Grid.Column="3" Height="30" Content="{Binding BrowseRemoteLabel}" Command="{Binding BrowseRemoteCommand}"/>
+
+          <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding UserLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="3" Grid.Column="1" Height="30" Text="{Binding Username, Mode=TwoWay}"/>
+          <CheckBox Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"
                     Content="{Binding TlsLabel}" IsChecked="{Binding UseTls, Mode=TwoWay}" IsVisible="{Binding ShowTls}"/>
 
-          <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding PassLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
-          <TextBox Grid.Row="3" Grid.Column="1" Height="30" PasswordChar="●" Text="{Binding Password, Mode=TwoWay}"/>
-          <Button Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Height="30"
+          <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding PassLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
+          <TextBox Grid.Row="4" Grid.Column="1" Height="30" PasswordChar="●" Text="{Binding Password, Mode=TwoWay}"/>
+          <Button Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2" Height="30"
                   Content="{Binding TestLabel}" Command="{Binding TestCommand}" IsEnabled="{Binding !Testing}"/>
 
-          <TextBlock Grid.Row="4" Grid.Column="2" Grid.ColumnSpan="2" Text="{Binding TestResult}" Margin="0,4,0,0"
+          <TextBlock Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" Text="{Binding TestResult}" Margin="0,4,0,0"
                      FontSize="11" TextAlignment="Center" TextTrimming="CharacterEllipsis"
                      Foreground="{DynamicResource SubTextBrush}"
                      Classes.success="{Binding TestOk}" Classes.error="{Binding TestError}"/>
