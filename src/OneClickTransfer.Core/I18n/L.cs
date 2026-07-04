@@ -105,6 +105,8 @@ public static class L
         ["testConn"] = ("Testar conexão", "Test connection"),
         ["testing"] = ("Testando...", "Testing..."),
         ["sec3Options"] = ("Opções", "Options"),
+        ["about"] = ("Sobre", "About"),
+        ["viewOnGithub"] = ("Ver no GitHub", "View on GitHub"),
         ["shortcutLabel"] = ("Atalho do teclado para TRANSFERIR:", "Keyboard shortcut for TRANSFER:"),
         ["themeLabel"] = ("Tema:", "Theme:"),
         ["themeDark"] = ("Escuro", "Dark"),

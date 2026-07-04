@@ -54,6 +54,15 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string _versionText = "";
     [ObservableProperty] private bool _checkingUpdate;
 
+    // ---------------- About ----------------
+    public const string GithubUrl = "https://github.com/samaBR85/1clicktransfer";
+    public string AppNameText => L.T("appTitle");
+    public string AboutLabel => L.T("about");
+    public string GithubLabel => L.T("viewOnGithub");
+
+    [RelayCommand]
+    private void OpenGithub() => LinkOpener.Open(GithubUrl);
+
     // ---------------- Textos ----------------
     public string Title => L.T("settingsTitle");
     public string Sec3 => L.T("sec3Options");

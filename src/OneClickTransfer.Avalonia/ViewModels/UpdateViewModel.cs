@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -47,7 +46,7 @@ public sealed partial class UpdateViewModel : ViewModelBase
         // Fora do Windows: sem self-swap — abre a página do release no navegador.
         if (!OperatingSystem.IsWindows())
         {
-            OpenUrl(_info.Url);
+            LinkOpener.Open(_info.Url);
             CloseRequested?.Invoke(false);
             return;
         }
@@ -73,18 +72,4 @@ public sealed partial class UpdateViewModel : ViewModelBase
 
     [RelayCommand]
     private void Later() { if (!_busy) CloseRequested?.Invoke(false); }
-
-    private static void OpenUrl(string url)
-    {
-        try
-        {
-            if (OperatingSystem.IsWindows())
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-            else if (OperatingSystem.IsMacOS())
-                Process.Start("open", url);
-            else
-                Process.Start("xdg-open", url);
-        }
-        catch { /* sem navegador disponível: ignora */ }
-    }
 }

@@ -5,7 +5,7 @@
         x:DataType="vm:SettingsViewModel"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="470" Height="330"
+        Width="470" Height="420"
         WindowStartupLocation="CenterOwner" CanResize="False"
         Background="{DynamicResource BgBrush}">
 
@@ -38,6 +38,21 @@
           <CheckBox VerticalAlignment="Center" Margin="14,0,0,0" Content="{Binding AutoUpdateLabel}" IsChecked="{Binding AutoUpdateCheck, Mode=TwoWay}"/>
           <TextBlock Text="{Binding VersionText}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center" Margin="16,0,0,0" FontSize="11"/>
         </StackPanel>
+      </Border>
+
+      <!-- About -->
+      <TextBlock Text="{Binding AboutLabel}" FontWeight="SemiBold" Margin="0,16,0,6"/>
+      <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="8" Padding="12">
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Classes="link" VerticalAlignment="Center"
+                  Content="{Binding GithubLabel}" Command="{Binding OpenGithubCommand}"
+                  ToolTip.Tip="https://github.com/samaBR85/1clicktransfer"/>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{Binding AppNameText}" FontWeight="SemiBold"/>
+            <TextBlock Text="{Binding VersionText}" Foreground="{DynamicResource SubTextBrush}" FontSize="11"/>
+          </StackPanel>
+        </DockPanel>
       </Border>
     </StackPanel>
   </DockPanel>
