@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private ColumnDefinition ColSrc => CardsGrid.ColumnDefinitions[0];
     private ColumnDefinition ColDst => CardsGrid.ColumnDefinitions[2];
     private RowDefinition RowTasks => RootGrid.RowDefinitions[1];
+    private RowDefinition RowQueue => RootGrid.RowDefinitions[10];
 
     public MainWindow()
     {
@@ -65,6 +66,11 @@ public partial class MainWindow : Window
         if (double.IsNaN(h) || h < 140) h = 150;
         if (h > 600) h = 600;
         RowTasks.Height = new GridLength(h, GridUnitType.Pixel);
+
+        var qh = S.QueueHeight;
+        if (double.IsNaN(qh) || qh < 90) qh = 160;
+        if (qh > 500) qh = 500;
+        RowQueue.Height = new GridLength(qh, GridUnitType.Pixel);
     }
 
     // ---------------- Geometria ----------------
@@ -155,6 +161,41 @@ public partial class MainWindow : Window
             S.TasksHeight = RowTasks.ActualHeight;
             SettingsService.Save(S);
         }
+    }
+
+    // Arrasto manual (não GridSplitter): entre a fila e o card acima há várias rows Auto
+    // (ação/transferir/progresso/status/taxa) e o GridSplitter atravessa elas, redimensionando
+    // o card SOURCE/DESTINATION em vez da fila. Arrastar pra cima cresce a fila (puxa o topo
+    // dela pra cima); pra baixo encolhe.
+    private bool _queueDragging;
+    private double _queueDragStartY;
+    private double _queueDragStartHeight;
+
+    private void QueueSplitter_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+        _queueDragging = true;
+        _queueDragStartY = e.GetPosition(this).Y;
+        _queueDragStartHeight = RowQueue.ActualHeight;
+        e.Pointer.Capture(sender as Border);
+    }
+
+    private void QueueSplitter_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_queueDragging) return;
+        var dy = e.GetPosition(this).Y - _queueDragStartY;
+        var h = _queueDragStartHeight - dy;
+        if (h < 90) h = 90; else if (h > 500) h = 500;
+        RowQueue.Height = new GridLength(h, GridUnitType.Pixel);
+    }
+
+    private void QueueSplitter_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_queueDragging) return;
+        _queueDragging = false;
+        e.Pointer.Capture(null);
+        S.QueueHeight = RowQueue.ActualHeight;
+        SettingsService.Save(S);
     }
 
     // ---------------- Navegação (duplo-clique) ----------------

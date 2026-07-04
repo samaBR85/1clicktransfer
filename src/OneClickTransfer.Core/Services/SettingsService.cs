@@ -99,6 +99,9 @@ public static class SettingsService
         if (double.IsNaN(s.TasksHeight) || s.TasksHeight < 140) s.TasksHeight = 150;
         if (s.TasksHeight > 600) s.TasksHeight = 600;
 
+        if (double.IsNaN(s.QueueHeight) || s.QueueHeight < 90) s.QueueHeight = 160;
+        if (s.QueueHeight > 500) s.QueueHeight = 500;
+
         // Migração: config antiga (Source/Destinations no topo) vira a 1ª tarefa.
         if (s.Jobs.Count == 0)
         {

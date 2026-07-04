@@ -67,6 +67,16 @@ public class SettingsMigrationTests : IDisposable
         Assert.Equal(expected, s.TasksHeight);
     }
 
+    [Theory]
+    [InlineData(10, 160)]     // abaixo do minimo -> padrao
+    [InlineData(9999, 500)]   // acima do maximo -> teto
+    [InlineData(220, 220)]    // valido -> preservado
+    public void QueueHeight_Clamp(double input, double expected)
+    {
+        var s = LoadJson($"{{ \"queueHeight\": {input}, \"jobs\": [ {{ \"name\": \"A\", \"source\": {{ \"files\": [] }}, \"destinations\": [] }} ] }}");
+        Assert.Equal(expected, s.QueueHeight);
+    }
+
     [Fact]
     public void ShortcutF5_ViraF4()
     {

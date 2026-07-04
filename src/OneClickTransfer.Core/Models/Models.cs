@@ -218,6 +218,7 @@ public class AppSettings
     public string Shortcut { get; set; } = "F4";   // atalho do TRANSFERIR (F5 e fixo p/ Atualizar)
     public double SplitRatio { get; set; } = 0.5;   // largura do card ORIGEM (0..1)
     public double TasksHeight { get; set; } = 150;  // altura em px do painel TAREFAS
+    public double QueueHeight { get; set; } = 160;  // altura em px do painel TRANSFER QUEUE
 
     // Geometria da janela principal (reabrir igual da ultima vez). 0 = usar padrao.
     public double WindowWidth { get; set; } = 0;

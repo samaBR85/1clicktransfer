@@ -33,8 +33,9 @@
       <RowDefinition Height="Auto"/>                                   <!-- 6 progress -->
       <RowDefinition Height="Auto"/>                                   <!-- 7 status -->
       <RowDefinition Height="Auto"/>                                   <!-- 8 taxa -->
-      <RowDefinition Height="Auto"/>                                   <!-- 9 fila de transferencia -->
-      <RowDefinition Height="Auto"/>                                   <!-- 10 rodape -->
+      <RowDefinition Height="Auto"/>                                   <!-- 9 splitter da fila -->
+      <RowDefinition Height="160" MinHeight="90"/>                     <!-- 10 fila de transferencia -->
+      <RowDefinition Height="Auto"/>                                   <!-- 11 rodape -->
     </Grid.RowDefinitions>
 
     <!-- Top bar: título + engrenagem de Configurações -->
@@ -276,8 +277,17 @@
     <TextBlock Grid.Row="8" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="11"
                Margin="0,3,0,0" Foreground="{DynamicResource SubTextBrush}"/>
 
+    <!-- Divisor arrastavel: altura do painel TRANSFER QUEUE (arrasto manual: entre a fila e
+         o card SOURCE/DESTINATION ha varias rows Auto, o GridSplitter atravessa elas e
+         redimensiona o card errado, por isso o arrasto e feito na mao aqui). -->
+    <Border Grid.Row="9" Height="7" Background="Transparent" Cursor="SizeNorthSouth"
+            PointerPressed="QueueSplitter_PointerPressed" PointerMoved="QueueSplitter_PointerMoved"
+            PointerReleased="QueueSplitter_PointerReleased">
+      <Border Height="2" VerticalAlignment="Center" Background="{DynamicResource LineBrush}" CornerRadius="1"/>
+    </Border>
+
     <!-- Fila de transferência: sempre visível (mesmo vazia), não só durante atividade -->
-    <Border Grid.Row="9" Margin="0,10,0,0" Padding="12,10"
+    <Border Grid.Row="10" Padding="12,10"
             Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AccentBrush}"
             BorderThickness="1" CornerRadius="8">
       <DockPanel>
@@ -302,7 +312,7 @@
 
         <DataGrid x:Name="GridQueue" ItemsSource="{Binding ActiveQueueItems}" IsReadOnly="True"
                   CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
-                  SelectionMode="Single" SelectionChanged="Grid_SelectionCleared" MaxHeight="140">
+                  SelectionMode="Single" SelectionChanged="Grid_SelectionCleared">
           <DataGrid.Styles>
             <Style Selector="DataGridRow" x:DataType="vm:TransferQueueItem">
               <Setter Property="Classes.failed" Value="{Binding IsFailed}"/>
@@ -339,7 +349,7 @@
     </Border>
 
     <!-- Footer -->
-    <Grid Grid.Row="10" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+    <Grid Grid.Row="11" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
       <TextBlock Grid.Column="0" Text="{Binding HintText}" FontSize="12"
                  Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"
