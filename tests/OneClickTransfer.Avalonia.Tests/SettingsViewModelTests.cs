@@ -7,7 +7,7 @@ namespace OneClickTransfer.Avalonia.Tests;
 public class SettingsViewModelTests
 {
     private static AppSettings Globals()
-        => new() { Shortcut = "F4", Theme = "dark", Language = "en", AutoUpdateCheck = true };
+        => new() { Shortcut = "F4", Theme = "dark", Language = "en", AutoUpdateCheck = true, MaxParallelDestinations = 3 };
 
     private static SettingsViewModel New(AppSettings s)
         => new(s, new FakeDialogService());
@@ -42,6 +42,16 @@ public class SettingsViewModelTests
         Assert.Equal("en", s.Language);
         Assert.Equal("F6", s.Shortcut);
         Assert.False(s.AutoUpdateCheck);
+    }
+
+    [Fact]
+    public void Save_writes_max_parallel_destinations()
+    {
+        var s = Globals();
+        var vm = New(s);
+        vm.MaxParallelDestinations = 6;
+        vm.SaveCommand.Execute(null);
+        Assert.Equal(6, s.MaxParallelDestinations);
     }
 
     [Fact]

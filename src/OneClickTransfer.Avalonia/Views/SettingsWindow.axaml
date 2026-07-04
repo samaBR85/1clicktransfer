@@ -5,7 +5,7 @@
         x:DataType="vm:SettingsViewModel"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="470" Height="420"
+        Width="470" Height="480"
         WindowStartupLocation="CenterOwner" CanResize="False"
         Background="{DynamicResource BgBrush}">
 
@@ -16,6 +16,23 @@
     </StackPanel>
 
     <StackPanel>
+      <TextBlock Text="{Binding GeneralSection}" FontWeight="SemiBold" Margin="0,0,0,10"/>
+      <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"
+              BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,16">
+        <StackPanel>
+          <TextBlock Text="{Binding MaxParallelLabel}" FontSize="12"/>
+          <TextBlock Text="{Binding MaxParallelHint}" FontSize="10.5" Foreground="{DynamicResource SubTextBrush}" Margin="0,2,0,8"/>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Slider Width="220" Minimum="1" Maximum="8" TickFrequency="1" IsSnapToTickEnabled="True"
+                    Value="{Binding MaxParallelDestinations, Mode=TwoWay}"/>
+            <Border Width="34" Height="28" Background="{DynamicResource InputBrush}" CornerRadius="6"
+                    BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
+              <TextBlock Text="{Binding MaxParallelDestinations}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
+            </Border>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
       <TextBlock Text="{Binding Sec3}" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
       <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
