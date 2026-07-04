@@ -5,7 +5,7 @@
         x:DataType="vm:SettingsViewModel"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="470" Height="480"
+        Width="470" Height="560"
         WindowStartupLocation="CenterOwner" CanResize="False"
         Background="{DynamicResource BgBrush}">
 
