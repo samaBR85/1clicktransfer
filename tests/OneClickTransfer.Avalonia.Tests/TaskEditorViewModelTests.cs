@@ -138,25 +138,85 @@ public class TaskEditorViewModelTests
     }
 
     [Fact]
-    public async System.Threading.Tasks.Task Save_writes_exclude_patterns_for_folder_source()
+    public async System.Threading.Tasks.Task ChooseFolder_populates_exclude_items_from_root_level_all_included()
     {
-        var s = SettingsWithJob(out var job);
-        var vm = New(s, files: new FakeFilePicker { FolderToReturn = @"C:\some\folder" });
-        await vm.ChooseFolderCommand.ExecuteAsync(null);
-        vm.ExcludePatternsText = "node_modules/, .git/, *.tmp";
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+            File.WriteAllText(Path.Combine(tmp, "b.txt"), "y");
+            Directory.CreateDirectory(Path.Combine(tmp, "sub"));
 
-        vm.SaveCommand.Execute(null);
+            var s = SettingsWithJob(out _);
+            var vm = New(s, files: new FakeFilePicker { FolderToReturn = tmp });
+            await vm.ChooseFolderCommand.ExecuteAsync(null);
 
-        Assert.Equal(new[] { "node_modules/", ".git/", "*.tmp" }, job.Source.ExcludePatterns);
+            Assert.Equal(3, vm.FolderExcludeItems.Count);
+            Assert.All(vm.FolderExcludeItems, i => Assert.True(i.IsIncluded));
+        }
+        finally { Directory.Delete(tmp, true); }
     }
 
     [Fact]
-    public void LoadSourceFromSpec_reads_existing_exclude_patterns_back_into_text()
+    public void Unchecking_a_folder_item_writes_the_right_exclude_pattern_on_save()
     {
-        var s = SettingsWithJob(out var job);
-        job.Source = new SourceSpec { Kind = SourceKind.Folder, Path = @"C:\some\folder", ExcludePatterns = { "*.tmp", ".git/" } };
-        var vm = New(s);
-        Assert.Equal("*.tmp, .git/", vm.ExcludePatternsText);
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+            Directory.CreateDirectory(Path.Combine(tmp, "sub"));
+
+            var s = SettingsWithJob(out var job);
+            job.Source = new SourceSpec { Kind = SourceKind.Folder, Path = tmp };
+            var vm = New(s);
+
+            var subItem = vm.FolderExcludeItems.Single(i => i.RealName == "sub");
+            subItem.IsIncluded = false;
+
+            vm.SaveCommand.Execute(null);
+
+            Assert.Equal(new[] { "sub/" }, job.Source.ExcludePatterns);
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
+    public void LoadSourceFromSpec_restores_unchecked_state_for_saved_patterns()
+    {
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+            File.WriteAllText(Path.Combine(tmp, "b.tmp"), "y");
+
+            var s = SettingsWithJob(out var job);
+            job.Source = new SourceSpec { Kind = SourceKind.Folder, Path = tmp, ExcludePatterns = { "b.tmp" } };
+            var vm = New(s);
+
+            Assert.False(vm.FolderExcludeItems.Single(i => i.RealName == "b.tmp").IsIncluded);
+            Assert.True(vm.FolderExcludeItems.Single(i => i.RealName == "a.txt").IsIncluded);
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
+    public void LoadSourceFromSpec_preserves_orphan_pattern_not_matching_any_visible_item()
+    {
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+
+            var s = SettingsWithJob(out var job);
+            job.Source = new SourceSpec { Kind = SourceKind.Folder, Path = tmp, ExcludePatterns = { "*.tmp" } };
+            var vm = New(s);
+
+            // "*.tmp" não bate com nenhum item visível (nenhum arquivo .tmp na pasta agora),
+            // mas deve sobreviver ao save em vez de ser silenciosamente descartado.
+            vm.SaveCommand.Execute(null);
+            Assert.Contains("*.tmp", job.Source.ExcludePatterns);
+        }
+        finally { Directory.Delete(tmp, true); }
     }
 
     [Fact]

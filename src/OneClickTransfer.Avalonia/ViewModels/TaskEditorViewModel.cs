@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,6 +23,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     private readonly IFilePickerService _files;
     private bool _grpSync;
     private bool _profSync;
+    private List<string> _extraExcludePatterns = new();
 
     public event Action<bool>? CloseRequested;
 
@@ -41,6 +43,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
 
     // ---------------- Coleções ----------------
     public ObservableCollection<string> SrcFiles { get; } = new();
+    public ObservableCollection<FolderExcludeItem> FolderExcludeItems { get; } = new();
     public ObservableCollection<Destination> Dests { get; } = new();
     public ObservableCollection<string> GroupOptions { get; } = new();
     public ObservableCollection<string> ProfileOptions { get; } = new();
@@ -53,8 +56,9 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     [ObservableProperty] private int _selectedProfileIndex;
     [ObservableProperty] private bool _isFolderSource;
     [ObservableProperty] private string _folderSourcePath = "";
-    [ObservableProperty] private int _folderSourceFileCount;
-    [ObservableProperty] private string _excludePatternsText = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FolderSourceSummary))]
+    private int _folderSourceFileCount;
 
     // ---------------- Textos ----------------
     public string TaskNameLabel => L.T("taskNamePrompt");
@@ -64,8 +68,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     public string ChooseFolderLabel => L.T("chooseFolder");
     public string UseFilesInsteadLabel => L.T("useFilesInstead");
     public string FolderSourceSummary => L.T("folderSourceSummary", FolderSourcePath, FolderSourceFileCount);
-    public string ExcludePatternsLabel => L.T("excludePatternsLabel");
-    public string ExcludePatternsHint => L.T("excludePatternsHint");
+    public string ExcludeItemsLabel => L.T("excludeItemsLabel");
     public string Sec2 => L.T("sec2Where");
     public string AddDestLabel => L.T("addDest");
     public string EditDestLabel => L.T("editDest");
@@ -95,7 +98,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         {
             IsFolderSource = true;
             FolderSourcePath = src.Path;
-            ExcludePatternsText = string.Join(", ", src.ExcludePatterns);
+            PopulateFolderExcludeItems(src.Path, src.ExcludePatterns);
             FolderSourceFileCount = src.All.Count;   // so pra exibir, avaliado agora
             SrcFiles.Clear();
         }
@@ -103,14 +106,50 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         {
             IsFolderSource = false;
             FolderSourcePath = "";
-            ExcludePatternsText = "";
+            FolderExcludeItems.Clear();
+            _extraExcludePatterns = new();
             FolderSourceFileCount = 0;
             LoadSrc(src.All);
         }
     }
 
-    private static List<string> ParseExcludePatterns(string text)
-        => text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    private static string PatternFor(FolderExcludeItem item) => item.IsDir ? item.RealName + "/" : item.RealName;
+
+    /// <summary>Lista o nível raiz da pasta (sem recursão) com um item por arquivo/subpasta.
+    /// Padrões salvos que batem com um item viram o checkbox desmarcado; os que não batem com
+    /// nada visível (ex: tarefa antiga com padrão digitado à mão) ficam guardados em
+    /// _extraExcludePatterns e são preservados no save sem aparecer na lista.</summary>
+    private void PopulateFolderExcludeItems(string folderPath, List<string> existingPatterns)
+    {
+        foreach (var item in FolderExcludeItems) item.PropertyChanged -= OnExcludeItemChanged;
+        FolderExcludeItems.Clear();
+
+        string[] entries;
+        try { entries = string.IsNullOrEmpty(folderPath) ? Array.Empty<string>() : Directory.GetFileSystemEntries(folderPath); }
+        catch { entries = Array.Empty<string>(); }
+
+        var matched = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in entries.OrderBy(e => e, StringComparer.OrdinalIgnoreCase))
+        {
+            var name = Path.GetFileName(entry);
+            var isDir = Directory.Exists(entry);
+            var pattern = isDir ? name + "/" : name;
+            var isExcluded = existingPatterns.Any(p => string.Equals(p, pattern, StringComparison.OrdinalIgnoreCase));
+            if (isExcluded) matched.Add(pattern);
+            var item = new FolderExcludeItem { RealName = name, IsDir = isDir, IsIncluded = !isExcluded };
+            item.PropertyChanged += OnExcludeItemChanged;
+            FolderExcludeItems.Add(item);
+        }
+        _extraExcludePatterns = existingPatterns.Where(p => !matched.Contains(p)).ToList();
+    }
+
+    private void OnExcludeItemChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(FolderExcludeItem.IsIncluded)) RecomputeFolderCount();
+    }
+
+    private List<string> BuildExcludePatterns()
+        => _extraExcludePatterns.Concat(FolderExcludeItems.Where(i => !i.IsIncluded).Select(PatternFor)).ToList();
 
     private void RecomputeFolderCount()
     {
@@ -120,17 +159,15 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
             Kind = SourceKind.Folder,
             Path = FolderSourcePath,
             Pattern = "*",
-            ExcludePatterns = ParseExcludePatterns(ExcludePatternsText)
+            ExcludePatterns = BuildExcludePatterns()
         }.All.Count;
     }
-
-    partial void OnExcludePatternsTextChanged(string value) => RecomputeFolderCount();
 
     private SourceSpec ReadSource() => IsFolderSource
         ? new SourceSpec
         {
             Kind = SourceKind.Folder, Path = FolderSourcePath, Pattern = "*", Recursive = true,
-            Files = new List<string>(), ExcludePatterns = ParseExcludePatterns(ExcludePatternsText)
+            Files = new List<string>(), ExcludePatterns = BuildExcludePatterns()
         }
         : new SourceSpec { Files = SrcFiles.ToList(), Path = SrcFiles.Count > 0 ? SrcFiles[0] : "", Kind = SourceKind.File };
 
@@ -151,7 +188,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         SrcFiles.Clear();
         IsFolderSource = true;
         FolderSourcePath = folder;
-        ExcludePatternsText = "";
+        PopulateFolderExcludeItems(folder, new());
         RecomputeFolderCount();
     }
 
@@ -160,7 +197,8 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     {
         IsFolderSource = false;
         FolderSourcePath = "";
-        ExcludePatternsText = "";
+        FolderExcludeItems.Clear();
+        _extraExcludePatterns = new();
         FolderSourceFileCount = 0;
         SrcFiles.Clear();
     }
@@ -351,7 +389,8 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         Dests.Clear();
         IsFolderSource = false;
         FolderSourcePath = "";
-        ExcludePatternsText = "";
+        FolderExcludeItems.Clear();
+        _extraExcludePatterns = new();
         FolderSourceFileCount = 0;
     }
 
