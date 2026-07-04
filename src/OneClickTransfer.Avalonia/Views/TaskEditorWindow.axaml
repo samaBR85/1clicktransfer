@@ -41,9 +41,9 @@
           </ListBox.ItemTemplate>
         </ListBox>
 
-        <Border IsVisible="{Binding IsFolderSource}" MinHeight="64"
+        <Border IsVisible="{Binding IsFolderSource}" MinHeight="148"
                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
-          <StackPanel VerticalAlignment="Center" Spacing="4">
+          <StackPanel VerticalAlignment="Top" Spacing="4">
             <TextBlock Text="{Binding FolderSourcePath}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FolderSourcePath}"/>
             <TextBlock Text="{Binding FolderSourceSummary}" FontSize="11" Foreground="{DynamicResource SubTextBrush}" TextWrapping="Wrap"/>
             <TextBlock Text="{Binding ExcludePatternsLabel}" FontSize="10.5" Foreground="{DynamicResource SubTextBrush}" Margin="0,6,0,0"/>
