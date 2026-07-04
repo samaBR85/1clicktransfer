@@ -20,7 +20,8 @@
 
       <!-- Origem -->
       <TextBlock Grid.Row="0" Text="{Binding Sec1}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-      <ListBox Grid.Row="1" MinHeight="64" ItemsSource="{Binding SrcFiles}" SelectedIndex="{Binding SelectedSrcIndex, Mode=TwoWay}">
+      <ListBox Grid.Row="1" MinHeight="64" ItemsSource="{Binding SrcFiles}" SelectedIndex="{Binding SelectedSrcIndex, Mode=TwoWay}"
+               Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="3">
         <ListBox.Styles>
           <Style Selector="ListBoxItem"><Setter Property="Padding" Value="8,3"/><Setter Property="MinHeight" Value="0"/></Style>
         </ListBox.Styles>
@@ -38,7 +39,8 @@
       <!-- Destinos -->
       <TextBlock Grid.Row="3" Text="{Binding Sec2}" FontWeight="SemiBold" Margin="0,14,0,6"/>
       <ListBox Grid.Row="4" x:Name="LstDests" MinHeight="90" ItemsSource="{Binding Dests}"
-               SelectedIndex="{Binding SelectedDestIndex, Mode=TwoWay}" DoubleTapped="Dests_DoubleTapped">
+               SelectedIndex="{Binding SelectedDestIndex, Mode=TwoWay}" DoubleTapped="Dests_DoubleTapped"
+               Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6" Padding="3">
         <ListBox.Styles>
           <Style Selector="ListBoxItem"><Setter Property="Padding" Value="8,3"/><Setter Property="MinHeight" Value="0"/></Style>
         </ListBox.Styles>
