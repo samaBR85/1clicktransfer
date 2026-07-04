@@ -85,7 +85,7 @@ SO — cada asset é um `.zip` com um executável **self-contained** dentro (no 
 |---|---|---|
 | **Windows 10/11** | `1clickTransfer-win-x64.zip` | descompacte e duplo-clique em `1clickTransfer.exe`. O SmartScreen pode alertar (não é assinado): *Mais informações → Executar assim mesmo* |
 | **Linux (x64)** | `1clickTransfer-linux-x64.zip` | descompacte e `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
-| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | descompacte pra obter `1clickTransfer.app`, clique com o botão direito → *Abrir* (Gatekeeper, build não assinado) |
+| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | descompacte pra obter `1clickTransfer.app`. O Gatekeeper vai bloquear (build não assinado) — tente clique direito → *Abrir*; no macOS Sequoia em diante isso não libera mais, então vá em **Ajustes do Sistema → Privacidade e Segurança → Segurança** (role até o fim) e clique em **Abrir Mesmo Assim**, depois confirme |
 | **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64.zip` | igual ao Intel, build arm64 |
 
 O `settings.json` é criado **ao lado do executável** (portátil — no macOS, ao lado de

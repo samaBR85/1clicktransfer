@@ -84,7 +84,7 @@ so it gets a proper Dock icon), no runtime or install needed:
 |---|---|---|
 | **Windows 10/11** | `1clickTransfer-win-x64.zip` | unzip, double-click `1clickTransfer.exe`. SmartScreen may warn (not code-signed): *More info → Run anyway* |
 | **Linux (x64)** | `1clickTransfer-linux-x64.zip` | unzip, then `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
-| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | unzip to get `1clickTransfer.app`, then right-click → *Open* (Gatekeeper, unsigned build) |
+| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | unzip to get `1clickTransfer.app`. Gatekeeper will block it (unsigned build) — try right-click → *Open*; on macOS Sequoia and later that no longer works, so instead go to **System Settings → Privacy & Security → Security** (scroll down) and click **Open Anyway**, then confirm |
 | **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64.zip` | same as Intel, arm64 build |
 
 `settings.json` is created **next to the executable** (portable — on macOS, next to
