@@ -54,7 +54,7 @@ public static class L
         ["dontReplace"] = ("Não Substituir", "Don't replace"),
         ["transfer"] = ("TRANSFERIR", "TRANSFER"),
         ["settings"] = ("Configurar", "Settings"),
-        ["shortcutHint"] = ("Atalho do teclado: {0}", "Keyboard shortcut: {0}"),
+        ["shortcutHint"] = ("Atalho do teclado: {0}", "Transfer shortcut: {0}"),
         ["clickSettingsStart"] = ("Clique em \"Configurar\" para começar.", "Click \"Settings\" to start."),
         ["refreshing"] = ("Atualizando...", "Refreshing..."),
         ["refreshedOk"] = ("✓ Lista atualizada", "✓ List refreshed"),
