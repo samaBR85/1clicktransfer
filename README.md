@@ -63,16 +63,18 @@ time**, or let it **watch** a file and send it automatically when it changes.
 
 ### Download & run
 Grab the latest **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** for your OS —
-each asset is a `.zip` containing a single **self-contained** executable, no runtime or install needed:
+each asset is a `.zip` containing a single **self-contained** executable (a `.app` bundle on macOS,
+so it gets a proper Dock icon), no runtime or install needed:
 
 | OS | Download | How to run |
 |---|---|---|
 | **Windows 10/11** | `1clickTransfer-win-x64.zip` | unzip, double-click `1clickTransfer.exe`. SmartScreen may warn (not code-signed): *More info → Run anyway* |
 | **Linux (x64)** | `1clickTransfer-linux-x64.zip` | unzip, then `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
-| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | unzip, `chmod +x …`, and if Gatekeeper blocks it: `xattr -d com.apple.quarantine …` |
+| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | unzip to get `1clickTransfer.app`, then right-click → *Open* (Gatekeeper, unsigned build) |
 | **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64.zip` | same as Intel, arm64 build |
 
-`settings.json` is created **next to the executable** (portable). On Linux/macOS, if that folder
+`settings.json` is created **next to the executable** (portable — on macOS, next to
+`1clickTransfer.app/Contents/MacOS/1clickTransfer`). On Linux/macOS, if that folder
 isn't writable it falls back to `~/.config/1clicktransfer/settings.json`.
 
 ### Command line
@@ -87,6 +89,7 @@ Run a transfer without opening the window — handy for scripts, cron and Task S
 | `1clickTransfer --help` | help |
 
 No arguments → opens the normal window. Exit codes: `0` = ok, `1` = some failure, `2` = usage error.
+On macOS the binary for CLI use is `1clickTransfer.app/Contents/MacOS/1clickTransfer`.
 
 ### Run from source / build
 Requires the **.NET 8 SDK**.
@@ -155,16 +158,18 @@ ou **uma de cada vez** — ou deixe o app **observar** um arquivo e enviá-lo so
 
 ### Baixar e usar
 Baixe o **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** mais recente do seu
-SO — cada asset é um `.zip` com um executável **self-contained** dentro, sem runtime nem instalação:
+SO — cada asset é um `.zip` com um executável **self-contained** dentro (no macOS, um `.app` com
+ícone de verdade no Dock), sem runtime nem instalação:
 
 | SO | Download | Como rodar |
 |---|---|---|
 | **Windows 10/11** | `1clickTransfer-win-x64.zip` | descompacte e duplo-clique em `1clickTransfer.exe`. O SmartScreen pode alertar (não é assinado): *Mais informações → Executar assim mesmo* |
 | **Linux (x64)** | `1clickTransfer-linux-x64.zip` | descompacte e `chmod +x 1clickTransfer-linux-x64 && ./1clickTransfer-linux-x64` |
-| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | descompacte, `chmod +x …` e, se o Gatekeeper bloquear: `xattr -d com.apple.quarantine …` |
+| **macOS (Intel)** | `1clickTransfer-osx-x64.zip` | descompacte pra obter `1clickTransfer.app`, clique com o botão direito → *Abrir* (Gatekeeper, build não assinado) |
 | **macOS (Apple Silicon)** | `1clickTransfer-osx-arm64.zip` | igual ao Intel, build arm64 |
 
-O `settings.json` é criado **ao lado do executável** (portátil). No Linux/macOS, se a pasta não for
+O `settings.json` é criado **ao lado do executável** (portátil — no macOS, ao lado de
+`1clickTransfer.app/Contents/MacOS/1clickTransfer`). No Linux/macOS, se a pasta não for
 gravável, ele usa `~/.config/1clicktransfer/settings.json`.
 
 ### Linha de comando
@@ -179,6 +184,7 @@ Dispare uma transferência sem abrir a janela — ótimo para scripts, cron e Ag
 | `1clickTransfer --help` | ajuda |
 
 Sem argumentos → abre a janela normal. Códigos de saída: `0` = ok, `1` = alguma falha, `2` = erro de uso.
+No macOS, o binário pra uso via CLI é `1clickTransfer.app/Contents/MacOS/1clickTransfer`.
 
 ### Rodar pelo código / compilar
 Requer o **SDK do .NET 8**.
