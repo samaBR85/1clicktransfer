@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Enumeration;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -47,9 +48,11 @@ public class SourceSpec
     public string Pattern { get; set; } = "*";
     public bool Recursive { get; set; } = true;
     public List<string> Files { get; set; } = new();  // vários arquivos de origem
+    public List<string> ExcludePatterns { get; set; } = new();  // ex: "node_modules/", ".git/", "*.tmp"
 
     /// <summary>Lista efetiva de arquivos: se Kind==Folder, expande a pasta (recursivo, dinâmico —
-    /// reavaliado a cada chamada); senão usa Files, ou o Path legado se Files vazio.</summary>
+    /// reavaliado a cada chamada), aplicando ExcludePatterns; senão usa Files, ou o Path legado se
+    /// Files vazio.</summary>
     [JsonIgnore]
     public List<string> All
     {
@@ -62,6 +65,7 @@ public class SourceSpec
                 {
                     // Recursive sempre true aqui (decisao do usuario); campo fica so p/ retro-compat do JSON.
                     return Directory.EnumerateFiles(Path, string.IsNullOrEmpty(Pattern) ? "*" : Pattern, SearchOption.AllDirectories)
+                        .Where(f => !IsExcluded(System.IO.Path.GetRelativePath(Path, f), ExcludePatterns))
                         .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                         .ToList();
                 }
@@ -72,13 +76,42 @@ public class SourceSpec
         }
     }
 
+    /// <summary>Casamento simples estilo .gitignore: "pasta/" bate qualquer segmento de diretorio,
+    /// "*.ext"/nome-com-curinga bate o nome do arquivo, nome sem barra bate qualquer segmento.</summary>
+    private static bool IsExcluded(string relativePath, List<string> patterns)
+    {
+        if (patterns == null || patterns.Count == 0) return false;
+        var segments = relativePath.Split(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+        var fileName = segments[^1];
+        foreach (var raw in patterns)
+        {
+            var p = raw?.Trim() ?? "";
+            if (p.Length == 0) continue;
+            if (p.EndsWith('/') || p.EndsWith('\\'))
+            {
+                var folderName = p.TrimEnd('/', '\\');
+                if (segments.Take(segments.Length - 1).Any(s => string.Equals(s, folderName, StringComparison.OrdinalIgnoreCase)))
+                    return true;
+            }
+            else if (FileSystemName.MatchesSimpleExpression(p, fileName))
+            {
+                return true;
+            }
+            else if (segments.Any(s => string.Equals(s, p, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     [JsonIgnore] public int Count => All.Count;
     [JsonIgnore] public string First => All.Count > 0 ? All[0] : "";
 
     public SourceSpec Clone() => new()
     {
         Path = Path, Kind = Kind, Pattern = Pattern, Recursive = Recursive,
-        Files = new List<string>(Files)
+        Files = new List<string>(Files), ExcludePatterns = new List<string>(ExcludePatterns)
     };
 }
 
@@ -159,6 +192,24 @@ public class DestGroup
     public DestGroup Clone() => new() { Name = Name, Destinations = Destinations.ConvertAll(d => d.Clone()) };
 }
 
+/// <summary>Servidor FTP/SFTP salvo (reutilizável no editor de destino).</summary>
+public class SavedServer
+{
+    public string Name { get; set; } = "";
+    public DestType Type { get; set; } = DestType.Ftp;
+    public string Host { get; set; } = "";
+    public int Port { get; set; } = 21;
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";     // criptografada (DPAPI)
+    public bool UseTls { get; set; } = false;
+
+    public SavedServer Clone() => new()
+    {
+        Name = Name, Type = Type, Host = Host, Port = Port,
+        Username = Username, Password = Password, UseTls = UseTls
+    };
+}
+
 public class AppSettings
 {
     // Preferencias globais
@@ -177,6 +228,8 @@ public class AppSettings
     public bool AutoUpdateCheck { get; set; } = true;   // procurar atualizacoes ao iniciar
     public OverwriteMode OverwriteMode { get; set; } = OverwriteMode.Always;  // legado (migrado p/ Jobs)
     public DateTime? LastTransferAt { get; set; } = null;   // ultimo envio bem-sucedido (rodape)
+    public int MaxParallelDestinations { get; set; } = 3;   // limite de destinos enviados ao mesmo tempo (1-8)
+    public bool MinimizeToTrayOnClose { get; set; } = false;   // opt-in: fechar a janela so minimiza p/ bandeja
 
     // Tarefas: cada uma tem origem + destinos + modo próprios (v2.1)
     public List<TransferJob> Jobs { get; set; } = new();
@@ -205,4 +258,7 @@ public class AppSettings
 
     // Grupos de destino salvos (conjuntos de destinos reutilizáveis)
     public List<DestGroup> DestGroups { get; set; } = new();
+
+    // Servidores FTP/SFTP salvos (reutilizáveis no editor de destino)
+    public List<SavedServer> SavedServers { get; set; } = new();
 }

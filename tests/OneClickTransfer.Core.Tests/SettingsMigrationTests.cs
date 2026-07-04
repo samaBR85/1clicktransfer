@@ -94,4 +94,30 @@ public class SettingsMigrationTests : IDisposable
         var s = SettingsService.Load(Path.Combine(_dir, "naoexiste.json"));
         Assert.Single(s.Jobs);
     }
+
+    [Theory]
+    [InlineData(0, 3)]     // abaixo do minimo -> padrao
+    [InlineData(99, 3)]    // acima do maximo -> padrao
+    [InlineData(5, 5)]     // valido -> preservado
+    public void MaxParallelDestinations_ForaDoRange_ViraPadrao(int input, int expected)
+    {
+        var s = LoadJson($"{{ \"maxParallelDestinations\": {input}, \"jobs\": [ {{ \"name\": \"A\", \"source\": {{ \"files\": [] }}, \"destinations\": [] }} ] }}");
+        Assert.Equal(expected, s.MaxParallelDestinations);
+    }
+
+    [Fact]
+    public void SavedServers_AusenteNoJson_ViraListaVazia()
+    {
+        var s = LoadJson("""{ "jobs": [ { "name": "A", "source": { "files": [] }, "destinations": [] } ] }""");
+        Assert.NotNull(s.SavedServers);
+        Assert.Empty(s.SavedServers);
+    }
+
+    [Fact]
+    public void ExcludePatterns_AusenteNoJson_ViraListaVazia()
+    {
+        var s = LoadJson("""{ "jobs": [ { "name": "A", "source": { "files": [] }, "destinations": [] } ] }""");
+        Assert.NotNull(s.Jobs[0].Source.ExcludePatterns);
+        Assert.Empty(s.Jobs[0].Source.ExcludePatterns);
+    }
 }

@@ -54,6 +54,42 @@ public class ModelsTests
     }
 
     [Fact]
+    public void SourceSpec_All_Folder_RespeitaExcludePatterns()
+    {
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var nodeModules = Directory.CreateDirectory(Path.Combine(tmp, "node_modules")).FullName;
+            File.WriteAllText(Path.Combine(nodeModules, "x.js"), "x");
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "y");
+            File.WriteAllText(Path.Combine(tmp, "b.tmp"), "z");
+
+            var s = new SourceSpec
+            {
+                Kind = SourceKind.Folder,
+                Path = tmp,
+                Pattern = "*",
+                ExcludePatterns = { "node_modules/", "*.tmp" }
+            };
+
+            Assert.Single(s.All);
+            Assert.EndsWith("a.txt", s.All[0]);
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
+    public void SavedServer_Clone_Independente()
+    {
+        var s = new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h", Port = 21, Username = "u" };
+        var c = s.Clone();
+        c.Host = "outro";
+        c.Name = "Outro";
+        Assert.Equal("h", s.Host);
+        Assert.Equal("NAS", s.Name);
+    }
+
+    [Fact]
     public void TransferJob_SourceFile_UmArquivo()
     {
         var j = new TransferJob { Source = new SourceSpec { Files = { @"C:\dir\plugin.3gx" } } };

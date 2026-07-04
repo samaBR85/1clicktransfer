@@ -93,6 +93,8 @@ public static class SettingsService
         s.ActiveProfile ??= "";
         s.DestGroups ??= new();
         s.Jobs ??= new();
+        s.SavedServers ??= new();
+        if (s.MaxParallelDestinations < 1 || s.MaxParallelDestinations > 8) s.MaxParallelDestinations = 3;
 
         if (double.IsNaN(s.TasksHeight) || s.TasksHeight < 140) s.TasksHeight = 150;
         if (s.TasksHeight > 600) s.TasksHeight = 600;
@@ -116,6 +118,7 @@ public static class SettingsService
             var j = s.Jobs[i];
             j.Source ??= new SourceSpec();
             j.Source.Files ??= new();
+            j.Source.ExcludePatterns ??= new();
             // Migração: origem antiga de 1 arquivo (Path) vira a lista Files.
             // So p/ Kind==File -- em Kind==Folder, Path e a pasta em si, nao um arquivo.
             if (j.Source.Kind == SourceKind.File && j.Source.Files.Count == 0 && !string.IsNullOrEmpty(j.Source.Path))
