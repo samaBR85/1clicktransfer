@@ -352,28 +352,33 @@ public sealed partial class MainViewModel : ViewModelBase
     private void RefreshSourcePanel()
     {
         var files = Job.Source.All;
-        if (files.Count >= 2)
+        bool isFolder = Job.Source.Kind == SourceKind.Folder;
+        if (files.Count >= 2 || isFolder)
         {
             _srcDir = "";
             Source.Rows.Clear();
-            Source.PathText = L.T("srcCount", files.Count);
-            foreach (var f in files)
-            {
-                var fi = new FileInfo(f);
-                Source.Rows.Add(new FileRow
-                {
-                    Name = "\U0001F4C4  " + Path.GetFileName(f),
-                    Size = fi.Exists ? FormatSize(fi.Length) : "",
-                    Modified = fi.Exists ? fi.LastWriteTime.ToString("dd/MM/yyyy HH:mm") : "",
-                    RealName = Path.GetFileName(f)
-                });
-            }
+            Source.PathText = isFolder ? L.T("folderPrefix") + Job.Source.Path : L.T("srcCount", files.Count);
+            if (isFolder && files.Count == 0) Source.Rows.Add(InfoRow("emptyFolder"));
+            else foreach (var f in files) Source.Rows.Add(BuildFileRow(f, isFolder ? Job.Source.Path : null));
         }
         else
         {
             _srcDir = files.Count == 1 ? (Path.GetDirectoryName(files[0]) ?? "") : "";
             RefillSource();
         }
+    }
+
+    private static FileRow BuildFileRow(string f, string? relativeToRoot)
+    {
+        var fi = new FileInfo(f);
+        var displayName = relativeToRoot != null ? Path.GetRelativePath(relativeToRoot, f) : Path.GetFileName(f);
+        return new FileRow
+        {
+            Name = "\U0001F4C4  " + displayName,
+            Size = fi.Exists ? FormatSize(fi.Length) : "",
+            Modified = fi.Exists ? fi.LastWriteTime.ToString("dd/MM/yyyy HH:mm") : "",
+            RealName = Path.GetFileName(f)
+        };
     }
 
     private void RefreshDestPanel(bool fetchFtp = false)
@@ -455,7 +460,7 @@ public sealed partial class MainViewModel : ViewModelBase
     // ---------------- Navegação (duplo-clique) ----------------
     private void NavigateSource(FileRow? it)
     {
-        if (Job.Source.Count >= 2) { _ = EditTaskAsync(); return; }   // múltiplas origens: edita no editor da tarefa
+        if (Job.Source.Count >= 2 || Job.Source.Kind == SourceKind.Folder) { _ = EditTaskAsync(); return; }   // múltiplas origens/pasta: edita no editor da tarefa
         if (it is null || string.IsNullOrEmpty(_srcDir)) return;
         if (it.IsUp) { _srcDir = Directory.GetParent(_srcDir)?.FullName ?? _srcDir; RefillSource(); }
         else if (it.IsDir) { _srcDir = Path.Combine(_srcDir, it.RealName); RefillSource(); }

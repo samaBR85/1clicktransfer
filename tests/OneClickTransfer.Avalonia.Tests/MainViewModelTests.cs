@@ -118,6 +118,25 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void RefreshHome_folder_source_shows_folder_prefix_and_rows()
+    {
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+            var job = Job("A");
+            job.Source = new SourceSpec { Kind = SourceKind.Folder, Path = tmp, Pattern = "*" };
+            var s = WithJobs(job);
+            var vm = New(s);
+            vm.OnOpened();
+            Assert.Contains(tmp, vm.Source.PathText);
+            Assert.Single(vm.Source.Rows);
+            vm.OnClosed();
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
     public async Task Transfer_success_sets_last_transfer_text()
     {
         var (src, dstDir) = MakeSrcAndDest(out _);

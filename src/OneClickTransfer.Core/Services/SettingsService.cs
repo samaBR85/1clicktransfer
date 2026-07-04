@@ -117,7 +117,8 @@ public static class SettingsService
             j.Source ??= new SourceSpec();
             j.Source.Files ??= new();
             // Migração: origem antiga de 1 arquivo (Path) vira a lista Files.
-            if (j.Source.Files.Count == 0 && !string.IsNullOrEmpty(j.Source.Path))
+            // So p/ Kind==File -- em Kind==Folder, Path e a pasta em si, nao um arquivo.
+            if (j.Source.Kind == SourceKind.File && j.Source.Files.Count == 0 && !string.IsNullOrEmpty(j.Source.Path))
                 j.Source.Files.Add(j.Source.Path);
             j.Destinations ??= new();
             if (string.IsNullOrWhiteSpace(j.Name)) j.Name = DefaultJobName(i);

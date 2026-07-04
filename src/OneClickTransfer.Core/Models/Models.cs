@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -47,10 +48,29 @@ public class SourceSpec
     public bool Recursive { get; set; } = true;
     public List<string> Files { get; set; } = new();  // vários arquivos de origem
 
-    /// <summary>Lista efetiva de arquivos (Files, ou o Path legado se Files vazio).</summary>
+    /// <summary>Lista efetiva de arquivos: se Kind==Folder, expande a pasta (recursivo, dinâmico —
+    /// reavaliado a cada chamada); senão usa Files, ou o Path legado se Files vazio.</summary>
     [JsonIgnore]
-    public List<string> All => Files.Count > 0 ? Files
-        : (string.IsNullOrEmpty(Path) ? new List<string>() : new List<string> { Path });
+    public List<string> All
+    {
+        get
+        {
+            if (Kind == SourceKind.Folder)
+            {
+                if (string.IsNullOrEmpty(Path) || !Directory.Exists(Path)) return new List<string>();
+                try
+                {
+                    // Recursive sempre true aqui (decisao do usuario); campo fica so p/ retro-compat do JSON.
+                    return Directory.EnumerateFiles(Path, string.IsNullOrEmpty(Pattern) ? "*" : Pattern, SearchOption.AllDirectories)
+                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+                catch { return new List<string>(); }
+            }
+            return Files.Count > 0 ? Files
+                : (string.IsNullOrEmpty(Path) ? new List<string>() : new List<string> { Path });
+        }
+    }
 
     [JsonIgnore] public int Count => All.Count;
     [JsonIgnore] public string First => All.Count > 0 ? All[0] : "";

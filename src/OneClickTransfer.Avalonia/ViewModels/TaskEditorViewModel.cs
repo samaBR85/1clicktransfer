@@ -33,7 +33,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
 
         Title = L.T("taskEditorTitle", _s.CurrentJob.Name);
         TaskName = _s.CurrentJob.Name;
-        LoadSrc(_s.CurrentJob.Source.All);
+        LoadSourceFromSpec(_s.CurrentJob.Source);
         LoadDests(_s.CurrentJob.Destinations);
         ReloadGroups();
         ReloadProfiles();
@@ -51,12 +51,18 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     [ObservableProperty] private int _selectedDestIndex = -1;
     [ObservableProperty] private int _selectedGroupIndex;
     [ObservableProperty] private int _selectedProfileIndex;
+    [ObservableProperty] private bool _isFolderSource;
+    [ObservableProperty] private string _folderSourcePath = "";
+    [ObservableProperty] private int _folderSourceFileCount;
 
     // ---------------- Textos ----------------
     public string TaskNameLabel => L.T("taskNamePrompt");
     public string Sec1 => L.T("sec1File");
     public string AddFileLabel => L.T("addFile");
     public string RemoveFileLabel => L.T("removeFile");
+    public string ChooseFolderLabel => L.T("chooseFolder");
+    public string UseFilesInsteadLabel => L.T("useFilesInstead");
+    public string FolderSourceSummary => L.T("folderSourceSummary", FolderSourcePath, FolderSourceFileCount);
     public string Sec2 => L.T("sec2Where");
     public string AddDestLabel => L.T("addDest");
     public string EditDestLabel => L.T("editDest");
@@ -80,12 +86,27 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         foreach (var f in files) if (!string.IsNullOrWhiteSpace(f)) SrcFiles.Add(f);
     }
 
-    private SourceSpec ReadSource() => new()
+    private void LoadSourceFromSpec(SourceSpec src)
     {
-        Files = SrcFiles.ToList(),
-        Path = SrcFiles.Count > 0 ? SrcFiles[0] : "",
-        Kind = SourceKind.File
-    };
+        if (src.Kind == SourceKind.Folder)
+        {
+            IsFolderSource = true;
+            FolderSourcePath = src.Path;
+            FolderSourceFileCount = src.All.Count;   // so pra exibir, avaliado agora
+            SrcFiles.Clear();
+        }
+        else
+        {
+            IsFolderSource = false;
+            FolderSourcePath = "";
+            FolderSourceFileCount = 0;
+            LoadSrc(src.All);
+        }
+    }
+
+    private SourceSpec ReadSource() => IsFolderSource
+        ? new SourceSpec { Kind = SourceKind.Folder, Path = FolderSourcePath, Pattern = "*", Recursive = true, Files = new List<string>() }
+        : new SourceSpec { Files = SrcFiles.ToList(), Path = SrcFiles.Count > 0 ? SrcFiles[0] : "", Kind = SourceKind.File };
 
     [RelayCommand]
     private async Task AddSrcAsync()
@@ -94,6 +115,26 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         foreach (var f in files)
             if (!SrcFiles.Any(x => string.Equals(x, f, StringComparison.OrdinalIgnoreCase)))
                 SrcFiles.Add(f);
+    }
+
+    [RelayCommand]
+    private async Task ChooseFolderAsync()
+    {
+        var folder = await _files.PickFolderAsync(string.IsNullOrWhiteSpace(FolderSourcePath) ? null : FolderSourcePath);
+        if (string.IsNullOrWhiteSpace(folder)) return;
+        SrcFiles.Clear();
+        IsFolderSource = true;
+        FolderSourcePath = folder;
+        FolderSourceFileCount = new SourceSpec { Kind = SourceKind.Folder, Path = folder }.All.Count;
+    }
+
+    [RelayCommand]
+    private void UseFilesInstead()
+    {
+        IsFolderSource = false;
+        FolderSourcePath = "";
+        FolderSourceFileCount = 0;
+        SrcFiles.Clear();
     }
 
     [RelayCommand]
@@ -222,7 +263,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         if (_profSync || value <= 0 || value >= ProfileOptions.Count) return;
         var name = ProfileOptions[value];
         var prof = _s.Profiles.FirstOrDefault(p => p.Name == name);
-        if (prof != null) { LoadSrc(prof.Source.All); LoadDests(prof.Destinations); }
+        if (prof != null) { LoadSourceFromSpec(prof.Source); LoadDests(prof.Destinations); }
     }
 
     [RelayCommand]
@@ -280,6 +321,9 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     {
         SrcFiles.Clear();
         Dests.Clear();
+        IsFolderSource = false;
+        FolderSourcePath = "";
+        FolderSourceFileCount = 0;
     }
 
     // ---------------- Salvar / Cancelar ----------------

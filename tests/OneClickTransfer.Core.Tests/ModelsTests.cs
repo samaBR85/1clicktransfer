@@ -1,3 +1,4 @@
+using System.IO;
 using OneClickTransfer.Models;
 using Xunit;
 
@@ -23,6 +24,34 @@ public class ModelsTests
 
     [Fact]
     public void SourceSpec_Vazio_CountZero() => Assert.Equal(0, new SourceSpec().Count);
+
+    [Fact]
+    public void SourceSpec_All_Folder_EnumeraRecursivo()
+    {
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+            var sub = Directory.CreateDirectory(Path.Combine(tmp, "sub")).FullName;
+            File.WriteAllText(Path.Combine(sub, "b.txt"), "y");
+
+            var s = new SourceSpec { Kind = SourceKind.Folder, Path = tmp, Pattern = "*" };
+
+            Assert.Equal(2, s.Count);
+            Assert.Contains(s.All, f => f.EndsWith("a.txt"));
+            Assert.Contains(s.All, f => f.EndsWith("b.txt"));
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
+    public void SourceSpec_All_Folder_PastaInexistente_RetornaVazio()
+    {
+        var s = new SourceSpec { Kind = SourceKind.Folder, Path = @"C:\definitely-does-not-exist-xyz" };
+        Assert.Empty(s.All);
+        Assert.Equal(0, s.Count);
+        Assert.Equal("", s.First);
+    }
 
     [Fact]
     public void TransferJob_SourceFile_UmArquivo()

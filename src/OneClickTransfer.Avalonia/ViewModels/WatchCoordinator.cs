@@ -31,29 +31,59 @@ public sealed class WatchCoordinator : IDisposable
         Stop();
         foreach (var job in watchedJobs)
         {
-            foreach (var path in job.Source.All)
-            {
-                var dir = Path.GetDirectoryName(path);
-                var file = Path.GetFileName(path);
-                if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) continue;
-                try
-                {
-                    var w = new FileSystemWatcher(dir, file)
-                    {
-                        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
-                                     | NotifyFilters.FileName | NotifyFilters.CreationTime
-                    };
-                    var captured = job;
-                    FileSystemEventHandler h = (_, _) => OnEvent(captured);
-                    w.Changed += h;
-                    w.Created += h;
-                    w.Renamed += (_, _) => OnEvent(captured);
-                    w.EnableRaisingEvents = true;
-                    _watchers.Add(w);
-                }
-                catch { /* pasta pode sumir entre a checagem e o watcher */ }
-            }
+            if (job.Source.Kind == SourceKind.Folder) WatchFolder(job);
+            else foreach (var path in job.Source.All) WatchSingleFile(job, path);
         }
+    }
+
+    private void WatchSingleFile(TransferJob job, string path)
+    {
+        var dir = Path.GetDirectoryName(path);
+        var file = Path.GetFileName(path);
+        if (string.IsNullOrEmpty(dir) || string.IsNullOrEmpty(file) || !Directory.Exists(dir)) return;
+        try
+        {
+            var w = new FileSystemWatcher(dir, file)
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
+                             | NotifyFilters.FileName | NotifyFilters.CreationTime
+            };
+            var captured = job;
+            FileSystemEventHandler h = (_, _) => OnEvent(captured);
+            w.Changed += h;
+            w.Created += h;
+            w.Renamed += (_, _) => OnEvent(captured);
+            w.EnableRaisingEvents = true;
+            _watchers.Add(w);
+        }
+        catch { /* pasta pode sumir entre a checagem e o watcher */ }
+    }
+
+    /// <summary>Origem "pasta inteira": um único watcher recursivo na raiz, senão um arquivo
+    /// novo dentro dela nunca dispararia o auto-envio.</summary>
+    private void WatchFolder(TransferJob job)
+    {
+        var dir = job.Source.Path;
+        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
+        try
+        {
+            var w = new FileSystemWatcher(dir)
+            {
+                Filter = string.IsNullOrEmpty(job.Source.Pattern) ? "*" : job.Source.Pattern,
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName
+                             | NotifyFilters.CreationTime | NotifyFilters.DirectoryName
+            };
+            var captured = job;
+            FileSystemEventHandler h = (_, _) => OnEvent(captured);
+            w.Changed += h;
+            w.Created += h;
+            w.Deleted += h;
+            w.Renamed += (_, _) => OnEvent(captured);
+            w.EnableRaisingEvents = true;
+            _watchers.Add(w);
+        }
+        catch { /* pasta pode sumir entre a checagem e o watcher */ }
     }
 
     public void Stop()

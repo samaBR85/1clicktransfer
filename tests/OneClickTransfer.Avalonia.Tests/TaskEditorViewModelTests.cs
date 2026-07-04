@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Models;
@@ -88,6 +89,52 @@ public class TaskEditorViewModelTests
         vm.SrcFiles.Add("a"); vm.SrcFiles.Add("b"); vm.SrcFiles.Add("c");
         vm.RemoveSrcCommand.Execute(new System.Collections.Generic.List<object> { "a", "c" });
         Assert.Equal(new[] { "b" }, vm.SrcFiles.ToArray());
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task ChooseFolder_switches_to_folder_mode()
+    {
+        var s = SettingsWithJob(out _);
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "x.bin"), "1");
+            var vm = New(s, files: new FakeFilePicker { FolderToReturn = tmp });
+
+            await vm.ChooseFolderCommand.ExecuteAsync(null);
+
+            Assert.True(vm.IsFolderSource);
+            Assert.Equal(tmp, vm.FolderSourcePath);
+            Assert.Empty(vm.SrcFiles);
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task Save_writes_folder_source_kind()
+    {
+        var s = SettingsWithJob(out var job);
+        var vm = New(s, files: new FakeFilePicker { FolderToReturn = @"C:\some\folder" });
+        await vm.ChooseFolderCommand.ExecuteAsync(null);
+
+        vm.SaveCommand.Execute(null);
+
+        Assert.Equal(SourceKind.Folder, job.Source.Kind);
+        Assert.Equal(@"C:\some\folder", job.Source.Path);
+        Assert.Empty(job.Source.Files);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task UseFilesInstead_reverts_to_empty_file_mode()
+    {
+        var s = SettingsWithJob(out _);
+        var vm = New(s, files: new FakeFilePicker { FolderToReturn = @"C:\folder" });
+        await vm.ChooseFolderCommand.ExecuteAsync(null);
+
+        vm.UseFilesInsteadCommand.Execute(null);
+
+        Assert.False(vm.IsFolderSource);
+        Assert.Empty(vm.SrcFiles);
     }
 
     [Fact]

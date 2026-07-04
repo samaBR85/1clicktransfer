@@ -49,6 +49,14 @@ public class SettingsMigrationTests : IDisposable
         Assert.Equal("C:\\a.txt", s.Jobs[0].Source.All[0]);
     }
 
+    [Fact]
+    public void OrigemPasta_NaoMigraPathParaFiles()
+    {
+        var s = LoadJson("""{ "jobs": [ { "name": "A", "source": { "kind": "folder", "path": "C:\\alguma\\pasta" }, "destinations": [] } ] }""");
+        Assert.Empty(s.Jobs[0].Source.Files);   // Path e a pasta, nao um arquivo -- nao pode virar item de Files
+        Assert.Equal(SourceKind.Folder, s.Jobs[0].Source.Kind);
+    }
+
     [Theory]
     [InlineData(10, 150)]     // abaixo do minimo -> padrao
     [InlineData(9999, 600)]   // acima do maximo -> teto
