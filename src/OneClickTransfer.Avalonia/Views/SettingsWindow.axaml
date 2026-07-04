@@ -48,6 +48,8 @@
           <Button DockPanel.Dock="Right" Classes="link" VerticalAlignment="Center"
                   Content="{Binding GithubLabel}" Command="{Binding OpenGithubCommand}"
                   ToolTip.Tip="https://github.com/samaBR85/1clicktransfer"/>
+          <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Text="{Binding AuthorText}"
+                     Foreground="{DynamicResource SubTextBrush}" FontSize="11.5" Margin="0,0,12,0"/>
           <StackPanel VerticalAlignment="Center">
             <TextBlock Text="{Binding AppNameText}" FontWeight="SemiBold"/>
             <TextBlock Text="{Binding VersionText}" Foreground="{DynamicResource SubTextBrush}" FontSize="11"/>

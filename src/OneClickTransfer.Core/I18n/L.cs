@@ -107,6 +107,7 @@ public static class L
         ["sec3Options"] = ("Opções", "Options"),
         ["about"] = ("Sobre", "About"),
         ["viewOnGithub"] = ("Ver no GitHub", "View on GitHub"),
+        ["byAuthor"] = ("por samaBR85", "by samaBR85"),
         ["shortcutLabel"] = ("Atalho do teclado para TRANSFERIR:", "Keyboard shortcut for TRANSFER:"),
         ["themeLabel"] = ("Tema:", "Theme:"),
         ["themeDark"] = ("Escuro", "Dark"),

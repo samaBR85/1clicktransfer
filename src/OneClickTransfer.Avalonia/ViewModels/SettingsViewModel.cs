@@ -59,6 +59,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     public string AppNameText => L.T("appTitle");
     public string AboutLabel => L.T("about");
     public string GithubLabel => L.T("viewOnGithub");
+    public string AuthorText => L.T("byAuthor");
 
     [RelayCommand]
     private void OpenGithub() => LinkOpener.Open(GithubUrl);
