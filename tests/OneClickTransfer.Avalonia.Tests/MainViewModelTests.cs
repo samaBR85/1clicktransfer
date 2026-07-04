@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Models;
@@ -187,6 +188,29 @@ public class MainViewModelTests
         vm.OnOpened();
         await vm.TransferCommand.ExecuteAsync(null);
         Assert.Contains("1 failed", vm.StatusText);
+        vm.OnClosed();
+    }
+
+    // ---- Auto-refresh de DESTINATION ao trocar de tarefa ----
+    [Fact]
+    public async Task SwitchJob_ftp_offline_shows_message_instead_of_hanging()
+    {
+        var (src, _) = MakeSrcAndDest(out _);
+        var jobA = Job("A");
+        var jobB = Job("B");
+        jobB.Source.Files.Add(src);
+        jobB.Destinations.Add(new Destination { Type = DestType.Ftp, Host = "notarealhost.invalid", Port = 21, Enabled = true });
+        var s = WithJobs(jobA, jobB);
+        var vm = New(s);
+        vm.OnOpened();
+
+        vm.SelectedJobIndex = 1;   // B: destino FTP inalcancavel
+
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline && vm.Dest.Rows.Any(r => r.Name.Contains("Loading") || r.Name.Contains("Carregando")))
+            await Task.Delay(100);
+
+        Assert.Contains(vm.Dest.Rows, r => r.Name.Contains("offline") || r.Name.Contains("FTP address"));
         vm.OnClosed();
     }
 

@@ -45,6 +45,7 @@ public static class L
         ["loadingFtp"] = ("Carregando lista do FTP...", "Loading FTP list..."),
         ["emptyFolder"] = ("(pasta vazia)", "(empty folder)"),
         ["cantListFtp"] = ("(não foi possível listar o FTP)", "(could not list the FTP)"),
+        ["ftpOffline"] = ("(endereço FTP offline)", "(FTP address offline)"),
         ["colName"] = ("Nome", "Name"),
         ["colSize"] = ("Tamanho", "Size"),
         ["colModified"] = ("Modificado", "Modified"),

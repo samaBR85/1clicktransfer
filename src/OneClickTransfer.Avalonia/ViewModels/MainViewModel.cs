@@ -153,7 +153,10 @@ public sealed partial class MainViewModel : ViewModelBase
         if (value < 0) return;
         S.SelectedJob = value;
         SettingsService.Save(S);
-        RefreshHome();
+        // Ao trocar de tarefa, busca o FTP/SFTP de verdade (nao so o placeholder "clique p/ atualizar") --
+        // FetchRemoteAt ja roda via Task.Run e trata falha com "(FTP address offline)" em vez de travar.
+        RefreshSourcePanel();
+        RefreshDestPanel(fetchFtp: true);
         UpdateReadyState();
     }
 
@@ -512,7 +515,7 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             Dest.Rows.Clear();
             if (path.TrimEnd('/').Length > 0) Dest.Rows.Add(UpRow());
-            Dest.Rows.Add(InfoRow("cantListFtp"));
+            Dest.Rows.Add(InfoRow("ftpOffline"));
         }
     }
 
