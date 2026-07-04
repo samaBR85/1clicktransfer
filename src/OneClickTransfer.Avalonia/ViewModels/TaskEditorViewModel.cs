@@ -54,6 +54,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     [ObservableProperty] private bool _isFolderSource;
     [ObservableProperty] private string _folderSourcePath = "";
     [ObservableProperty] private int _folderSourceFileCount;
+    [ObservableProperty] private string _excludePatternsText = "";
 
     // ---------------- Textos ----------------
     public string TaskNameLabel => L.T("taskNamePrompt");
@@ -63,6 +64,8 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     public string ChooseFolderLabel => L.T("chooseFolder");
     public string UseFilesInsteadLabel => L.T("useFilesInstead");
     public string FolderSourceSummary => L.T("folderSourceSummary", FolderSourcePath, FolderSourceFileCount);
+    public string ExcludePatternsLabel => L.T("excludePatternsLabel");
+    public string ExcludePatternsHint => L.T("excludePatternsHint");
     public string Sec2 => L.T("sec2Where");
     public string AddDestLabel => L.T("addDest");
     public string EditDestLabel => L.T("editDest");
@@ -92,6 +95,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         {
             IsFolderSource = true;
             FolderSourcePath = src.Path;
+            ExcludePatternsText = string.Join(", ", src.ExcludePatterns);
             FolderSourceFileCount = src.All.Count;   // so pra exibir, avaliado agora
             SrcFiles.Clear();
         }
@@ -99,13 +103,35 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         {
             IsFolderSource = false;
             FolderSourcePath = "";
+            ExcludePatternsText = "";
             FolderSourceFileCount = 0;
             LoadSrc(src.All);
         }
     }
 
+    private static List<string> ParseExcludePatterns(string text)
+        => text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private void RecomputeFolderCount()
+    {
+        if (!IsFolderSource) { FolderSourceFileCount = 0; return; }
+        FolderSourceFileCount = new SourceSpec
+        {
+            Kind = SourceKind.Folder,
+            Path = FolderSourcePath,
+            Pattern = "*",
+            ExcludePatterns = ParseExcludePatterns(ExcludePatternsText)
+        }.All.Count;
+    }
+
+    partial void OnExcludePatternsTextChanged(string value) => RecomputeFolderCount();
+
     private SourceSpec ReadSource() => IsFolderSource
-        ? new SourceSpec { Kind = SourceKind.Folder, Path = FolderSourcePath, Pattern = "*", Recursive = true, Files = new List<string>() }
+        ? new SourceSpec
+        {
+            Kind = SourceKind.Folder, Path = FolderSourcePath, Pattern = "*", Recursive = true,
+            Files = new List<string>(), ExcludePatterns = ParseExcludePatterns(ExcludePatternsText)
+        }
         : new SourceSpec { Files = SrcFiles.ToList(), Path = SrcFiles.Count > 0 ? SrcFiles[0] : "", Kind = SourceKind.File };
 
     [RelayCommand]
@@ -125,7 +151,8 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         SrcFiles.Clear();
         IsFolderSource = true;
         FolderSourcePath = folder;
-        FolderSourceFileCount = new SourceSpec { Kind = SourceKind.Folder, Path = folder }.All.Count;
+        ExcludePatternsText = "";
+        RecomputeFolderCount();
     }
 
     [RelayCommand]
@@ -133,6 +160,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     {
         IsFolderSource = false;
         FolderSourcePath = "";
+        ExcludePatternsText = "";
         FolderSourceFileCount = 0;
         SrcFiles.Clear();
     }
@@ -323,6 +351,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         Dests.Clear();
         IsFolderSource = false;
         FolderSourcePath = "";
+        ExcludePatternsText = "";
         FolderSourceFileCount = 0;
     }
 

@@ -84,6 +84,8 @@ public static class L
         ["chooseFolder"] = ("Escolher pasta...", "Choose folder..."),
         ["useFilesInstead"] = ("Usar arquivos individuais", "Use individual files instead"),
         ["folderSourceSummary"] = ("📁 {0} — {1} arquivo(s), inclui subpastas", "📁 {0} — {1} file(s), includes subfolders"),
+        ["excludePatternsLabel"] = ("Ignorar (opcional):", "Exclude (optional):"),
+        ["excludePatternsHint"] = ("Padrões separados por vírgula, ex: node_modules/, .git/, *.tmp", "Comma-separated patterns, e.g. node_modules/, .git/, *.tmp"),
         ["sec2Where"] = ("Para onde enviar", "Where to send"),
         ["destEditorTitle"] = ("Destino", "Destination"),
         ["addDest"] = ("Adicionar", "Add"),

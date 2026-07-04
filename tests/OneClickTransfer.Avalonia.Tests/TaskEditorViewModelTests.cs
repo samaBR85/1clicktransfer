@@ -138,6 +138,28 @@ public class TaskEditorViewModelTests
     }
 
     [Fact]
+    public async System.Threading.Tasks.Task Save_writes_exclude_patterns_for_folder_source()
+    {
+        var s = SettingsWithJob(out var job);
+        var vm = New(s, files: new FakeFilePicker { FolderToReturn = @"C:\some\folder" });
+        await vm.ChooseFolderCommand.ExecuteAsync(null);
+        vm.ExcludePatternsText = "node_modules/, .git/, *.tmp";
+
+        vm.SaveCommand.Execute(null);
+
+        Assert.Equal(new[] { "node_modules/", ".git/", "*.tmp" }, job.Source.ExcludePatterns);
+    }
+
+    [Fact]
+    public void LoadSourceFromSpec_reads_existing_exclude_patterns_back_into_text()
+    {
+        var s = SettingsWithJob(out var job);
+        job.Source = new SourceSpec { Kind = SourceKind.Folder, Path = @"C:\some\folder", ExcludePatterns = { "*.tmp", ".git/" } };
+        var vm = New(s);
+        Assert.Equal("*.tmp, .git/", vm.ExcludePatternsText);
+    }
+
+    [Fact]
     public void Save_writes_source_and_dests_to_current_job_and_closes_true()
     {
         var s = SettingsWithJob(out var job);
