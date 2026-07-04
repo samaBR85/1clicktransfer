@@ -333,11 +333,17 @@
             <DataGridTemplateColumn Header="{Binding QueueColProgress}" Width="180">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TransferQueueItem">
-                  <StackPanel VerticalAlignment="Center" IsVisible="{Binding IsActive}" Spacing="2">
-                    <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding Progress}"
-                                 Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
-                    <TextBlock Text="{Binding StatusText}" FontSize="10" Foreground="{DynamicResource SubTextBrush}"/>
-                  </StackPanel>
+                  <Grid>
+                    <StackPanel VerticalAlignment="Center" IsVisible="{Binding IsActive}" Spacing="2">
+                      <ProgressBar Height="4" Minimum="0" Maximum="100" Value="{Binding Progress}"
+                                   Background="{DynamicResource InputBrush}" Foreground="{DynamicResource AccentBrush}"/>
+                      <TextBlock Text="{Binding StatusText}" FontSize="10" Foreground="{DynamicResource SubTextBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding ResultText}" FontSize="11" VerticalAlignment="Center"
+                               IsVisible="{Binding !IsActive}" TextTrimming="CharacterEllipsis"
+                               ToolTip.Tip="{Binding ResultText}"
+                               Foreground="{DynamicResource SubTextBrush}" Classes.error="{Binding IsFailed}"/>
+                  </Grid>
                 </DataTemplate>
               </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>

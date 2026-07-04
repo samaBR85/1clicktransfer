@@ -1,5 +1,6 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
+using OneClickTransfer.I18n;
 
 namespace OneClickTransfer.Avalonia.ViewModels;
 
@@ -24,7 +25,7 @@ public sealed partial class TransferQueueItem : ObservableObject
     public string? ErrorMessage
     {
         get => _errorMessage;
-        set { _errorMessage = value; OnPropertyChanged(nameof(TooltipText)); }
+        set { _errorMessage = value; OnPropertyChanged(nameof(TooltipText)); OnPropertyChanged(nameof(ResultText)); }
     }
 
     [ObservableProperty] private double _progress;
@@ -37,6 +38,17 @@ public sealed partial class TransferQueueItem : ObservableObject
 
     public bool IsActive => State is QueueItemState.Queued or QueueItemState.Running;
     public bool IsFailed => State == QueueItemState.Failed;
+
+    /// <summary>Texto exibido na coluna Progress quando o item não está mais ativo:
+    /// "Done" pra sucesso, "Failed" (+ motivo, se houver) pra falha.</summary>
+    public string ResultText => State switch
+    {
+        QueueItemState.Success => L.T("queueDone"),
+        QueueItemState.Failed => string.IsNullOrEmpty(ErrorMessage)
+            ? L.T("queueFailed")
+            : L.T("queueFailedReason", ErrorMessage),
+        _ => "",
+    };
 
     public string SizeText
     {
@@ -53,5 +65,6 @@ public sealed partial class TransferQueueItem : ObservableObject
     {
         OnPropertyChanged(nameof(IsActive));
         OnPropertyChanged(nameof(IsFailed));
+        OnPropertyChanged(nameof(ResultText));
     }
 }
