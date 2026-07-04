@@ -19,6 +19,10 @@
   <a href="README.md"><b>🇬🇧 Read in English</b></a>
 </p>
 
+<p align="center">
+  <a href="https://ko-fi.com/E5N7227AO5"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi"></a>
+</p>
+
 <hr>
 
 Um app de desktop **multiplataforma** (**C# / .NET 8, Avalonia UI**) para **Windows, Linux e macOS**.

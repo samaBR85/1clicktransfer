@@ -19,6 +19,10 @@
   <a href="README.pt-BR.md"><b>🇧🇷 Ler em Português</b></a>
 </p>
 
+<p align="center">
+  <a href="https://ko-fi.com/E5N7227AO5"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi"></a>
+</p>
+
 <hr>
 
 A **cross-platform** desktop app (**C# / .NET 8, Avalonia UI**) for **Windows, Linux and macOS**.
