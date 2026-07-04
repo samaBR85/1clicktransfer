@@ -276,8 +276,8 @@
     <TextBlock Grid.Row="8" Text="{Binding RateText}" HorizontalAlignment="Center" FontSize="11"
                Margin="0,3,0,0" Foreground="{DynamicResource SubTextBrush}"/>
 
-    <!-- Fila de transferência -->
-    <Border Grid.Row="9" Margin="0,10,0,0" Padding="12,10" IsVisible="{Binding HasQueueActivity}"
+    <!-- Fila de transferência: sempre visível (mesmo vazia), não só durante atividade -->
+    <Border Grid.Row="9" Margin="0,10,0,0" Padding="12,10"
             Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AccentBrush}"
             BorderThickness="1" CornerRadius="8">
       <DockPanel>
