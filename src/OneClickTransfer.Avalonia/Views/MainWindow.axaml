@@ -158,11 +158,13 @@
             <TextBlock Text="{Binding SourceHeader}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
               <Button Width="26" Height="24" Padding="0" Command="{Binding Source.RefreshCommand}"
-                      IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}">
+                      IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}"
+                      AutomationProperties.Name="{Binding RefreshTip}">
                 <PathIcon Data="{StaticResource IcoRefresh}" Width="13" Height="13"/>
               </Button>
               <ToggleButton Classes="toggle-flat" Width="30" Height="24"
-                            IsChecked="{Binding IsWatchChecked, Mode=TwoWay}" ToolTip.Tip="{Binding WatchTip}">
+                            IsChecked="{Binding IsWatchChecked, Mode=TwoWay}" ToolTip.Tip="{Binding WatchTip}"
+                            AutomationProperties.Name="{Binding WatchTip}">
                 <PathIcon Data="{StaticResource IcoEye}" Width="14" Height="14"/>
               </ToggleButton>
             </StackPanel>
@@ -201,7 +203,8 @@
           <Grid DockPanel.Dock="Top">
             <TextBlock Text="{Binding DestHeader}" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
             <Button Width="26" Height="24" Padding="0" HorizontalAlignment="Right" Command="{Binding Dest.RefreshCommand}"
-                    IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}">
+                    IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding RefreshTip}"
+                    AutomationProperties.Name="{Binding RefreshTip}">
               <PathIcon Data="{StaticResource IcoRefresh}" Width="13" Height="13"/>
             </Button>
           </Grid>
