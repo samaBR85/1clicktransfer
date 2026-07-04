@@ -23,6 +23,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private readonly IDialogService _dialogs;
     private readonly IUiDispatcher _ui;
+    private readonly IClipboardService _clipboard;
     private readonly WatchCoordinator _watch;
 
     private AppSettings _s;
@@ -36,11 +37,12 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>Disparado após reabrir Configurar (E9): permite ao root recarregar App.Settings.</summary>
     public event Action<AppSettings>? SettingsReloaded;
 
-    public MainViewModel(AppSettings settings, IDialogService dialogs, IUiDispatcher ui)
+    public MainViewModel(AppSettings settings, IDialogService dialogs, IUiDispatcher ui, IClipboardService clipboard)
     {
         _s = settings;
         _dialogs = dialogs;
         _ui = ui;
+        _clipboard = clipboard;
         _watch = new WatchCoordinator(ui, TriggerWatch);
         Source = new FilePanelViewModel(RefreshSource, NavigateSource);
         Dest = new FilePanelViewModel(RefreshDest, NavigateDest);
@@ -570,6 +572,72 @@ public sealed partial class MainViewModel : ViewModelBase
             Dest.PathText = prefix + d.Host + np;
             FetchRemoteAt(d, np);
         }
+    }
+
+    // ---------------- Menu de contexto (DESTINATION: local + FTP/SFTP) ----------------
+    public string CtxCreateFolderLabel => L.T("ctxCreateFolder");
+    public string CtxRenameLabel => L.T("rename");
+    public string CtxDeleteLabel => L.T("delete");
+    public string CtxCopyPathLabel => L.T("ctxCopyPath");
+
+    private string JoinDestPath(string name)
+        => SingleNavDest?.Type == DestType.Local ? Path.Combine(_dstDir, name) : _dstDir.TrimEnd('/') + "/" + name;
+
+    [RelayCommand]
+    private async Task CreateFolderInDestAsync()
+    {
+        var d = SingleNavDest;
+        if (d == null) return;
+        var name = await _dialogs.PromptAsync(L.T("ctxCreateFolder"), L.T("ctxNewFolderPrompt"), "");
+        if (string.IsNullOrWhiteSpace(name)) return;
+        try
+        {
+            var parent = _dstDir;
+            await Task.Run(() => TransferService.CreateFolder(d, parent, name.Trim()));
+            RefreshDestPanel(fetchFtp: true);
+        }
+        catch (Exception ex) { SetStatus(L.T("ctxOpFailed", ex.Message), StatusKind.Error); }
+    }
+
+    [RelayCommand]
+    private async Task RenameDestItemAsync(FileRow? it)
+    {
+        var d = SingleNavDest;
+        if (d == null || it is null || it.IsUp) return;
+        var newName = await _dialogs.PromptAsync(L.T("rename"), L.T("ctxRenamePrompt"), it.RealName);
+        if (string.IsNullOrWhiteSpace(newName) || newName == it.RealName) return;
+        try
+        {
+            var oldPath = JoinDestPath(it.RealName);
+            var newPath = JoinDestPath(newName.Trim());
+            await Task.Run(() => TransferService.Rename(d, oldPath, newPath));
+            RefreshDestPanel(fetchFtp: true);
+        }
+        catch (Exception ex) { SetStatus(L.T("ctxOpFailed", ex.Message), StatusKind.Error); }
+    }
+
+    [RelayCommand]
+    private async Task DeleteDestItemAsync(FileRow? it)
+    {
+        var d = SingleNavDest;
+        if (d == null || it is null || it.IsUp) return;
+        if (!await _dialogs.ConfirmAsync(L.T("delete"), L.T("ctxDeleteConfirm", it.RealName))) return;
+        try
+        {
+            var path = JoinDestPath(it.RealName);
+            await Task.Run(() => TransferService.Delete(d, path, it.IsDir));
+            RefreshDestPanel(fetchFtp: true);
+        }
+        catch (Exception ex) { SetStatus(L.T("ctxOpFailed", ex.Message), StatusKind.Error); }
+    }
+
+    [RelayCommand]
+    private async Task CopyDestPathAsync(FileRow? it)
+    {
+        if (SingleNavDest == null || it is null || it.IsUp) return;
+        var path = JoinDestPath(it.RealName);
+        await _clipboard.SetTextAsync(path);
+        FlashStatus(L.T("ctxPathCopied"));
     }
 
     // ---------------- Estado / rádios / status ----------------

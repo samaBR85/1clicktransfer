@@ -21,6 +21,13 @@ public sealed class FakeAppControl : IAppControl
     public void Shutdown(int code = 0) => ShutdownCalled = true;
 }
 
+/// <summary>Clipboard fake: só guarda o último texto copiado.</summary>
+public sealed class FakeClipboard : IClipboardService
+{
+    public string? LastText { get; private set; }
+    public Task SetTextAsync(string text) { LastText = text; return Task.CompletedTask; }
+}
+
 /// <summary>File picker configurável.</summary>
 public sealed class FakeFilePicker : IFilePickerService
 {

@@ -215,7 +215,24 @@
           <DataGrid x:Name="GridDst" ItemsSource="{Binding Dest.Rows}" IsReadOnly="True"
                     CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
                     SelectionMode="Single" SelectionChanged="Grid_SelectionCleared"
-                    DoubleTapped="GridDst_DoubleTapped">
+                    DoubleTapped="GridDst_DoubleTapped" ContextRequested="GridDst_ContextRequested">
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="{Binding CtxCreateFolderLabel}" Command="{Binding CreateFolderInDestCommand}">
+                  <MenuItem.Icon><PathIcon Data="{StaticResource IcoPlus}" Width="13" Height="13"/></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{Binding CtxRenameLabel}" Click="CtxRename_Click">
+                  <MenuItem.Icon><PathIcon Data="{StaticResource IcoPencil}" Width="13" Height="13"/></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{Binding CtxDeleteLabel}" Click="CtxDelete_Click">
+                  <MenuItem.Icon><PathIcon Data="{StaticResource IcoTrash}" Width="13" Height="13"/></MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="{Binding CtxCopyPathLabel}" Click="CtxCopyPath_Click">
+                  <MenuItem.Icon><PathIcon Data="{StaticResource IcoCopy}" Width="13" Height="13"/></MenuItem.Icon>
+                </MenuItem>
+              </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
               <DataGridTextColumn Header="{Binding ColName}" Binding="{Binding Name}" Width="*"/>
               <DataGridTextColumn Header="{Binding ColSize}" Binding="{Binding Size}" Width="80"/>

@@ -289,4 +289,84 @@ public static class TransferService
         if (d.Type == DestType.Ftp) FtpTestConnection(d);
         else if (d.Type == DestType.Sftp) SftpTest(d);
     }
+
+    // ---------------- Operações de arquivo/pasta (menu de contexto do DESTINATION) ----------------
+    public static void CreateFolder(Destination d, string parentPath, string name)
+    {
+        switch (d.Type)
+        {
+            case DestType.Local:
+                Directory.CreateDirectory(Path.Combine(parentPath, name));
+                break;
+            case DestType.Ftp:
+            {
+                using var c = MakeClient(d);
+                c.Connect();
+                c.CreateDirectory(parentPath.TrimEnd('/') + "/" + name);
+                c.Disconnect();
+                break;
+            }
+            case DestType.Sftp:
+            {
+                using var c = MakeSftp(d);
+                c.Connect();
+                c.CreateDirectory(parentPath.TrimEnd('/') + "/" + name);
+                c.Disconnect();
+                break;
+            }
+        }
+    }
+
+    public static void Delete(Destination d, string path, bool isDir)
+    {
+        switch (d.Type)
+        {
+            case DestType.Local:
+                if (isDir) Directory.Delete(path, true); else File.Delete(path);
+                break;
+            case DestType.Ftp:
+            {
+                using var c = MakeClient(d);
+                c.Connect();
+                if (isDir) c.DeleteDirectory(path); else c.DeleteFile(path);
+                c.Disconnect();
+                break;
+            }
+            case DestType.Sftp:
+            {
+                using var c = MakeSftp(d);
+                c.Connect();
+                if (isDir) c.DeleteDirectory(path); else c.DeleteFile(path);
+                c.Disconnect();
+                break;
+            }
+        }
+    }
+
+    public static void Rename(Destination d, string oldPath, string newPath)
+    {
+        switch (d.Type)
+        {
+            case DestType.Local:
+                if (Directory.Exists(oldPath)) Directory.Move(oldPath, newPath);
+                else File.Move(oldPath, newPath);
+                break;
+            case DestType.Ftp:
+            {
+                using var c = MakeClient(d);
+                c.Connect();
+                c.Rename(oldPath, newPath);
+                c.Disconnect();
+                break;
+            }
+            case DestType.Sftp:
+            {
+                using var c = MakeSftp(d);
+                c.Connect();
+                c.RenameFile(oldPath, newPath);
+                c.Disconnect();
+                break;
+            }
+        }
+    }
 }

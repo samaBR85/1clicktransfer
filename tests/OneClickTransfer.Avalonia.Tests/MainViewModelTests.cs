@@ -9,8 +9,8 @@ namespace OneClickTransfer.Avalonia.Tests;
 
 public class MainViewModelTests
 {
-    private static MainViewModel New(AppSettings s, FakeDialogService? dlg = null)
-        => new(s, dlg ?? new FakeDialogService(), new FakeUiDispatcher());
+    private static MainViewModel New(AppSettings s, FakeDialogService? dlg = null, FakeClipboard? clipboard = null)
+        => new(s, dlg ?? new FakeDialogService(), new FakeUiDispatcher(), clipboard ?? new FakeClipboard());
 
     private static AppSettings WithJobs(params TransferJob[] jobs)
     {
@@ -211,6 +211,63 @@ public class MainViewModelTests
             await Task.Delay(100);
 
         Assert.Contains(vm.Dest.Rows, r => r.Name.Contains("offline") || r.Name.Contains("FTP address"));
+        vm.OnClosed();
+    }
+
+    // ---- Menu de contexto do DESTINATION (local) ----
+    [Fact]
+    public async Task DeleteDestItem_local_removes_file_and_refreshes()
+    {
+        var (src, dstDir) = MakeSrcAndDest(out var fileName);
+        File.Copy(src, Path.Combine(dstDir, fileName));
+        var job = ReadyJob("A", src, dstDir);
+        var s = WithJobs(job);
+        var vm = New(s, new FakeDialogService { ConfirmResult = true });
+        vm.OnOpened();
+
+        var row = vm.Dest.Rows.First(r => r.RealName == fileName);
+        await vm.DeleteDestItemCommand.ExecuteAsync(row);
+
+        Assert.False(File.Exists(Path.Combine(dstDir, fileName)));
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public async Task CopyDestPath_local_sets_clipboard_text()
+    {
+        var (src, dstDir) = MakeSrcAndDest(out var fileName);
+        File.Copy(src, Path.Combine(dstDir, fileName));
+        var job = ReadyJob("A", src, dstDir);
+        var s = WithJobs(job);
+        var clipboard = new FakeClipboard();
+        var vm = New(s, clipboard: clipboard);
+        vm.OnOpened();
+
+        var row = vm.Dest.Rows.First(r => r.RealName == fileName);
+        await vm.CopyDestPathCommand.ExecuteAsync(row);
+
+        Assert.NotNull(clipboard.LastText);
+        Assert.Contains(fileName, clipboard.LastText);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public async Task RenameDestItem_local_failure_sets_status_error_not_exception()
+    {
+        var (src, dstDir) = MakeSrcAndDest(out var fileName);
+        File.Copy(src, Path.Combine(dstDir, fileName));
+        var job = ReadyJob("A", src, dstDir);
+        var s = WithJobs(job);
+        // Nome novo == pasta existente vazia -> Directory.Move falha (destino ja existe).
+        var conflictDir = Path.Combine(dstDir, "conflict");
+        Directory.CreateDirectory(conflictDir);
+        var vm = New(s, new FakeDialogService { PromptResult = "conflict" });
+        vm.OnOpened();
+
+        var row = vm.Dest.Rows.First(r => r.RealName == fileName);
+        await vm.RenameDestItemCommand.ExecuteAsync(row);
+
+        Assert.True(vm.StatusError);
         vm.OnClosed();
     }
 

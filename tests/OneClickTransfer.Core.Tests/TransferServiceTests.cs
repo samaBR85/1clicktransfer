@@ -76,4 +76,40 @@ public class TransferServiceTests : IDisposable
         File.SetLastWriteTime(Path.Combine(dst.Folder, "s.txt"), DateTime.Now.AddHours(1)); // dest mais novo
         Assert.False(TransferService.IsSourceNewer(dst, src, "s.txt"));
     }
+
+    // ---- Operações de arquivo/pasta (menu de contexto, só DestType.Local -- FTP/SFTP e manual) ----
+    [Fact]
+    public void CreateFolder_Local_CriaSubpasta()
+    {
+        var dst = LocalDest("d");
+        TransferService.CreateFolder(dst, dst.Folder, "nova");
+        Assert.True(Directory.Exists(Path.Combine(dst.Folder, "nova")));
+    }
+
+    [Fact]
+    public void Delete_Local_ApagaArquivoEPasta()
+    {
+        var dst = LocalDest("d");
+        var f = Path.Combine(dst.Folder, "x.txt");
+        File.WriteAllText(f, "x");
+        TransferService.Delete(dst, f, isDir: false);
+        Assert.False(File.Exists(f));
+
+        var sub = Directory.CreateDirectory(Path.Combine(dst.Folder, "sub")).FullName;
+        TransferService.Delete(dst, sub, isDir: true);
+        Assert.False(Directory.Exists(sub));
+    }
+
+    [Fact]
+    public void Rename_Local_RenomeiaArquivo()
+    {
+        var dst = LocalDest("d");
+        var oldPath = Path.Combine(dst.Folder, "old.txt");
+        File.WriteAllText(oldPath, "conteudo");
+        var newPath = Path.Combine(dst.Folder, "new.txt");
+        TransferService.Rename(dst, oldPath, newPath);
+        Assert.False(File.Exists(oldPath));
+        Assert.True(File.Exists(newPath));
+        Assert.Equal("conteudo", File.ReadAllText(newPath));
+    }
 }

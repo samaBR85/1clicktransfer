@@ -156,6 +156,16 @@ public partial class MainWindow : Window
     private void GridDst_DoubleTapped(object? sender, TappedEventArgs e)
         => Vm?.Dest.NavigateCommand.Execute(RowUnder(e));
 
+    // ---------------- Menu de contexto (DESTINATION) ----------------
+    private FileRow? _dstCtxRow;
+
+    private void GridDst_ContextRequested(object? sender, ContextRequestedEventArgs e)
+        => _dstCtxRow = (e.Source as Visual)?.GetSelfAndVisualAncestors().OfType<DataGridRow>().FirstOrDefault()?.DataContext as FileRow;
+
+    private void CtxRename_Click(object? sender, RoutedEventArgs e) => Vm?.RenameDestItemCommand.Execute(_dstCtxRow);
+    private void CtxDelete_Click(object? sender, RoutedEventArgs e) => Vm?.DeleteDestItemCommand.Execute(_dstCtxRow);
+    private void CtxCopyPath_Click(object? sender, RoutedEventArgs e) => Vm?.CopyDestPathCommand.Execute(_dstCtxRow);
+
     private void Jobs_DoubleTapped(object? sender, TappedEventArgs e)
         => Vm?.JobActivateCommand.Execute(null);
 
