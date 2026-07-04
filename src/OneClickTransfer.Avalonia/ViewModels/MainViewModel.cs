@@ -210,6 +210,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     // ---------------- Textos (i18n) ----------------
     public string Title => L.T("appTitle");
+    public string VersionText => "v" + UpdateService.Current;
     public string TasksHeader => L.T("tasks");
     public string NewLabel => L.T("taskNew");
     public string DuplicateLabel => L.T("taskDuplicate");

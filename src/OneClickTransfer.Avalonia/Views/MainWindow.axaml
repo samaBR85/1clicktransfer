@@ -39,8 +39,12 @@
 
     <!-- Top bar: título + engrenagem de Configurações -->
     <Grid Grid.Row="0" Margin="0,0,0,8" ColumnDefinitions="*,Auto">
-      <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
-                 Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"/>
+      <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"
+                   Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"/>
+        <TextBlock Text="{Binding VersionText}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
+                   VerticalAlignment="Center"/>
+      </StackPanel>
       <Button Grid.Column="1" Width="30" Height="28" Padding="0" Command="{Binding OpenSettingsCommand}"
               IsEnabled="{Binding NotTransferring}" ToolTip.Tip="{Binding SettingsLabel}"
               AutomationProperties.Name="{Binding SettingsLabel}">
