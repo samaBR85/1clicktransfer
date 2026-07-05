@@ -79,6 +79,27 @@ public class ModelsTests
     }
 
     [Fact]
+    public void RelPathFor_Folder_SemKeepRootFolderName_RelativoARaiz()
+    {
+        var s = new SourceSpec { Kind = SourceKind.Folder, Path = @"C:\src\AppGuide" };
+        Assert.Equal(Path.Combine("de", "guide.txt"), s.RelPathFor(@"C:\src\AppGuide\de\guide.txt"));
+    }
+
+    [Fact]
+    public void RelPathFor_Folder_ComKeepRootFolderName_PrefixaNomeDaPasta()
+    {
+        var s = new SourceSpec { Kind = SourceKind.Folder, Path = @"C:\src\AppGuide", KeepRootFolderName = true };
+        Assert.Equal(Path.Combine("AppGuide", "de", "guide.txt"), s.RelPathFor(@"C:\src\AppGuide\de\guide.txt"));
+    }
+
+    [Fact]
+    public void RelPathFor_ModoArquivoAvulso_SoONomeDoArquivo()
+    {
+        var s = new SourceSpec { Kind = SourceKind.File, KeepRootFolderName = true };
+        Assert.Equal("guide.txt", s.RelPathFor(@"C:\qualquer\pasta\guide.txt"));
+    }
+
+    [Fact]
     public void SavedServer_Clone_Independente()
     {
         var s = new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h", Port = 21, Username = "u" };

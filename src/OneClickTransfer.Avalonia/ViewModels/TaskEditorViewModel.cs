@@ -55,10 +55,13 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     [ObservableProperty] private int _selectedGroupIndex;
     [ObservableProperty] private int _selectedProfileIndex;
     [ObservableProperty] private bool _isFolderSource;
-    [ObservableProperty] private string _folderSourcePath = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(KeepRootFolderLabel))]
+    private string _folderSourcePath = "";
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(FolderSourceSummary))]
     private int _folderSourceFileCount;
+    [ObservableProperty] private bool _keepRootFolderName;
 
     // ---------------- Textos ----------------
     public string TaskNameLabel => L.T("taskNamePrompt");
@@ -69,6 +72,8 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     public string UseFilesInsteadLabel => L.T("useFilesInstead");
     public string FolderSourceSummary => L.T("folderSourceSummary", FolderSourcePath, FolderSourceFileCount);
     public string ExcludeItemsLabel => L.T("excludeItemsLabel");
+    public string KeepRootFolderLabel
+        => L.T("keepRootFolderLabel", Path.GetFileName(FolderSourcePath.TrimEnd('\\', '/')).Replace("_", "__"));
     public string Sec2 => L.T("sec2Where");
     public string AddDestLabel => L.T("addDest");
     public string EditDestLabel => L.T("editDest");
@@ -98,6 +103,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         {
             IsFolderSource = true;
             FolderSourcePath = src.Path;
+            KeepRootFolderName = src.KeepRootFolderName;
             PopulateFolderExcludeItems(src.Path, src.ExcludePatterns);
             FolderSourceFileCount = src.All.Count;   // so pra exibir, avaliado agora
             SrcFiles.Clear();
@@ -106,6 +112,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         {
             IsFolderSource = false;
             FolderSourcePath = "";
+            KeepRootFolderName = false;
             FolderExcludeItems.Clear();
             _extraExcludePatterns = new();
             FolderSourceFileCount = 0;
@@ -167,7 +174,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         ? new SourceSpec
         {
             Kind = SourceKind.Folder, Path = FolderSourcePath, Pattern = "*", Recursive = true,
-            Files = new List<string>(), ExcludePatterns = BuildExcludePatterns()
+            Files = new List<string>(), ExcludePatterns = BuildExcludePatterns(), KeepRootFolderName = KeepRootFolderName
         }
         : new SourceSpec { Files = SrcFiles.ToList(), Path = SrcFiles.Count > 0 ? SrcFiles[0] : "", Kind = SourceKind.File };
 
@@ -188,6 +195,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         SrcFiles.Clear();
         IsFolderSource = true;
         FolderSourcePath = folder;
+        KeepRootFolderName = false;
         PopulateFolderExcludeItems(folder, new());
         RecomputeFolderCount();
     }
@@ -197,6 +205,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
     {
         IsFolderSource = false;
         FolderSourcePath = "";
+        KeepRootFolderName = false;
         FolderExcludeItems.Clear();
         _extraExcludePatterns = new();
         FolderSourceFileCount = 0;
@@ -389,6 +398,7 @@ public sealed partial class TaskEditorViewModel : ViewModelBase
         Dests.Clear();
         IsFolderSource = false;
         FolderSourcePath = "";
+        KeepRootFolderName = false;
         FolderExcludeItems.Clear();
         _extraExcludePatterns = new();
         FolderSourceFileCount = 0;

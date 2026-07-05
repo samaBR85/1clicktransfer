@@ -59,6 +59,8 @@
                        TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FolderSourcePath}"/>
             <TextBlock DockPanel.Dock="Top" Text="{Binding FolderSourceSummary}" FontSize="11"
                        Foreground="{DynamicResource SubTextBrush}" TextWrapping="Wrap" Margin="0,2,0,6"/>
+            <CheckBox DockPanel.Dock="Top" Content="{Binding KeepRootFolderLabel}"
+                      IsChecked="{Binding KeepRootFolderName, Mode=TwoWay}" FontSize="11.5" Margin="0,0,0,6"/>
             <TextBlock DockPanel.Dock="Top" Text="{Binding ExcludeItemsLabel}" FontSize="10.5"
                        Foreground="{DynamicResource SubTextBrush}" Margin="0,0,0,4"/>
             <ListBox ItemsSource="{Binding FolderExcludeItems}" MinHeight="72" MaxHeight="110"

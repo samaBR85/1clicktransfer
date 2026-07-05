@@ -85,6 +85,7 @@ public static class L
         ["useFilesInstead"] = ("Usar arquivos individuais", "Use individual files instead"),
         ["folderSourceSummary"] = ("📁 {0} — {1} arquivo(s), inclui subpastas", "📁 {0} — {1} file(s), includes subfolders"),
         ["excludeItemsLabel"] = ("Itens a enviar (desmarque pra ignorar):", "Items to send (uncheck to skip):"),
+        ["keepRootFolderLabel"] = ("Manter \"{0}\" como pasta no destino", "Keep \"{0}\" as a folder in the destination"),
         ["sec2Where"] = ("Para onde enviar", "Where to send"),
         ["destEditorTitle"] = ("Destino", "Destination"),
         ["addDest"] = ("Adicionar", "Add"),

@@ -758,11 +758,6 @@ public sealed partial class MainViewModel : ViewModelBase
         public TransferQueueItem QueueItem = null!;
     }
 
-    /// <summary>Caminho relativo do arquivo em relação à raiz da origem -- preserva a árvore de
-    /// subpastas no destino quando a origem é uma pasta recursiva; em modo arquivo-a-arquivo não
-    /// há árvore (arquivos avulsos), então cai pro nome plano de sempre.</summary>
-    private static string RelPathFor(TransferJob j, string src)
-        => j.Source.Kind == SourceKind.Folder ? Path.GetRelativePath(j.Source.Path, src) : Path.GetFileName(src);
 
     private static long SafeFileLength(string path)
     {
@@ -801,7 +796,7 @@ public sealed partial class MainViewModel : ViewModelBase
             foreach (var src in files)
             {
                 var fileName = Path.GetFileName(src);
-                var relPath = RelPathFor(j, src);
+                var relPath = j.Source.RelPathFor(src);
                 foreach (var d in dests)
                 {
                     if (j.Overwrite != OverwriteMode.Always)

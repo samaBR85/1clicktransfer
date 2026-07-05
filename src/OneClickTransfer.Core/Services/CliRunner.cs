@@ -102,7 +102,7 @@ public static class CliRunner
             foreach (var src in files)
             {
                 var fileName = Path.GetFileName(src);
-                var relPath = j.Source.Kind == SourceKind.Folder ? Path.GetRelativePath(j.Source.Path, src) : fileName;
+                var relPath = j.Source.RelPathFor(src);
                 foreach (var d in dests)
                 {
                     try

@@ -50,6 +50,10 @@ public class SourceSpec
     public List<string> Files { get; set; } = new();  // vários arquivos de origem
     public List<string> ExcludePatterns { get; set; } = new();  // ex: "node_modules/", ".git/", "*.tmp"
 
+    /// <summary>Kind==Folder: se true, o destino recebe a pasta escolhida como uma subpasta
+    /// nomeada (ex.: dest/AppGuide/de/...) em vez de só o conteúdo dela (dest/de/...).</summary>
+    public bool KeepRootFolderName { get; set; }
+
     /// <summary>Lista efetiva de arquivos: se Kind==Folder, expande a pasta (recursivo, dinâmico —
     /// reavaliado a cada chamada), aplicando ExcludePatterns; senão usa Files, ou o Path legado se
     /// Files vazio.</summary>
@@ -108,10 +112,23 @@ public class SourceSpec
     [JsonIgnore] public int Count => All.Count;
     [JsonIgnore] public string First => All.Count > 0 ? All[0] : "";
 
+    /// <summary>Caminho relativo usado pra recriar a estrutura no destino: em modo arquivo-a-avulso
+    /// é só o nome do arquivo (não há árvore); em modo pasta é relativo à raiz escolhida, com a
+    /// própria pasta como prefixo se KeepRootFolderName estiver marcado.</summary>
+    public string RelPathFor(string absoluteFilePath)
+    {
+        if (Kind != SourceKind.Folder) return System.IO.Path.GetFileName(absoluteFilePath);
+        var rel = System.IO.Path.GetRelativePath(Path, absoluteFilePath);
+        if (!KeepRootFolderName) return rel;
+        var rootName = System.IO.Path.GetFileName(Path.TrimEnd('\\', '/'));
+        return string.IsNullOrEmpty(rootName) ? rel : System.IO.Path.Combine(rootName, rel);
+    }
+
     public SourceSpec Clone() => new()
     {
         Path = Path, Kind = Kind, Pattern = Pattern, Recursive = Recursive,
-        Files = new List<string>(Files), ExcludePatterns = new List<string>(ExcludePatterns)
+        Files = new List<string>(Files), ExcludePatterns = new List<string>(ExcludePatterns),
+        KeepRootFolderName = KeepRootFolderName
     };
 }
 

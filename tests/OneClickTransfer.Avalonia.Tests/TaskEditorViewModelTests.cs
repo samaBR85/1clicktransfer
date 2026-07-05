@@ -220,6 +220,29 @@ public class TaskEditorViewModelTests
     }
 
     [Fact]
+    public void KeepRootFolderName_RoundTrip_SaveELoad()
+    {
+        var tmp = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(tmp, "a.txt"), "x");
+
+            var s = SettingsWithJob(out var job);
+            var vm = New(s, files: new FakeFilePicker { FolderToReturn = tmp });
+            vm.ChooseFolderCommand.Execute(null);
+            Assert.False(vm.KeepRootFolderName);   // default ao escolher pasta nova
+
+            vm.KeepRootFolderName = true;
+            vm.SaveCommand.Execute(null);
+            Assert.True(job.Source.KeepRootFolderName);
+
+            var vm2 = New(s);
+            Assert.True(vm2.KeepRootFolderName);
+        }
+        finally { Directory.Delete(tmp, true); }
+    }
+
+    [Fact]
     public void Save_writes_source_and_dests_to_current_job_and_closes_true()
     {
         var s = SettingsWithJob(out var job);

@@ -8,7 +8,10 @@ public sealed partial class FolderExcludeItem : ObservableObject
 {
     public string RealName { get; init; } = "";
     public bool IsDir { get; init; }
-    public string DisplayName => (IsDir ? "📁 " : "") + RealName;
+
+    /// <summary>"_" dobrado -- Content de CheckBox interpreta "_" simples como tecla de acesso
+    /// (mnemônico) e engole o caractere na exibição; nomes de arquivo/pasta reais não devem sumir.</summary>
+    public string DisplayName => (IsDir ? "📁 " : "") + RealName.Replace("_", "__");
 
     [ObservableProperty] private bool _isIncluded = true;
 }
