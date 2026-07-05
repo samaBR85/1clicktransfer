@@ -6,6 +6,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using OneClickTransfer.Avalonia.Services;
 using OneClickTransfer.Avalonia.ViewModels;
 using OneClickTransfer.Avalonia.Views;
@@ -21,6 +22,9 @@ public partial class App : Application
 
     /// <summary>Setada pelo item "Sair" da bandeja antes do Shutdown — bypassa o minimizar-ao-fechar.</summary>
     public static bool IsReallyExiting { get; set; }
+
+    /// <summary>Setado pelo Program.Main quando esta é a instância primária (mesmo caminho de exe).</summary>
+    public static SingleInstanceGuard? InstanceGuard { get; set; }
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -54,6 +58,9 @@ public partial class App : Application
 
             desktop.MainWindow = window;
             SetupTrayIcon(window, vm, desktop);
+
+            InstanceGuard?.StartListening(() =>
+                Dispatcher.UIThread.Post(() => ShowMainWindow(window)));
         }
 
         base.OnFrameworkInitializationCompleted();
