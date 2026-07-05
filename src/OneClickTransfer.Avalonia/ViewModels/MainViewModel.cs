@@ -753,9 +753,16 @@ public sealed partial class MainViewModel : ViewModelBase
     {
         public TransferJob Job = null!;
         public string Src = "";
+        public string RelPath = "";
         public Destination Dest = null!;
         public TransferQueueItem QueueItem = null!;
     }
+
+    /// <summary>Caminho relativo do arquivo em relação à raiz da origem -- preserva a árvore de
+    /// subpastas no destino quando a origem é uma pasta recursiva; em modo arquivo-a-arquivo não
+    /// há árvore (arquivos avulsos), então cai pro nome plano de sempre.</summary>
+    private static string RelPathFor(TransferJob j, string src)
+        => j.Source.Kind == SourceKind.Folder ? Path.GetRelativePath(j.Source.Path, src) : Path.GetFileName(src);
 
     private static long SafeFileLength(string path)
     {
@@ -794,15 +801,16 @@ public sealed partial class MainViewModel : ViewModelBase
             foreach (var src in files)
             {
                 var fileName = Path.GetFileName(src);
+                var relPath = RelPathFor(j, src);
                 foreach (var d in dests)
                 {
                     if (j.Overwrite != OverwriteMode.Always)
                     {
-                        bool exists = await Task.Run(() => TransferService.DestExists(d, fileName));
+                        bool exists = await Task.Run(() => TransferService.DestExists(d, relPath));
                         if (exists)
                         {
                             if (j.Overwrite == OverwriteMode.Never) { skipped++; continue; }
-                            if (j.Overwrite == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, fileName))) { skipped++; continue; }
+                            if (j.Overwrite == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, relPath))) { skipped++; continue; }
                         }
                     }
                     var qi = new TransferQueueItem
@@ -813,7 +821,7 @@ public sealed partial class MainViewModel : ViewModelBase
                         State = QueueItemState.Queued,
                         StatusText = L.T("queueWaiting")
                     };
-                    workItems.Add(new WorkItem { Job = j, Src = src, Dest = d, QueueItem = qi });
+                    workItems.Add(new WorkItem { Job = j, Src = src, RelPath = relPath, Dest = d, QueueItem = qi });
                 }
             }
         }
@@ -865,7 +873,7 @@ public sealed partial class MainViewModel : ViewModelBase
                                     ? FormatSpeed(bps) + " — " + FormatBytes(done) + " / " + FormatBytes(total)
                                     : (total > 0 ? FormatBytes(done) + " / " + FormatBytes(total) : "");
                             });
-                        }));
+                        }, w.RelPath));
                         Interlocked.Increment(ref sent);
                         var doneNow = Interlocked.Increment(ref completed);
                         _ui.Post(() =>

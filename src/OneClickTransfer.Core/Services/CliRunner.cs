@@ -102,16 +102,17 @@ public static class CliRunner
             foreach (var src in files)
             {
                 var fileName = Path.GetFileName(src);
+                var relPath = j.Source.Kind == SourceKind.Folder ? Path.GetRelativePath(j.Source.Path, src) : fileName;
                 foreach (var d in dests)
                 {
                     try
                     {
-                        if (j.Overwrite != OverwriteMode.Always && TransferService.DestExists(d, fileName))
+                        if (j.Overwrite != OverwriteMode.Always && TransferService.DestExists(d, relPath))
                         {
                             if (j.Overwrite == OverwriteMode.Never) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
-                            if (j.Overwrite == OverwriteMode.IfNewer && !TransferService.IsSourceNewer(d, src, fileName)) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
+                            if (j.Overwrite == OverwriteMode.IfNewer && !TransferService.IsSourceNewer(d, src, relPath)) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
                         }
-                        TransferService.Send(d, src, null);
+                        TransferService.Send(d, src, null, relPath);
                         sent++;
                         Out($"OK     {fileName} -> {d.Summary}");
                     }

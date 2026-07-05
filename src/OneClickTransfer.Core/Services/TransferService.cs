@@ -17,10 +17,12 @@ public readonly record struct TransferProgress(double Percent, long Transferred,
 public static class TransferService
 {
     // ---------------- Local ----------------
-    public static void LocalCopy(string srcFile, string destFolder)
+    /// <summary>relPath pode conter subpastas (origem em pasta recursiva) -- recria a árvore no destino.</summary>
+    public static void LocalCopy(string srcFile, string destFolder, string relPath)
     {
-        Directory.CreateDirectory(destFolder);
-        var dst = Path.Combine(destFolder, Path.GetFileName(srcFile));
+        var dst = Path.Combine(destFolder, relPath);
+        var dstDir = Path.GetDirectoryName(dst);
+        if (!string.IsNullOrEmpty(dstDir)) Directory.CreateDirectory(dstDir);
         File.Copy(srcFile, dst, true);
     }
 
@@ -70,12 +72,14 @@ public static class TransferService
         return baseP.TrimEnd('/') + "/" + fileName;
     }
 
-    public static void FtpUpload(Destination d, string srcFile, Action<TransferProgress>? onProgress)
+    /// <summary>relPath pode conter subpastas -- createRemoteDir=true (já usado abaixo) já recria
+    /// a árvore de pastas no servidor, sem precisar de lógica extra de criação de diretório.</summary>
+    public static void FtpUpload(Destination d, string srcFile, string relPath, Action<TransferProgress>? onProgress)
     {
         long total = new FileInfo(srcFile).Length;
         using var c = MakeClient(d);
         c.Connect();
-        var remote = RemoteFilePath(d, Path.GetFileName(srcFile));
+        var remote = RemoteFilePath(d, relPath.Replace('\\', '/'));
         Action<FtpProgress> p = fp =>
         {
             if (fp.Progress >= 0)
@@ -85,22 +89,23 @@ public static class TransferService
         c.Disconnect();
     }
 
-    public static bool FtpExists(Destination d, string fileName)
+    public static bool FtpExists(Destination d, string relPath)
     {
         using var c = MakeClient(d);
         c.Connect();
-        var ok = c.FileExists(RemoteFilePath(d, fileName));
+        var ok = c.FileExists(RemoteFilePath(d, relPath.Replace('\\', '/')));
         c.Disconnect();
         return ok;
     }
 
-    public static DateTime? FtpModified(Destination d, string fileName)
+    public static DateTime? FtpModified(Destination d, string relPath)
     {
+        var relFwd = relPath.Replace('\\', '/');
         try
         {
             using var c = MakeClient(d);
             c.Connect();
-            var t = c.GetModifiedTime(RemoteFilePath(d, fileName));
+            var t = c.GetModifiedTime(RemoteFilePath(d, relFwd));
             c.Disconnect();
             if (t != DateTime.MinValue) return t;
         }
@@ -108,10 +113,14 @@ public static class TransferService
 
         // Alguns ftpd embarcados (ex.: o do 3DS/Luma) anunciam MDTM no FEAT mas respondem
         // "502 Command not implemented" -- caem aqui pro Modify já presente na listagem MLSD.
+        // relPath pode ter subpastas (origem em pasta recursiva) -- lista a subpasta certa, não a base.
         try
         {
-            var entry = FtpListPath(d, d.Folder)
-                .FirstOrDefault(e => !e.IsDir && string.Equals(e.Name, fileName, StringComparison.OrdinalIgnoreCase));
+            var slash = relFwd.LastIndexOf('/');
+            var subDir = slash < 0 ? d.Folder : (d.Folder.TrimEnd('/') + "/" + relFwd[..slash]);
+            var name = slash < 0 ? relFwd : relFwd[(slash + 1)..];
+            var entry = FtpListPath(d, subDir)
+                .FirstOrDefault(e => !e.IsDir && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
             return entry?.Modified;
         }
         catch { return null; }
@@ -167,13 +176,17 @@ public static class TransferService
         }
     }
 
-    public static void SftpUpload(Destination d, string srcFile, Action<TransferProgress>? onProgress)
+    /// <summary>relPath pode conter subpastas -- EnsureSftpDir cria a árvore até o diretório real
+    /// do arquivo (não só a pasta base), recriando a estrutura da origem no servidor.</summary>
+    public static void SftpUpload(Destination d, string srcFile, string relPath, Action<TransferProgress>? onProgress)
     {
         using var c = MakeSftp(d);
         c.Connect();
         var folder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
-        EnsureSftpDir(c, folder);
-        var remote = folder.TrimEnd('/') + "/" + Path.GetFileName(srcFile);
+        var relFwd = relPath.Replace('\\', '/');
+        var remote = folder.TrimEnd('/') + "/" + relFwd;
+        var remoteDir = remote[..remote.LastIndexOf('/')];
+        EnsureSftpDir(c, remoteDir);
         using var fs = File.OpenRead(srcFile);
         long total = fs.Length;
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -206,24 +219,24 @@ public static class TransferService
         return list;
     }
 
-    public static bool SftpExists(Destination d, string fileName)
+    public static bool SftpExists(Destination d, string relPath)
     {
         using var c = MakeSftp(d);
         c.Connect();
         var folder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
-        var ok = c.Exists(folder.TrimEnd('/') + "/" + fileName);
+        var ok = c.Exists(folder.TrimEnd('/') + "/" + relPath.Replace('\\', '/'));
         c.Disconnect();
         return ok;
     }
 
-    public static DateTime? SftpModified(Destination d, string fileName)
+    public static DateTime? SftpModified(Destination d, string relPath)
     {
         try
         {
             using var c = MakeSftp(d);
             c.Connect();
             var folder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
-            var full = folder.TrimEnd('/') + "/" + fileName;
+            var full = folder.TrimEnd('/') + "/" + relPath.Replace('\\', '/');
             DateTime? t = c.Exists(full) ? c.GetLastWriteTime(full) : null;
             c.Disconnect();
             return t;
@@ -240,19 +253,23 @@ public static class TransferService
     }
 
     // ---------------- Dispatchers por tipo ----------------
-    public static void Send(Destination d, string srcFile, Action<TransferProgress>? onProgress)
+    /// <summary>relPath (opcional) preserva a árvore de subpastas da origem no destino -- quando
+    /// omitido (compat com o v2 congelado, que só conhece o nome do arquivo), cai pro nome plano
+    /// de sempre.</summary>
+    public static void Send(Destination d, string srcFile, Action<TransferProgress>? onProgress, string? relPath = null)
     {
+        relPath ??= Path.GetFileName(srcFile);
         switch (d.Type)
         {
             case DestType.Local:
             {
                 long size = new FileInfo(srcFile).Length;
-                LocalCopy(srcFile, d.Folder);
+                LocalCopy(srcFile, d.Folder, relPath);
                 onProgress?.Invoke(new TransferProgress(100, size, size, 0));
                 break;
             }
-            case DestType.Ftp: FtpUpload(d, srcFile, onProgress); break;
-            case DestType.Sftp: SftpUpload(d, srcFile, onProgress); break;
+            case DestType.Ftp: FtpUpload(d, srcFile, relPath, onProgress); break;
+            case DestType.Sftp: SftpUpload(d, srcFile, relPath, onProgress); break;
         }
     }
 

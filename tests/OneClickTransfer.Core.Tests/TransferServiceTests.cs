@@ -61,6 +61,22 @@ public class TransferServiceTests : IDisposable
     }
 
     [Fact]
+    public void Send_Local_ComRelPath_RecriaSubpastasNoDestino()
+    {
+        var srcDir = Directory.CreateDirectory(Path.Combine(_root, "src")).FullName;
+        var subDir = Directory.CreateDirectory(Path.Combine(srcDir, "de")).FullName;
+        var srcFile = Path.Combine(subDir, "guide.txt");
+        File.WriteAllText(srcFile, "conteudo");
+        var dst = LocalDest("d");
+
+        TransferService.Send(dst, srcFile, null, relPath: Path.Combine("de", "guide.txt"));
+
+        var expected = Path.Combine(dst.Folder, "de", "guide.txt");
+        Assert.True(File.Exists(expected));
+        Assert.Equal("conteudo", File.ReadAllText(expected));
+    }
+
+    [Fact]
     public void IsSourceNewer_DestinoInexistente_True()
     {
         var src = MakeFile("s.txt", "s");
