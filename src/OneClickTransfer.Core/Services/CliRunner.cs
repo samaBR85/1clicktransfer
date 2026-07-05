@@ -102,10 +102,16 @@ public static class CliRunner
             var relPaths = files.Select(f => j.Source.RelPathFor(f)).ToList();
 
             // 1 listagem por destino (não por arquivo) -- evita reconectar via FTP/SFTP pra cada
-            // arquivo só pra checar exists/modified.
+            // arquivo só pra checar exists/modified. Se o destino estiver inacessível (host fora
+            // do ar), a conexão lança aqui -- guarda a falha por destino em vez de deixar subir.
             var caches = new Dictionary<Destination, RemoteListingCache?>();
+            var offlineDests = new Dictionary<Destination, string>();
             foreach (var d in dests)
-                caches[d] = j.Overwrite != OverwriteMode.Always ? TransferService.BuildListingCache(d, relPaths) : null;
+            {
+                if (j.Overwrite == OverwriteMode.Always) { caches[d] = null; continue; }
+                try { caches[d] = TransferService.BuildListingCache(d, relPaths); }
+                catch (Exception ex) { offlineDests[d] = ex.Message; caches[d] = null; }
+            }
 
             foreach (var src in files)
             {
@@ -113,6 +119,12 @@ public static class CliRunner
                 var relPath = j.Source.RelPathFor(src);
                 foreach (var d in dests)
                 {
+                    if (offlineDests.TryGetValue(d, out var offlineMsg))
+                    {
+                        failed++;
+                        Out($"FALHA  {fileName} -> {d.Summary}: {offlineMsg}");
+                        continue;
+                    }
                     try
                     {
                         if (j.Overwrite != OverwriteMode.Always && TransferService.DestExists(d, relPath, caches[d]))

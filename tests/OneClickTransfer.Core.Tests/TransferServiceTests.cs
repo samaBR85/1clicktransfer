@@ -105,6 +105,13 @@ public class TransferServiceTests : IDisposable
     }
 
     [Fact]
+    public void BuildFtpListingCache_HostInexistente_Lanca()
+    {
+        var d = new Destination { Type = DestType.Ftp, Host = "host-que-nao-existe.invalid", Folder = "/x" };
+        Assert.ThrowsAny<Exception>(() => TransferService.BuildFtpListingCache(d, new[] { "a.txt" }));
+    }
+
+    [Fact]
     public void IsSourceNewer_DestinoInexistente_True()
     {
         var src = MakeFile("s.txt", "s");

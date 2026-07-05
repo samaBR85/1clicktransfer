@@ -789,6 +789,7 @@ public sealed partial class MainViewModel : ViewModelBase
         // Monta a lista de work-items (arquivo x destino) ANTES de transferir; modo de sobrescrita
         // ja decide aqui quem entra na fila ou e pulado direto (skip nao aparece na fila visualmente).
         var workItems = new List<WorkItem>();
+        var immediateFails = new List<TransferQueueItem>();
         foreach (var j in jobs)
         {
             var dests = j.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
@@ -796,12 +797,17 @@ public sealed partial class MainViewModel : ViewModelBase
             var relPaths = files.Select(f => j.Source.RelPathFor(f)).ToList();
 
             // 1 listagem por destino (não por arquivo) antes do loop de sempre -- evita reconectar
-            // via FTP/SFTP pra cada arquivo só pra checar exists/modified.
+            // via FTP/SFTP pra cada arquivo só pra checar exists/modified. Se o destino estiver
+            // inacessível (host fora do ar), a conexão lança aqui -- guardamos a falha por destino
+            // em vez de deixar subir (isso derrubava o app inteiro antes da v3(63)).
             var caches = new Dictionary<Destination, RemoteListingCache?>();
+            var offlineDests = new Dictionary<Destination, string>();
             foreach (var d in dests)
-                caches[d] = j.Overwrite != OverwriteMode.Always
-                    ? await Task.Run(() => TransferService.BuildListingCache(d, relPaths))
-                    : null;
+            {
+                if (j.Overwrite == OverwriteMode.Always) { caches[d] = null; continue; }
+                try { caches[d] = await Task.Run(() => TransferService.BuildListingCache(d, relPaths)); }
+                catch (Exception ex) { offlineDests[d] = ex.Message; caches[d] = null; }
+            }
 
             foreach (var src in files)
             {
@@ -809,6 +815,20 @@ public sealed partial class MainViewModel : ViewModelBase
                 var relPath = j.Source.RelPathFor(src);
                 foreach (var d in dests)
                 {
+                    if (offlineDests.TryGetValue(d, out var offlineMsg))
+                    {
+                        failed++;
+                        immediateFails.Add(new TransferQueueItem
+                        {
+                            FileName = fileName,
+                            DestSummary = d.Summary,
+                            SizeBytes = SafeFileLength(src),
+                            State = QueueItemState.Failed,
+                            FinishedAt = DateTime.Now,
+                            ErrorMessage = offlineMsg
+                        });
+                        continue;
+                    }
                     if (j.Overwrite != OverwriteMode.Always)
                     {
                         var cache = caches[d];
@@ -835,6 +855,7 @@ public sealed partial class MainViewModel : ViewModelBase
         _ui.Post(() =>
         {
             foreach (var w in workItems) QueuedItems.Add(w.QueueItem);
+            foreach (var qi in immediateFails) FailedItems.Insert(0, qi);
             RaiseQueueInfo();
         });
 

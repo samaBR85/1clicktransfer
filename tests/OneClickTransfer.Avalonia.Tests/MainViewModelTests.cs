@@ -192,6 +192,24 @@ public class MainViewModelTests
         vm.OnClosed();
     }
 
+    [Fact]
+    public async Task Transfer_ftp_offline_marks_failed_instead_of_crashing()
+    {
+        var (src, _) = MakeSrcAndDest(out _);
+        var job = Job("A");
+        job.Source.Files.Add(src);
+        job.Destinations.Add(new Destination { Type = DestType.Ftp, Host = "notarealhost.invalid", Port = 21, Enabled = true });
+        job.Overwrite = OverwriteMode.IfNewer;   // Always não passa pelo pré-check -- não reproduz o bug
+        var s = WithJobs(job);
+        var vm = New(s);
+        vm.OnOpened();
+
+        await vm.TransferCommand.ExecuteAsync(null);   // antes do fix: lança e derruba o teste
+
+        Assert.Contains("1 failed", vm.StatusText);
+        vm.OnClosed();
+    }
+
     // ---- Auto-refresh de DESTINATION ao trocar de tarefa ----
     [Fact]
     public async Task SwitchJob_ftp_offline_shows_message_instead_of_hanging()
