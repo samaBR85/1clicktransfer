@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using FluentFTP;
 using Renci.SshNet;
 using OneClickTransfer.Models;
@@ -101,7 +102,17 @@ public static class TransferService
             c.Connect();
             var t = c.GetModifiedTime(RemoteFilePath(d, fileName));
             c.Disconnect();
-            return t == DateTime.MinValue ? (DateTime?)null : t;
+            if (t != DateTime.MinValue) return t;
+        }
+        catch { /* MDTM cai pro fallback abaixo */ }
+
+        // Alguns ftpd embarcados (ex.: o do 3DS/Luma) anunciam MDTM no FEAT mas respondem
+        // "502 Command not implemented" -- caem aqui pro Modify já presente na listagem MLSD.
+        try
+        {
+            var entry = FtpListPath(d, d.Folder)
+                .FirstOrDefault(e => !e.IsDir && string.Equals(e.Name, fileName, StringComparison.OrdinalIgnoreCase));
+            return entry?.Modified;
         }
         catch { return null; }
     }
@@ -271,7 +282,12 @@ public static class TransferService
             return srcT > File.GetLastWriteTime(dst);
         }
         var rt = DestModified(d, fileName);
-        return rt == null || srcT > rt.Value;
+        if (rt == null) return true;
+        // FTP/SFTP retornam o Modified marcado como Utc (MDTM/MLSD são UTC por protocolo), mas
+        // File.GetLastWriteTime é Local -- comparar DateTime direto ignora o Kind e compara os
+        // ticks crus, dando resultado errado por até o offset de fuso do usuário. Normaliza os
+        // dois lados pra UTC antes de comparar.
+        return srcT.ToUniversalTime() > rt.Value.ToUniversalTime();
     }
 
     public static List<RemoteEntry> ListPath(Destination d, string path) => d.Type switch
