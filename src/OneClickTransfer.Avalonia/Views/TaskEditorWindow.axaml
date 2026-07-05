@@ -22,13 +22,14 @@
       <TextBox Height="30" Text="{Binding TaskName, Mode=TwoWay}"/>
     </StackPanel>
 
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
-        <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
-        <RowDefinition Height="1.6*"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
@@ -134,5 +135,6 @@
         </StackPanel>
       </Border>
     </Grid>
+    </ScrollViewer>
   </DockPanel>
 </Window>
