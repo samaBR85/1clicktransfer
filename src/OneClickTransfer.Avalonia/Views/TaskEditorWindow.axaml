@@ -6,7 +6,7 @@
         x:DataType="vm:TaskEditorViewModel"
         Title="{Binding Title}"
         Icon="/Assets/app.ico"
-        Width="600" Height="720" MinWidth="560" MinHeight="560"
+        Width="600" Height="820" MinWidth="560" MinHeight="620"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource BgBrush}">
 
@@ -25,7 +25,7 @@
     <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
-        <RowDefinition Height="*" MinHeight="230"/>
+        <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="1.6*"/>
@@ -51,7 +51,7 @@
           </ListBox.ItemTemplate>
         </ListBox>
 
-        <Border IsVisible="{Binding IsFolderSource}" Padding="12"
+        <Border IsVisible="{Binding IsFolderSource}" MinHeight="210" Padding="12"
                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1" CornerRadius="6">
           <DockPanel>
             <TextBlock DockPanel.Dock="Top" Text="{Binding FolderSourcePath}" FontSize="12" FontWeight="SemiBold"
