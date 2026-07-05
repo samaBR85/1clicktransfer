@@ -99,6 +99,14 @@ public static class CliRunner
                         $"FAIL   {j.Name}: no valid source or destination."));
                 continue;
             }
+            var relPaths = files.Select(f => j.Source.RelPathFor(f)).ToList();
+
+            // 1 listagem por destino (não por arquivo) -- evita reconectar via FTP/SFTP pra cada
+            // arquivo só pra checar exists/modified.
+            var caches = new Dictionary<Destination, RemoteListingCache?>();
+            foreach (var d in dests)
+                caches[d] = j.Overwrite != OverwriteMode.Always ? TransferService.BuildListingCache(d, relPaths) : null;
+
             foreach (var src in files)
             {
                 var fileName = Path.GetFileName(src);
@@ -107,10 +115,10 @@ public static class CliRunner
                 {
                     try
                     {
-                        if (j.Overwrite != OverwriteMode.Always && TransferService.DestExists(d, relPath))
+                        if (j.Overwrite != OverwriteMode.Always && TransferService.DestExists(d, relPath, caches[d]))
                         {
                             if (j.Overwrite == OverwriteMode.Never) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
-                            if (j.Overwrite == OverwriteMode.IfNewer && !TransferService.IsSourceNewer(d, src, relPath)) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
+                            if (j.Overwrite == OverwriteMode.IfNewer && !TransferService.IsSourceNewer(d, src, relPath, caches[d])) { skipped++; Out($"SKIP   {fileName} -> {d.Summary}"); continue; }
                         }
                         TransferService.Send(d, src, null, relPath);
                         sent++;

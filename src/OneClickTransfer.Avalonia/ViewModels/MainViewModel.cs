@@ -793,6 +793,16 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             var dests = j.Destinations.Where(d => d.Enabled && DestReady(d)).ToList();
             var files = j.Source.All.Where(File.Exists).ToList();
+            var relPaths = files.Select(f => j.Source.RelPathFor(f)).ToList();
+
+            // 1 listagem por destino (não por arquivo) antes do loop de sempre -- evita reconectar
+            // via FTP/SFTP pra cada arquivo só pra checar exists/modified.
+            var caches = new Dictionary<Destination, RemoteListingCache?>();
+            foreach (var d in dests)
+                caches[d] = j.Overwrite != OverwriteMode.Always
+                    ? await Task.Run(() => TransferService.BuildListingCache(d, relPaths))
+                    : null;
+
             foreach (var src in files)
             {
                 var fileName = Path.GetFileName(src);
@@ -801,11 +811,12 @@ public sealed partial class MainViewModel : ViewModelBase
                 {
                     if (j.Overwrite != OverwriteMode.Always)
                     {
-                        bool exists = await Task.Run(() => TransferService.DestExists(d, relPath));
+                        var cache = caches[d];
+                        bool exists = await Task.Run(() => TransferService.DestExists(d, relPath, cache));
                         if (exists)
                         {
                             if (j.Overwrite == OverwriteMode.Never) { skipped++; continue; }
-                            if (j.Overwrite == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, relPath))) { skipped++; continue; }
+                            if (j.Overwrite == OverwriteMode.IfNewer && await Task.Run(() => !TransferService.IsSourceNewer(d, src, relPath, cache))) { skipped++; continue; }
                         }
                     }
                     var qi = new TransferQueueItem

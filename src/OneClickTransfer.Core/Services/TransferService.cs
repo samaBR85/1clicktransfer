@@ -252,6 +252,78 @@ public static class TransferService
         c.Disconnect();
     }
 
+    // ---------------- Cache de listagem (1 conexão por destino em vez de 1 por arquivo) ----------------
+    private static List<string> DistinctSubDirs(IEnumerable<string> relPaths)
+    {
+        var dirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in relPaths)
+        {
+            var fwd = r.Replace('\\', '/');
+            var slash = fwd.LastIndexOf('/');
+            dirs.Add(slash < 0 ? "" : fwd[..slash]);
+        }
+        return dirs.ToList();
+    }
+
+    /// <summary>Uma conexão só, uma listagem por subpasta distinta tocada por relPaths (não
+    /// recursivo -- LIST recursivo é dependente de servidor, arriscado no mesmo ftpd que já mentiu
+    /// sobre suporte a MDTM no FEAT). Usado pra responder exists/modified de N arquivos sem
+    /// reconectar N vezes.</summary>
+    public static RemoteListingCache BuildFtpListingCache(Destination d, IEnumerable<string> relPaths)
+    {
+        var entries = new List<(string relDir, RemoteEntry entry)>();
+        using var c = MakeClient(d);
+        c.Connect();
+        foreach (var subDir in DistinctSubDirs(relPaths))
+        {
+            var remoteDir = string.IsNullOrEmpty(subDir) ? d.Folder : d.Folder.TrimEnd('/') + "/" + subDir;
+            try
+            {
+                var p = string.IsNullOrWhiteSpace(remoteDir) ? "/" : remoteDir;
+                foreach (var item in c.GetListing(p))
+                {
+                    entries.Add((subDir, new RemoteEntry(
+                        item.Name, item.Type == FtpObjectType.Directory,
+                        item.Size < 0 ? 0 : item.Size, item.Modified)));
+                }
+            }
+            catch { /* subpasta ainda não existe no destino -- trata como vazia */ }
+        }
+        c.Disconnect();
+        return new RemoteListingCache(entries);
+    }
+
+    public static RemoteListingCache BuildSftpListingCache(Destination d, IEnumerable<string> relPaths)
+    {
+        var entries = new List<(string relDir, RemoteEntry entry)>();
+        using var c = MakeSftp(d);
+        c.Connect();
+        var baseFolder = string.IsNullOrWhiteSpace(d.Folder) ? "/" : d.Folder;
+        foreach (var subDir in DistinctSubDirs(relPaths))
+        {
+            var remoteDir = string.IsNullOrEmpty(subDir) ? baseFolder : baseFolder.TrimEnd('/') + "/" + subDir;
+            try
+            {
+                foreach (var f in c.ListDirectory(remoteDir))
+                {
+                    if (f.Name is "." or "..") continue;
+                    entries.Add((subDir, new RemoteEntry(f.Name, f.IsDirectory, f.Length < 0 ? 0 : f.Length, f.LastWriteTime)));
+                }
+            }
+            catch { /* subpasta ainda não existe no destino -- trata como vazia */ }
+        }
+        c.Disconnect();
+        return new RemoteListingCache(entries);
+    }
+
+    /// <summary>Local não precisa de cache (File.Exists/GetLastWriteTime já são O(1) sem rede).</summary>
+    public static RemoteListingCache? BuildListingCache(Destination d, IEnumerable<string> relPaths) => d.Type switch
+    {
+        DestType.Ftp => BuildFtpListingCache(d, relPaths),
+        DestType.Sftp => BuildSftpListingCache(d, relPaths),
+        _ => null
+    };
+
     // ---------------- Dispatchers por tipo ----------------
     /// <summary>relPath (opcional) preserva a árvore de subpastas da origem no destino -- quando
     /// omitido (compat com o v2 congelado, que só conhece o nome do arquivo), cai pro nome plano
@@ -281,6 +353,11 @@ public static class TransferService
         _ => false
     };
 
+    /// <summary>Consulta o cache (sem rede) em vez de reconectar -- cache null cai pro caminho de
+    /// sempre (compat com quem ainda não constrói cache, ex.: chamadas antigas).</summary>
+    public static bool DestExists(Destination d, string relPath, RemoteListingCache? cache)
+        => cache != null ? cache.Exists(relPath) : DestExists(d, relPath);
+
     public static DateTime? DestModified(Destination d, string fileName) => d.Type switch
     {
         DestType.Ftp => FtpModified(d, fileName),
@@ -305,6 +382,16 @@ public static class TransferService
         // ticks crus, dando resultado errado por até o offset de fuso do usuário. Normaliza os
         // dois lados pra UTC antes de comparar.
         return srcT.ToUniversalTime() > rt.Value.ToUniversalTime();
+    }
+
+    /// <summary>Mesma comparação de IsSourceNewer, mas consultando o cache (sem rede) em vez de
+    /// reconectar; cache null cai pro caminho de sempre.</summary>
+    public static bool IsSourceNewer(Destination d, string sourcePath, string relPath, RemoteListingCache? cache)
+    {
+        if (cache == null) return IsSourceNewer(d, sourcePath, relPath);
+        var rt = cache.Modified(relPath);
+        if (rt == null) return true;
+        return File.GetLastWriteTime(sourcePath).ToUniversalTime() > rt.Value.ToUniversalTime();
     }
 
     public static List<RemoteEntry> ListPath(Destination d, string path) => d.Type switch

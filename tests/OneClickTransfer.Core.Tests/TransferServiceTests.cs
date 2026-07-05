@@ -77,6 +77,34 @@ public class TransferServiceTests : IDisposable
     }
 
     [Fact]
+    public void DestExists_ComCache_NaoAcessaRede_UsaOCacheDireto()
+    {
+        // Destination FTP fake (host inválido) -- se DestExists tentasse conectar, estouraria
+        // exceção/timeout. Passar o cache já resolve sem tocar rede nenhuma.
+        var d = new Destination { Type = DestType.Ftp, Host = "host-que-nao-existe.invalid", Folder = "/x" };
+        var cache = new RemoteListingCache(new[] { ("", new RemoteEntry("a.txt", false, 1, DateTime.UtcNow)) });
+
+        Assert.True(TransferService.DestExists(d, "a.txt", cache));
+        Assert.False(TransferService.DestExists(d, "b.txt", cache));
+    }
+
+    [Fact]
+    public void IsSourceNewer_ComCache_NaoAcessaRede_ComparaUtc()
+    {
+        var srcT = new DateTime(2026, 7, 4, 22, 0, 0, DateTimeKind.Utc);
+        var src = MakeFile("s.txt", "s");
+        File.SetLastWriteTimeUtc(src, srcT);
+
+        var d = new Destination { Type = DestType.Ftp, Host = "host-que-nao-existe.invalid", Folder = "/x" };
+
+        var cacheDestMaisNovo = new RemoteListingCache(new[] { ("", new RemoteEntry("s.txt", false, 1, srcT.AddHours(1))) });
+        Assert.False(TransferService.IsSourceNewer(d, src, "s.txt", cacheDestMaisNovo));
+
+        var cacheDestMaisVelho = new RemoteListingCache(new[] { ("", new RemoteEntry("s.txt", false, 1, srcT.AddHours(-1))) });
+        Assert.True(TransferService.IsSourceNewer(d, src, "s.txt", cacheDestMaisVelho));
+    }
+
+    [Fact]
     public void IsSourceNewer_DestinoInexistente_True()
     {
         var src = MakeFile("s.txt", "s");
