@@ -250,6 +250,7 @@ public class AppSettings
     public DateTime? LastTransferAt { get; set; } = null;   // ultimo envio bem-sucedido (rodape)
     public int MaxParallelDestinations { get; set; } = 3;   // limite de destinos enviados ao mesmo tempo (1-8)
     public bool MinimizeToTrayOnClose { get; set; } = false;   // opt-in: fechar a janela so minimiza p/ bandeja
+    public bool KeepWatchWhileMinimized { get; set; } = false;   // opt-in: Watch continua ativo com a janela escondida na bandeja
 
     // Tarefas: cada uma tem origem + destinos + modo próprios (v2.1)
     public List<TransferJob> Jobs { get; set; } = new();

@@ -247,6 +247,50 @@ public class MainViewModelTests
         vm.OnClosed();
     }
 
+    // ---- Restaurar da bandeja: não deve resetar o painel DESTINATION nem os watchers ----
+    [Fact]
+    public void OnOpened_fromTrayRestore_ComToggleLigado_NaoResetaPainelDestino()
+    {
+        var (src, _) = MakeSrcAndDest(out _);
+        var job = Job("A");
+        job.Source.Files.Add(src);
+        job.Destinations.Add(new Destination { Type = DestType.Ftp, Host = "notarealhost.invalid", Port = 21, Enabled = true });
+        var s = WithJobs(job);
+        s.KeepWatchWhileMinimized = true;
+        var vm = New(s);
+        vm.OnOpened();
+
+        vm.Dest.Rows.Clear();
+        vm.Dest.Rows.Add(new FileRow { Name = "sentinela-nao-deveria-sumir" });
+
+        vm.OnOpened(fromTrayRestore: true);
+
+        Assert.Single(vm.Dest.Rows);
+        Assert.Equal("sentinela-nao-deveria-sumir", vm.Dest.Rows[0].Name);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public void OnOpened_fromTrayRestore_SemToggle_ResetaPainelDestinoComoAntes()
+    {
+        var (src, _) = MakeSrcAndDest(out _);
+        var job = Job("A");
+        job.Source.Files.Add(src);
+        job.Destinations.Add(new Destination { Type = DestType.Ftp, Host = "notarealhost.invalid", Port = 21, Enabled = true });
+        var s = WithJobs(job);
+        s.KeepWatchWhileMinimized = false;   // toggle desligado -- comportamento de hoje preservado
+        var vm = New(s);
+        vm.OnOpened();
+
+        vm.Dest.Rows.Clear();
+        vm.Dest.Rows.Add(new FileRow { Name = "sentinela-deveria-sumir" });
+
+        vm.OnOpened(fromTrayRestore: true);
+
+        Assert.DoesNotContain(vm.Dest.Rows, r => r.Name == "sentinela-deveria-sumir");
+        vm.OnClosed();
+    }
+
     // ---- Menu de contexto do DESTINATION (local) ----
     [Fact]
     public async Task DeleteDestItem_local_removes_file_and_refreshes()

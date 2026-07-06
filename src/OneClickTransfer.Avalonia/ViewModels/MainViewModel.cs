@@ -271,13 +271,18 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     // ---------------- Ciclo de vida ----------------
-    /// <summary>Chamado pela View no Opened (equivale ao Loaded do WPF).</summary>
-    public void OnOpened()
+    /// <summary>Chamado pela View no Opened (equivale ao Loaded do WPF) ou ao restaurar da
+    /// bandeja. fromTrayRestore=true + KeepWatchWhileMinimized evita re-buscar/travar o painel
+    /// FTP e reiniciar os watchers de Watch, que já estavam ativos com a janela escondida.</summary>
+    public void OnOpened(bool fromTrayRestore = false)
     {
         RefreshJobs();
-        RefreshHome();
+        if (!fromTrayRestore || !S.KeepWatchWhileMinimized)
+        {
+            RefreshHome();
+            _watch.Restart(WatchedJobs());
+        }
         UpdateReadyState();
-        _watch.Restart(WatchedJobs());
         if (Job.Watch) SetStatus(L.T("watchStatus"), StatusKind.Sub);
         else if (Job.Source.Count == 0) SetStatus(L.T("clickSettingsStart"), StatusKind.Sub);
         if (S.AutoUpdateCheck) _ = CheckUpdatesAtStartupAsync();

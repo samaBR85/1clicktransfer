@@ -16,6 +16,7 @@ public partial class MainWindow : Window
 {
     // Avalonia não tem RestoreBounds: rastreamos o último retângulo Normal manualmente.
     private double _normalX, _normalY, _normalW, _normalH;
+    private bool _hiddenToTray;
 
     private static AppSettings S => App.Settings;
     private MainViewModel? Vm => DataContext as MainViewModel;
@@ -48,10 +49,26 @@ public partial class MainWindow : Window
         {
             WindowsDarkTitleBar.Apply(this, S.Theme != "light");
             EnsureOnScreen();
-            Vm?.OnOpened();
+            Vm?.OnOpened(fromTrayRestore: _hiddenToTray);
         };
         Closing += OnClosing;
         Closed += (_, _) => Vm?.OnClosed();
+    }
+
+    /// <summary>Chamado ao restaurar da bandeja (clique no ícone/menu "Abrir"). Não depende de
+    /// o Avalonia disparar Opened de novo em Show() após Hide() -- garante que o VM saiba que
+    /// isto é uma restauração, não a primeira abertura da janela.</summary>
+    public void RestoreFromTray()
+    {
+        var wasHidden = _hiddenToTray;
+        Show();
+        WindowState = WindowState == WindowState.Minimized ? WindowState.Normal : WindowState;
+        Activate();
+        if (wasHidden)
+        {
+            Vm?.OnOpened(fromTrayRestore: true);
+            _hiddenToTray = false;
+        }
     }
 
     // Aplica a razão do divisor (0.15–0.85) e a altura do painel TAREFAS (140–600) salvas.
@@ -115,6 +132,7 @@ public partial class MainWindow : Window
         if (S.MinimizeToTrayOnClose && !App.IsReallyExiting)
         {
             e.Cancel = true;
+            _hiddenToTray = true;
             Hide();
             return;
         }

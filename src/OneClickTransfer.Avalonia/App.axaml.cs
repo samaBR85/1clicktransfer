@@ -95,10 +95,5 @@ public partial class App : Application
         TrayIcon.SetIcons(Current!, new TrayIcons { tray });
     }
 
-    private static void ShowMainWindow(MainWindow window)
-    {
-        window.Show();
-        window.WindowState = window.WindowState == WindowState.Minimized ? WindowState.Normal : window.WindowState;
-        window.Activate();
-    }
+    private static void ShowMainWindow(MainWindow window) => window.RestoreFromTray();
 }

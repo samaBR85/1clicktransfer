@@ -43,6 +43,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         VersionText = "v" + UpdateService.Current;
         MaxParallelDestinations = _s.MaxParallelDestinations;
         MinimizeToTrayOnClose = _s.MinimizeToTrayOnClose;
+        KeepWatchWhileMinimized = _s.KeepWatchWhileMinimized;
     }
 
     public ObservableCollection<string> KeyOptions { get; } = new();
@@ -57,6 +58,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _checkingUpdate;
     [ObservableProperty] private int _maxParallelDestinations;
     [ObservableProperty] private bool _minimizeToTrayOnClose;
+    [ObservableProperty] private bool _keepWatchWhileMinimized;
 
     // ---------------- About ----------------
     public const string GithubUrl = "https://github.com/samaBR85/1clicktransfer";
@@ -74,6 +76,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     public string MaxParallelLabel => L.T("maxParallelLabel");
     public string MaxParallelHint => L.T("maxParallelHint");
     public string MinimizeToTrayLabel => L.T("minimizeToTrayLabel");
+    public string KeepWatchMinimizedLabel => L.T("keepWatchMinimizedLabel");
     public string Sec3 => L.T("sec3Options");
     public string LangLabelText => L.T("langLabel");
     public string ThemeLabelText => L.T("themeLabel");
@@ -114,6 +117,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _s.AutoUpdateCheck = AutoUpdateCheck;
         _s.MaxParallelDestinations = MaxParallelDestinations;
         _s.MinimizeToTrayOnClose = MinimizeToTrayOnClose;
+        _s.KeepWatchWhileMinimized = KeepWatchWhileMinimized;
         SettingsService.Save(_s);
         CloseRequested?.Invoke(true);
     }

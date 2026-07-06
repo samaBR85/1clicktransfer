@@ -140,6 +140,7 @@ public static class L
         ["maxParallelLabel"] = ("Destinos em paralelo por tarefa", "Parallel destinations per task"),
         ["maxParallelHint"] = ("Quantos destinos da mesma tarefa podem ser enviados ao mesmo tempo.", "How many destinations of the same task can send at the same time."),
         ["minimizeToTrayLabel"] = ("Minimizar para a bandeja ao fechar", "Minimize to tray on close"),
+        ["keepWatchMinimizedLabel"] = ("Manter o Watch ativo enquanto minimizado", "Keep Watch active while minimized"),
         ["trayOpen"] = ("Abrir", "Open"),
         ["traySendAll"] = ("Enviar todas as tarefas habilitadas", "Send all enabled tasks"),
         ["trayExit"] = ("Sair", "Exit"),

@@ -55,6 +55,27 @@ public class SettingsViewModelTests
     }
 
     [Fact]
+    public void Ctor_reflects_KeepWatchWhileMinimized()
+    {
+        var s = Globals();
+        s.MinimizeToTrayOnClose = true;
+        s.KeepWatchWhileMinimized = true;
+        var vm = New(s);
+        Assert.True(vm.MinimizeToTrayOnClose);
+        Assert.True(vm.KeepWatchWhileMinimized);
+    }
+
+    [Fact]
+    public void Save_writes_KeepWatchWhileMinimized()
+    {
+        var s = Globals();
+        var vm = New(s);
+        vm.KeepWatchWhileMinimized = true;
+        vm.SaveCommand.Execute(null);
+        Assert.True(s.KeepWatchWhileMinimized);
+    }
+
+    [Fact]
     public void Save_none_shortcut_stores_None()
     {
         var s = Globals();
