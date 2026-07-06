@@ -131,10 +131,10 @@
               </StackPanel>
             </Button>
           </StackPanel>
-          <StackPanel VerticalAlignment="Top">
+          <StackPanel VerticalAlignment="Top" ClipToBounds="True">
             <TextBlock Text="{Binding SelectedJobName}" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis"/>
-            <TextBlock Text="{Binding SelectedJobFilesText}" FontSize="11" Foreground="{DynamicResource SubTextBrush}" Margin="0,3,0,0"/>
-            <TextBlock Text="{Binding SelectedJobDestsText}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"/>
+            <TextBlock Text="{Binding SelectedJobSummaryText}" FontSize="11" Foreground="{DynamicResource SubTextBrush}"
+                       Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
           </StackPanel>
         </DockPanel>
       </Border>

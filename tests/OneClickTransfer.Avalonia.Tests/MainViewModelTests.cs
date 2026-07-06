@@ -37,6 +37,20 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void SelectedJobSummaryText_junta_arquivos_e_destinos_em_1_linha()
+    {
+        var job = Job("A");
+        job.Source.Files.Add("x.txt");
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = "d", Enabled = true });
+        var s = WithJobs(job);
+        var vm = New(s);
+        vm.OnOpened();
+
+        Assert.Equal(vm.SelectedJobFilesText + "  ·  " + vm.SelectedJobDestsText, vm.SelectedJobSummaryText);
+        vm.OnClosed();
+    }
+
+    [Fact]
     public async Task Rename_updates_selected_job_name()
     {
         var s = WithJobs(Job("A"));

@@ -153,6 +153,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public string SelectedJobName => Job.Name;
     public string SelectedJobFilesText => L.T("srcCount", Job.Source.Count);
     public string SelectedJobDestsText => L.T("destCount", Job.Destinations.Count(d => d.Enabled));
+    public string SelectedJobSummaryText => SelectedJobFilesText + "  ·  " + SelectedJobDestsText;
     public bool CanTransferSelected => JobReady(Job) && !IsTransferring;
     public string SendThisTaskLabel => L.T("sendThisTask");
     public string EditTaskLabel => L.T("editTaskBtn");
@@ -162,6 +163,7 @@ public sealed partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedJobName));
         OnPropertyChanged(nameof(SelectedJobFilesText));
         OnPropertyChanged(nameof(SelectedJobDestsText));
+        OnPropertyChanged(nameof(SelectedJobSummaryText));
         OnPropertyChanged(nameof(CanTransferSelected));
     }
 
