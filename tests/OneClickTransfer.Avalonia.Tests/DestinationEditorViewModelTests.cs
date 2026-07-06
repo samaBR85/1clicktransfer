@@ -105,6 +105,57 @@ public class DestinationEditorViewModelTests
         Assert.Equal("pw", SecretProtector.Unprotect(result.Password));
     }
 
+    [Fact]
+    public void Loading_ftp_destination_fills_ForceLegacyPasv()
+    {
+        var d = new Destination { Type = DestType.Ftp, Host = "1.2.3.4", ForceLegacyPasv = true };
+        var vm = New(d);
+        Assert.True(vm.ForceLegacyPasv);
+    }
+
+    [Fact]
+    public void Ok_on_ftp_returns_ForceLegacyPasv()
+    {
+        var vm = New();
+        vm.IsFtp = true;
+        vm.Host = "host";
+        vm.Port = "21";
+        vm.ForceLegacyPasv = true;
+        Destination? result = null;
+        vm.CloseRequested += r => result = r;
+        vm.OkCommand.Execute(null);
+        Assert.NotNull(result);
+        Assert.True(result!.ForceLegacyPasv);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task SavedServerSave_persiste_ForceLegacyPasv()
+    {
+        var s = new AppSettings();
+        var vm = New(s: s, dlg: new FakeDialogService { PromptResult = "NAS" });
+        vm.IsFtp = true;
+        vm.Host = "ftp.example.com";
+        vm.ForceLegacyPasv = true;
+
+        await vm.SavedServerSaveCommand.ExecuteAsync(null);
+
+        Assert.True(s.SavedServers[0].ForceLegacyPasv);
+    }
+
+    [Fact]
+    public void SelectingSavedServer_fills_ForceLegacyPasv()
+    {
+        var s = new AppSettings
+        {
+            SavedServers = { new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h", ForceLegacyPasv = true } }
+        };
+        var vm = New(s: s);
+
+        vm.SelectedSavedServerIndex = vm.SavedServerOptions.IndexOf("NAS");
+
+        Assert.True(vm.ForceLegacyPasv);
+    }
+
     // ---- Servidores FTP/SFTP salvos ----
     [Fact]
     public async System.Threading.Tasks.Task SavedServerSave_adds_to_settings_and_selects_it()

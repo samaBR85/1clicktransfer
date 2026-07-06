@@ -21,6 +21,7 @@ public class Destination
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";     // criptografada (DPAPI)
     public bool UseTls { get; set; } = false;
+    public bool ForceLegacyPasv { get; set; } = false;  // pula EPSV, vai direto pra PASV (servidores como o ftpd do 3DS)
     public bool Enabled { get; set; } = true;       // marcado = recebe a transferencia
 
     /// <summary>Resumo exibido nas listas (nao serializado).</summary>
@@ -36,7 +37,7 @@ public class Destination
     public Destination Clone() => new()
     {
         Type = Type, Folder = Folder, Host = Host, Port = Port,
-        Username = Username, Password = Password, UseTls = UseTls, Enabled = Enabled
+        Username = Username, Password = Password, UseTls = UseTls, ForceLegacyPasv = ForceLegacyPasv, Enabled = Enabled
     };
 }
 
@@ -219,11 +220,12 @@ public class SavedServer
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";     // criptografada (DPAPI)
     public bool UseTls { get; set; } = false;
+    public bool ForceLegacyPasv { get; set; } = false;
 
     public SavedServer Clone() => new()
     {
         Name = Name, Type = Type, Host = Host, Port = Port,
-        Username = Username, Password = Password, UseTls = UseTls
+        Username = Username, Password = Password, UseTls = UseTls, ForceLegacyPasv = ForceLegacyPasv
     };
 }
 

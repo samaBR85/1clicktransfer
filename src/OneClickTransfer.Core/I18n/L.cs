@@ -128,6 +128,7 @@ public static class L
         ["ftpUser"] = ("Usuário:", "Username:"),
         ["ftpPass"] = ("Senha:", "Password:"),
         ["ftpTls"] = ("Usar TLS (FTPS)", "Use TLS (FTPS)"),
+        ["ftpLegacyPasv"] = ("Modo PASV legado (evita aviso 502 EPSV)", "Legacy PASV mode (avoids 502 EPSV warning)"),
         ["testConn"] = ("Testar conexão", "Test connection"),
         ["savedServerLabel"] = ("Servidor salvo:", "Saved server:"),
         ["saveServer"] = ("Salvar servidor...", "Save server..."),

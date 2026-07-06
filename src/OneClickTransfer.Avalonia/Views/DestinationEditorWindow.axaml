@@ -4,7 +4,7 @@
         x:Class="OneClickTransfer.Avalonia.Views.DestinationEditorWindow"
         x:DataType="vm:DestinationEditorViewModel"
         Title="{Binding WindowTitle}"
-        Width="540" Height="470"
+        Width="540" Height="490"
         WindowStartupLocation="CenterOwner" CanResize="False" ShowInTaskbar="False"
         Background="{DynamicResource BgBrush}">
 
@@ -74,8 +74,11 @@
 
           <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding UserLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
           <TextBox Grid.Row="3" Grid.Column="1" Height="30" Text="{Binding Username, Mode=TwoWay}"/>
-          <CheckBox Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center"
-                    Content="{Binding TlsLabel}" IsChecked="{Binding UseTls, Mode=TwoWay}" IsVisible="{Binding ShowTls}"/>
+          <StackPanel Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" Spacing="4"
+                      VerticalAlignment="Center" IsVisible="{Binding ShowTls}">
+            <CheckBox Content="{Binding TlsLabel}" IsChecked="{Binding UseTls, Mode=TwoWay}"/>
+            <CheckBox Content="{Binding PasvLabel}" IsChecked="{Binding ForceLegacyPasv, Mode=TwoWay}"/>
+          </StackPanel>
 
           <TextBlock Grid.Row="4" Grid.Column="0" Text="{Binding PassLabel}" Foreground="{DynamicResource SubTextBrush}" VerticalAlignment="Center"/>
           <TextBox Grid.Row="4" Grid.Column="1" Height="30" PasswordChar="●" Text="{Binding Password, Mode=TwoWay}"/>

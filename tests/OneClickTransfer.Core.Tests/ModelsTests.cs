@@ -165,4 +165,18 @@ public class ModelsTests
         Assert.Equal("h", d.Host);
         Assert.True(d.Enabled);
     }
+
+    [Fact]
+    public void Destination_Clone_PreservaForceLegacyPasv()
+    {
+        var d = new Destination { Type = DestType.Ftp, Host = "h", ForceLegacyPasv = true };
+        Assert.True(d.Clone().ForceLegacyPasv);
+    }
+
+    [Fact]
+    public void SavedServer_Clone_PreservaForceLegacyPasv()
+    {
+        var s = new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h", ForceLegacyPasv = true };
+        Assert.True(s.Clone().ForceLegacyPasv);
+    }
 }

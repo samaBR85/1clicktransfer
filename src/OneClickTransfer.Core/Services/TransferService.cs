@@ -63,6 +63,8 @@ public static class TransferService
             c.Config.EncryptionMode = FtpEncryptionMode.Explicit;
             c.Config.ValidateAnyCertificate = true;
         }
+        if (d.ForceLegacyPasv)
+            c.Config.DataConnectionType = FtpDataConnectionType.PASV;
         return c;
     }
 

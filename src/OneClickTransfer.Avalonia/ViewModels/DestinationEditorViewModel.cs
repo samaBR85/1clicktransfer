@@ -74,6 +74,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
     [ObservableProperty] private string _username = "";
     [ObservableProperty] private string _password = "";
     [ObservableProperty] private bool _useTls;
+    [ObservableProperty] private bool _forceLegacyPasv;
 
     [ObservableProperty] private string _testResult = "";
     [ObservableProperty] private bool _testOk;
@@ -94,6 +95,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
     public string UserLabel => L.T("ftpUser");
     public string PassLabel => L.T("ftpPass");
     public string TlsLabel => L.T("ftpTls");
+    public string PasvLabel => L.T("ftpLegacyPasv");
     public string TestLabel => L.T("testConn");
     public string SaveLabel => L.T("save");
     public string CancelLabel => L.T("cancel");
@@ -129,6 +131,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
         Username = srv.Username;
         Password = SecretProtector.Unprotect(srv.Password);
         UseTls = srv.UseTls;
+        ForceLegacyPasv = srv.ForceLegacyPasv;
         _typeSync = false;
         ApplyTypeChange();
     }
@@ -148,7 +151,8 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
             Port = int.TryParse(Port, out var p) && p > 0 ? p : (IsSftp ? 22 : 21),
             Username = Username.Trim(),
             Password = SecretProtector.Protect(Password),
-            UseTls = IsFtp && UseTls
+            UseTls = IsFtp && UseTls,
+            ForceLegacyPasv = IsFtp && ForceLegacyPasv
         };
         var idx = _s.SavedServers.FindIndex(x => x.Name == srv.Name);
         if (idx >= 0) _s.SavedServers[idx] = srv; else _s.SavedServers.Add(srv);
@@ -189,6 +193,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
         Username = d.Username;
         Password = SecretProtector.Unprotect(d.Password);
         UseTls = d.UseTls;
+        ForceLegacyPasv = d.ForceLegacyPasv;
         _typeSync = false;
         ApplyTypeChange();
     }
@@ -207,7 +212,8 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
                 Folder = string.IsNullOrWhiteSpace(RemoteFolder) ? "/" : RemoteFolder.Trim(),
                 Username = Username.Trim(),
                 Password = SecretProtector.Protect(Password),
-                UseTls = !sftp && UseTls
+                UseTls = !sftp && UseTls,
+                ForceLegacyPasv = !sftp && ForceLegacyPasv
             };
         }
         return new Destination { Type = DestType.Local, Folder = LocalFolder.Trim() };
@@ -238,7 +244,8 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
             Host = Host.Trim(), Port = port, Folder = "/",
             Username = Username.Trim(),
             Password = SecretProtector.Protect(Password),
-            UseTls = !sftp && UseTls
+            UseTls = !sftp && UseTls,
+            ForceLegacyPasv = !sftp && ForceLegacyPasv
         };
         var start = string.IsNullOrWhiteSpace(RemoteFolder) ? "/" : RemoteFolder.Trim();
         var chosen = await _dialogs.BrowseRemoteFolderAsync(d, start);
