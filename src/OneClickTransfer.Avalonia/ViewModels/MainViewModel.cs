@@ -875,67 +875,74 @@ public sealed partial class MainViewModel : ViewModelBase
             var maxParallel = Math.Max(1, S.MaxParallelDestinations);
             using var gate = new SemaphoreSlim(maxParallel);
 
-            var tasks = workItems.Select(async w =>
+            // Um destino só aceita 1 conexão por vez (servidores FTP embarcados, tipo o ftpd do
+            // 3DS, rejeitam conexões concorrentes com "Failed to connect to host"). MaxParallelDestinations
+            // limita quantos DESTINOS distintos transferem ao mesmo tempo; dentro de um mesmo destino,
+            // os arquivos são enviados um de cada vez (sequencial), nunca em paralelo entre si.
+            var tasks = workItems.GroupBy(w => w.Dest).Select(async group =>
             {
                 await gate.WaitAsync();
                 try
                 {
-                    var d = w.Dest; var src = w.Src; var qi = w.QueueItem;
-                    var startedNow = Interlocked.Increment(ref started);
-                    _ui.Post(() =>
+                    foreach (var w in group)
                     {
-                        qi.State = QueueItemState.Running;
-                        qi.StatusText = d.Type == DestType.Local ? L.T("copying") : L.T("uploading");
-                        SetStatus(L.T("sendingTo", w.Job.Name + " · " + qi.FileName + " → " + qi.DestSummary, startedNow, steps), StatusKind.Sub);
-                    });
-
-                    var rateSw = Stopwatch.StartNew();
-                    double lastUiMs = -1000, lastPct = -1, lastBps = 0;
-                    try
-                    {
-                        await Task.Run(() => TransferService.Send(d, src, tp =>
+                        var d = w.Dest; var src = w.Src; var qi = w.QueueItem;
+                        var startedNow = Interlocked.Increment(ref started);
+                        _ui.Post(() =>
                         {
-                            if (tp.BytesPerSec > 0) lastBps = tp.BytesPerSec;
-                            double nowMs = rateSw.Elapsed.TotalMilliseconds;
-                            if (nowMs - lastUiMs < 200 && Math.Abs(tp.Percent - lastPct) < 1) return;
-                            lastUiMs = nowMs; lastPct = tp.Percent;
-                            var bps = lastBps; var done = tp.Transferred; var total = tp.Total;
+                            qi.State = QueueItemState.Running;
+                            qi.StatusText = d.Type == DestType.Local ? L.T("copying") : L.T("uploading");
+                            SetStatus(L.T("sendingTo", w.Job.Name + " · " + qi.FileName + " → " + qi.DestSummary, startedNow, steps), StatusKind.Sub);
+                        });
+
+                        var rateSw = Stopwatch.StartNew();
+                        double lastUiMs = -1000, lastPct = -1, lastBps = 0;
+                        try
+                        {
+                            await Task.Run(() => TransferService.Send(d, src, tp =>
+                            {
+                                if (tp.BytesPerSec > 0) lastBps = tp.BytesPerSec;
+                                double nowMs = rateSw.Elapsed.TotalMilliseconds;
+                                if (nowMs - lastUiMs < 200 && Math.Abs(tp.Percent - lastPct) < 1) return;
+                                lastUiMs = nowMs; lastPct = tp.Percent;
+                                var bps = lastBps; var done = tp.Transferred; var total = tp.Total;
+                                _ui.Post(() =>
+                                {
+                                    qi.Progress = tp.Percent;
+                                    qi.StatusText = bps > 0
+                                        ? FormatSpeed(bps) + " — " + FormatBytes(done) + " / " + FormatBytes(total)
+                                        : (total > 0 ? FormatBytes(done) + " / " + FormatBytes(total) : "");
+                                });
+                            }, w.RelPath));
+                            Interlocked.Increment(ref sent);
+                            var doneNow = Interlocked.Increment(ref completed);
                             _ui.Post(() =>
                             {
-                                qi.Progress = tp.Percent;
-                                qi.StatusText = bps > 0
-                                    ? FormatSpeed(bps) + " — " + FormatBytes(done) + " / " + FormatBytes(total)
-                                    : (total > 0 ? FormatBytes(done) + " / " + FormatBytes(total) : "");
+                                qi.Progress = 100;
+                                qi.State = QueueItemState.Success;
+                                qi.FinishedAt = DateTime.Now;
+                                QueuedItems.Remove(qi);
+                                SucceededItems.Insert(0, qi);
+                                RaiseQueueInfo();
+                                ProgressValue = steps > 0 ? doneNow * 100.0 / steps : 0;
                             });
-                        }, w.RelPath));
-                        Interlocked.Increment(ref sent);
-                        var doneNow = Interlocked.Increment(ref completed);
-                        _ui.Post(() =>
+                        }
+                        catch (Exception ex)
                         {
-                            qi.Progress = 100;
-                            qi.State = QueueItemState.Success;
-                            qi.FinishedAt = DateTime.Now;
-                            QueuedItems.Remove(qi);
-                            SucceededItems.Insert(0, qi);
-                            RaiseQueueInfo();
-                            ProgressValue = steps > 0 ? doneNow * 100.0 / steps : 0;
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Interlocked.Increment(ref failed);
-                        lastError = ex.Message;
-                        var doneNow = Interlocked.Increment(ref completed);
-                        _ui.Post(() =>
-                        {
-                            qi.State = QueueItemState.Failed;
-                            qi.FinishedAt = DateTime.Now;
-                            qi.ErrorMessage = ex.Message;
-                            QueuedItems.Remove(qi);
-                            FailedItems.Insert(0, qi);
-                            RaiseQueueInfo();
-                            ProgressValue = steps > 0 ? doneNow * 100.0 / steps : 0;
-                        });
+                            Interlocked.Increment(ref failed);
+                            lastError = ex.Message;
+                            var doneNow = Interlocked.Increment(ref completed);
+                            _ui.Post(() =>
+                            {
+                                qi.State = QueueItemState.Failed;
+                                qi.FinishedAt = DateTime.Now;
+                                qi.ErrorMessage = ex.Message;
+                                QueuedItems.Remove(qi);
+                                FailedItems.Insert(0, qi);
+                                RaiseQueueInfo();
+                                ProgressValue = steps > 0 ? doneNow * 100.0 / steps : 0;
+                            });
+                        }
                     }
                 }
                 finally { gate.Release(); }

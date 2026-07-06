@@ -374,6 +374,37 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task Transfer_multiple_files_same_destination_all_succeed_even_with_high_max_parallel()
+    {
+        // Regressão: MaxParallelDestinations limita DESTINOS concorrentes, não arquivos dentro do
+        // mesmo destino -- vários arquivos pro mesmo destino sempre devem ser sequenciais (servidores
+        // FTP embarcados só aceitam 1 conexão por vez e rejeitam as demais).
+        var root = Path.Combine(Path.GetTempPath(), "oct-vm-" + Guid.NewGuid().ToString("N"));
+        var srcDir = Path.Combine(root, "src");
+        var dstDir = Path.Combine(root, "dst");
+        Directory.CreateDirectory(srcDir);
+        Directory.CreateDirectory(dstDir);
+        var files = new[] { "a.txt", "b.txt", "c.txt" };
+        foreach (var f in files) File.WriteAllText(Path.Combine(srcDir, f), "conteúdo " + f);
+
+        var job = Job("A");
+        foreach (var f in files) job.Source.Files.Add(Path.Combine(srcDir, f));
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = dstDir, Enabled = true });
+        var s = WithJobs(job);
+        s.MaxParallelDestinations = 8;   // bem maior que o número de destinos (1)
+        var vm = New(s);
+        vm.OnOpened();
+
+        await vm.TransferCommand.ExecuteAsync(null);
+
+        foreach (var f in files) Assert.True(File.Exists(Path.Combine(dstDir, f)));
+        Assert.Contains("3 sent", vm.StatusText);
+        Assert.Empty(vm.FailedItems);
+        vm.OnClosed();
+        Directory.Delete(root, true);
+    }
+
+    [Fact]
     public async Task Transfer_populates_queue_items_success_and_failure()
     {
         var (src, _) = MakeSrcAndDest(out var fileName);
