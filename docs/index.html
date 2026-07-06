@@ -33,6 +33,10 @@
   .dlcount{margin-top:16px;display:none;font-size:.9rem;color:var(--text)}
   .dlcount.show{display:inline-block;background:var(--card);border:1px solid var(--border);
        border-radius:999px;padding:6px 16px}
+  .verbadge{display:none;font-size:.78rem;font-weight:600;color:var(--sub);
+       background:var(--card);border:1px solid var(--border);border-radius:999px;
+       padding:4px 12px}
+  .verbadge.show{display:inline-block}
   .mock{display:block;margin:36px auto;max-width:100%;filter:drop-shadow(0 20px 50px rgba(0,0,0,.5))}
   .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:44px 0}
   .feat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 18px}
@@ -49,6 +53,7 @@
   <header>
     <svg class="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2563EB"/><path d="M12 33 L52 14 L41 50 L33 39 L24 45 Z" fill="#fff"/><path d="M52 14 L33 39" stroke="#2563EB" stroke-width="1.5" fill="none"/></svg>
     <h1>1-Click Transfer</h1>
+    <a id="verBadge" class="verbadge" href="https://github.com/samaBR85/1clicktransfer/releases/latest"></a>
     <span class="spacer"></span>
     <div class="langbtns">
       <button id="btn-pt" class="active" onclick="setLang('pt')">PT</button>
@@ -165,6 +170,17 @@
     var saved = null; try{ saved = localStorage.getItem('lang'); }catch(e){}
     var l = saved || ((navigator.language||'en').toLowerCase().indexOf('pt')===0 ? 'pt' : 'en');
     setLang(l);
+  })();
+
+  // Badge da versão atual (release "latest" no GitHub)
+  (function(){
+    fetch('https://api.github.com/repos/samaBR85/1clicktransfer/releases/latest')
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+      .then(function(rel){
+        var el = document.getElementById('verBadge');
+        el.textContent = rel.tag_name;
+        el.classList.add('show');
+      }).catch(function(){});
   })();
 
   // Contador de downloads (soma os assets de todos os releases)
