@@ -863,11 +863,25 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     // ---------------- Watch ----------------
+    // Gatilhos de Watch que chegaram enquanto outra transferência rodava -- rodam ao terminar, em vez
+    // de serem descartados (senão, com 2 tarefas vigiadas mudando juntas, só a 1ª envia e a 2ª some).
+    // Tocado só na thread de UI (TriggerWatch vem de _ui.Post; DrainPendingWatch vem do finally).
+    private readonly HashSet<TransferJob> _pendingWatch = new();
+
     private void TriggerWatch(TransferJob job)
     {
-        if (_transferring || !job.Watch) return;
+        if (!job.Watch) return;
         if (!JobReady(job) || !job.Source.All.Any(File.Exists)) return;
+        if (_transferring) { _pendingWatch.Add(job); return; }
         _ = DoTransferJobs(new List<TransferJob> { job });
+    }
+
+    private void DrainPendingWatch()
+    {
+        if (_pendingWatch.Count == 0 || _transferring) return;
+        var jobs = _pendingWatch.Where(j => j.Watch && JobReady(j) && j.Source.All.Any(File.Exists)).ToList();
+        _pendingWatch.Clear();
+        if (jobs.Count > 0) _ = DoTransferJobs(jobs);
     }
 
     // ---------------- Transferência ----------------
@@ -1132,6 +1146,7 @@ public sealed partial class MainViewModel : ViewModelBase
             IsTransferring = false;
             RateText = "";
             UpdateReadyState();
+            DrainPendingWatch();   // roda gatilhos de Watch que chegaram durante este envio
         }
     }
 
