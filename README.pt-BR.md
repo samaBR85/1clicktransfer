@@ -43,6 +43,13 @@ ou **uma de cada vez** — ou deixe o app **observar** um arquivo e enviá-lo so
   **grupos** nomeados, **presets** reutilizáveis e uma biblioteca de **servidores FTP/SFTP salvos**.
 - **Fila de transferência** — um painel ao vivo mostra o que está na fila, em andamento, com falha
   e concluído, com progresso por item e um limite configurável de **destinos em paralelo**.
+  **Cancele** no meio do envio (o botão vira **Cancelar transferência**), ou desmarque o toggle de
+  um item na fila pra **pular** ele.
+- **Verificar após transferência** (opt-in, por destino) — após enviar, confirma que o tamanho do
+  arquivo bate no destino; uma divergência vira falha em vez de um falso sucesso silencioso.
+- **Prévia de match origem/destino** — quando uma tarefa tem vários destinos, arquivos que já
+  existem lá (batendo com o que você vai enviar) aparecem logo abaixo de cada destino, pra comparar
+  antes de enviar.
 - **Origem em pasta com padrões de exclusão** — escolha uma pasta inteira (recursiva) como origem e
   exclua subpastas/arquivos com padrões simples no estilo `.gitignore`.
 - **Botão direito num destino** — criar pasta, renomear, excluir ou copiar o caminho, tanto local

@@ -42,7 +42,13 @@ time**, or let it **watch** a file and send it automatically when it changes.
   **FTP/FTPS**, and **SFTP**. Destinations are a saved library with per-item checkboxes, reusable
   **named groups**, **presets**, and a library of **saved FTP/SFTP servers**.
 - **Transfer queue** — a live panel shows what's queued, in progress, failed and succeeded, with
-  per-item progress and a configurable **parallel destinations** limit.
+  per-item progress and a configurable **parallel destinations** limit. **Cancel** mid-transfer
+  (the button turns into **Cancel transfer**), or uncheck a queued item's toggle to **skip** it.
+- **Verify after transfer** (opt-in, per destination) — after sending, confirms the file size
+  matches on the destination; a mismatch is reported as a failure instead of a silent false success.
+- **Source/destination match preview** — when a task has multiple destinations, files that already
+  exist there (matching what you're about to send) show up right under each destination, so you can
+  compare before sending.
 - **Folder sources with exclude patterns** — pick a whole folder (recursive) as the source and
   exclude subfolders/files with simple `.gitignore`-style patterns.
 - **Right-click on a destination** — create folder, rename, delete, or copy path, on local
