@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using OneClickTransfer.Avalonia.ViewModels;
+using OneClickTransfer.I18n;
 using OneClickTransfer.Models;
 using OneClickTransfer.Services;
 
@@ -482,6 +483,72 @@ public class MainViewModelTests
         Assert.True(File.Exists(Path.Combine(dst, fileName)));
         Assert.Single(vm.SucceededItems);
         Assert.Empty(vm.FailedItems);
+        vm.OnClosed();
+    }
+
+    // ---- Match origem×destino no painel DESTINATION ----
+    [Fact]
+    public void MultiDest_mostra_match_da_origem_sob_cada_destino()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "oct-vm-" + Guid.NewGuid().ToString("N"));
+        var srcDir = Path.Combine(root, "src");
+        Directory.CreateDirectory(srcDir);
+        var src = Path.Combine(srcDir, "payload.txt");
+        File.WriteAllText(src, "conteudo");
+        var dstA = Path.Combine(root, "A"); Directory.CreateDirectory(dstA); File.WriteAllText(Path.Combine(dstA, "payload.txt"), "x");
+        var dstB = Path.Combine(root, "B"); Directory.CreateDirectory(dstB); File.WriteAllText(Path.Combine(dstB, "payload.txt"), "yy");
+        var dstC = Path.Combine(root, "C"); Directory.CreateDirectory(dstC);   // sem o arquivo
+
+        var job = Job("A");
+        job.Source.Files.Add(src);
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = dstA, Enabled = true });
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = dstB, Enabled = true });
+        job.Destinations.Add(new Destination { Type = DestType.Local, Folder = dstC, Enabled = true });
+        var s = WithJobs(job);
+        var vm = New(s);
+        vm.OnOpened();
+        vm.Dest.RefreshCommand.Execute(null);   // caminho fetchFtp=true
+
+        Assert.Equal(5, vm.Dest.Rows.Count);   // 3 resumos + 2 sub-linhas de match (A e B; C não)
+        var matches = vm.Dest.Rows.Where(r => r.Highlight).ToList();
+        Assert.Equal(2, matches.Count);
+        Assert.All(matches, m => Assert.False(string.IsNullOrEmpty(m.Size)));
+        Assert.All(matches, m => Assert.Contains("payload.txt", m.Name));
+        vm.OnClosed();
+        Directory.Delete(root, true);
+    }
+
+    [Fact]
+    public void SingleDest_local_destaca_arquivo_que_casa_com_a_origem()
+    {
+        var (src, dst) = MakeSrcAndDest(out var fileName);
+        File.Copy(src, Path.Combine(dst, fileName));   // destino já tem o mesmo arquivo
+        var s = WithJobs(ReadyJob("A", src, dst));
+        var vm = New(s);
+        vm.OnOpened();
+        vm.Dest.RefreshCommand.Execute(null);
+
+        var match = vm.Dest.Rows.FirstOrDefault(r => r.RealName == fileName);
+        Assert.NotNull(match);
+        Assert.True(match!.Highlight);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public async Task Transfer_local_verificado_marca_item_como_Verified()
+    {
+        var (src, dst) = MakeSrcAndDest(out _);
+        var job = ReadyJob("A", src, dst);
+        job.Destinations[0].VerifyAfterTransfer = true;
+        var s = WithJobs(job);
+        var vm = New(s);
+        vm.OnOpened();
+
+        await vm.TransferCommand.ExecuteAsync(null);
+
+        Assert.Single(vm.SucceededItems);
+        Assert.True(vm.SucceededItems[0].Verified);
+        Assert.Equal(L.T("queueDoneVerified"), vm.SucceededItems[0].ResultText);
         vm.OnClosed();
     }
 

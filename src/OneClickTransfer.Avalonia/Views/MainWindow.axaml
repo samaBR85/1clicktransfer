@@ -229,6 +229,18 @@
                     CanUserSortColumns="False" CanUserResizeColumns="True" HeadersVisibility="Column"
                     SelectionMode="Single" SelectionChanged="Grid_SelectionCleared"
                     DoubleTapped="GridDst_DoubleTapped" ContextRequested="GridDst_ContextRequested">
+            <DataGrid.Styles>
+              <Style Selector="DataGridRow" x:DataType="vm:FileRow">
+                <Setter Property="Classes.hl" Value="{Binding Highlight}"/>
+              </Style>
+              <Style Selector="DataGridRow.hl">
+                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+              </Style>
+              <Style Selector="DataGridRow.hl DataGridCell TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+              </Style>
+            </DataGrid.Styles>
             <DataGrid.ContextMenu>
               <ContextMenu>
                 <MenuItem Header="{Binding CtxCreateFolderLabel}" Command="{Binding CreateFolderInDestCommand}">
@@ -267,10 +279,10 @@
                    IsChecked="{Binding OverwriteNever, Mode=TwoWay}"/>
     </StackPanel>
 
-    <!-- Transfer -->
-    <Button Grid.Row="5" Classes="primary" Content="{Binding TransferLabel}"
+    <!-- Transfer (vira CANCEL TRANSFER durante o envio) -->
+    <Button Grid.Row="5" Classes="primary" Content="{Binding TransferButtonLabel}"
             Height="46" FontSize="15" Margin="0,10,0,0" HorizontalAlignment="Stretch"
-            HorizontalContentAlignment="Center" Command="{Binding TransferCommand}" IsEnabled="{Binding CanGo}"/>
+            HorizontalContentAlignment="Center" Command="{Binding TransferOrCancelCommand}" IsEnabled="{Binding TransferButtonEnabled}"/>
 
     <!-- Progress -->
     <ProgressBar Grid.Row="6" Height="6" Minimum="0" Maximum="100" Value="{Binding ProgressValue}"
@@ -330,6 +342,14 @@
             </Style>
           </DataGrid.Styles>
           <DataGrid.Columns>
+            <DataGridTemplateColumn Width="34">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate x:DataType="vm:TransferQueueItem">
+                  <CheckBox IsChecked="{Binding Included, Mode=TwoWay}" IsEnabled="{Binding IsQueued}"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
             <DataGridTemplateColumn Header="{Binding QueueColName}" Width="*">
               <DataGridTemplateColumn.CellTemplate>
                 <DataTemplate x:DataType="vm:TransferQueueItem">

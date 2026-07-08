@@ -32,6 +32,8 @@ public sealed partial class MainViewModel : ViewModelBase
     private bool _rbSync;       // suprime reação aos rádios durante sync
     private bool _watchSync;    // suprime reação ao toggle de watch durante sync
     private bool _transferring;
+    private CancellationTokenSource? _cts;   // cancelamento da transferencia em andamento
+    private int _destGen;      // guarda de obsolescencia: invalida probes de match em voo ao trocar de tarefa
     private string _srcDir = "";
     private string _dstDir = "";
 
@@ -95,15 +97,16 @@ public sealed partial class MainViewModel : ViewModelBase
     public string QueueColProgress => L.T("queueColProgress");
     public string QueueColSize => L.T("queueColSize");
     public string QueueColTime => L.T("queueColTime");
-    public bool CanClearCompletedQueue => FailedItems.Count > 0 || SucceededItems.Count > 0;
+    public bool CanClearCompletedQueue => FailedItems.Count > 0 || SucceededItems.Count > 0
+        || QueuedItems.Any(i => i.State == QueueItemState.Skipped);
 
     public string QueueTotalText
     {
         get
         {
-            if (QueuedItems.Count == 0) return L.T("queueEmpty");
-            var totalBytes = QueuedItems.Sum(i => i.SizeBytes);
-            return L.T("queueTotal", FormatBytes(totalBytes));
+            var waiting = QueuedItems.Where(i => i.State == QueueItemState.Queued).ToList();
+            if (waiting.Count == 0) return L.T("queueEmpty");
+            return L.T("queueTotal", FormatBytes(waiting.Sum(i => i.SizeBytes)));
         }
     }
 
@@ -112,6 +115,9 @@ public sealed partial class MainViewModel : ViewModelBase
     {
         FailedItems.Clear();
         SucceededItems.Clear();
+        // itens pulados ficam na aba Queued -- "limpar concluídos" também os remove
+        for (int i = QueuedItems.Count - 1; i >= 0; i--)
+            if (QueuedItems[i].State == QueueItemState.Skipped) QueuedItems.RemoveAt(i);
         RaiseQueueInfo();
     }
 
@@ -145,9 +151,16 @@ public sealed partial class MainViewModel : ViewModelBase
     [ObservableProperty] private bool _isWatchChecked;
     [ObservableProperty] private bool _canTransfer;
     [ObservableProperty] private bool _isTransferring;
+    [ObservableProperty] private bool _cancelRequested;   // cancelamento pedido, aguardando o motor parar
 
     public bool CanGo => CanTransfer && !IsTransferring;
     public bool NotTransferring => !IsTransferring;
+
+    // Botao TRANSFER vira CANCEL TRANSFER durante o envio; desabilita depois que o cancel foi pedido.
+    public string TransferButtonLabel => IsTransferring ? L.T("cancelTransfer") : L.T("transfer");
+    public bool TransferButtonEnabled => IsTransferring ? !CancelRequested : CanGo;
+
+    partial void OnCancelRequestedChanged(bool value) => OnPropertyChanged(nameof(TransferButtonEnabled));
 
     // Painel da tarefa selecionada (topo, coluna direita)
     public string SelectedJobName => Job.Name;
@@ -200,7 +213,11 @@ public sealed partial class MainViewModel : ViewModelBase
         SettingsService.Save(S);
     }
 
-    partial void OnCanTransferChanged(bool value) => OnPropertyChanged(nameof(CanGo));
+    partial void OnCanTransferChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanGo));
+        OnPropertyChanged(nameof(TransferButtonEnabled));
+    }
 
     partial void OnIsTransferringChanged(bool value)
     {
@@ -209,6 +226,8 @@ public sealed partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanTransferSelected));
         OnPropertyChanged(nameof(CanMoveJobUpUi));
         OnPropertyChanged(nameof(CanMoveJobDownUi));
+        OnPropertyChanged(nameof(TransferButtonLabel));
+        OnPropertyChanged(nameof(TransferButtonEnabled));
     }
 
     partial void OnIsWatchCheckedChanged(bool value)
@@ -464,6 +483,29 @@ public sealed partial class MainViewModel : ViewModelBase
     private static FileRow UpRow() => new() { Name = "  " + L.T("upFolder"), IsUp = true, IsDir = true };
     private static FileRow InfoRow(string key) => new() { Name = "  " + L.T(key) };
 
+    /// <summary>Nomes dos arquivos de origem da tarefa (o que ela vai enviar) -- base da comparacao
+    /// com o conteudo de cada destino.</summary>
+    private HashSet<string> SourceFileNames()
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in Job.Source.All)
+        {
+            var n = Path.GetFileName(f);
+            if (!string.IsNullOrEmpty(n)) set.Add(n);
+        }
+        return set;
+    }
+
+    /// <summary>Sub-linha de match (arquivo do destino que casa com a origem): indentada, com
+    /// tamanho/data e destaque; RealName vazio a deixa inerte (sem navegacao/menu), como os resumos.</summary>
+    private static FileRow MatchRow(RemoteEntry e) => new()
+    {
+        Name = "        ↳  \U0001F4C4  " + e.Name,
+        Size = FormatSize(e.Size),
+        Modified = e.Modified == DateTime.MinValue ? "" : e.Modified.ToString("dd/MM/yyyy HH:mm"),
+        Highlight = true, RealName = ""
+    };
+
     private void RefreshHome(bool fetchFtp = false)
     {
         RefreshSourcePanel();
@@ -504,6 +546,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private void RefreshDestPanel(bool fetchFtp = false)
     {
+        _destGen++;
         var dests = Job.Destinations;
         Dest.Rows.Clear();
         if (dests.Count == 0) { Dest.PathText = L.T("noDest"); return; }
@@ -527,9 +570,51 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
 
+        // Multi-destino: uma linha-resumo por destino. Se pediram fetch, olha dentro de cada destino
+        // e mostra sub-linhas dos arquivos que casam com a origem (local: sincrono; FTP/SFTP: probe em fundo).
         Dest.PathText = L.T("destCount", enabled.Count);
+        var names = fetchFtp ? SourceFileNames() : new HashSet<string>();
+        var remoteTargets = new List<(FileRow row, Destination dest)>();
         foreach (var dd in dests)
-            Dest.Rows.Add(new FileRow { Name = (dd.Enabled ? "☑  " : "☐  ") + dd.Summary });
+        {
+            var row = new FileRow { Name = (dd.Enabled ? "☑  " : "☐  ") + dd.Summary };
+            Dest.Rows.Add(row);
+            if (names.Count == 0 || !DestReady(dd)) continue;
+            if (dd.Type == DestType.Local) InsertLocalMatches(row, dd, names);
+            else remoteTargets.Add((row, dd));
+        }
+        if (remoteTargets.Count > 0) ProbeRemoteMatches(remoteTargets, names, _destGen);
+    }
+
+    private void InsertLocalMatches(FileRow row, Destination dd, HashSet<string> names)
+    {
+        List<RemoteEntry> list;
+        try { list = TransferService.LocalList(dd.Folder).ToList(); } catch { return; }
+        InsertMatchesAfter(row, list, names);
+    }
+
+    private void InsertMatchesAfter(FileRow row, List<RemoteEntry> list, HashSet<string> names)
+    {
+        var matches = list.Where(e => !e.IsDir && names.Contains(e.Name)).OrderBy(e => e.Name).ToList();
+        if (matches.Count == 0) return;
+        var idx = Dest.Rows.IndexOf(row);
+        if (idx < 0) return;
+        for (int i = 0; i < matches.Count; i++) Dest.Rows.Insert(idx + 1 + i, MatchRow(matches[i]));
+    }
+
+    /// <summary>Consulta FTP/SFTP em fundo, um destino por vez (evita conexoes concorrentes ao mesmo
+    /// host -- licao do v3(70)). Aborta se a tarefa foi trocada no meio (gen != _destGen).</summary>
+    private async void ProbeRemoteMatches(List<(FileRow row, Destination dest)> targets, HashSet<string> names, int gen)
+    {
+        foreach (var (row, dest) in targets)
+        {
+            if (gen != _destGen) return;
+            List<RemoteEntry> list;
+            try { list = await Task.Run(() => TransferService.ListPath(dest, string.IsNullOrEmpty(dest.Folder) ? "/" : dest.Folder)); }
+            catch { continue; }   // destino offline: sem sub-linha (silencioso)
+            if (gen != _destGen) return;
+            InsertMatchesAfter(row, list, names);
+        }
     }
 
     private void RefillSource()
@@ -552,26 +637,31 @@ public sealed partial class MainViewModel : ViewModelBase
         if (string.IsNullOrEmpty(_dstDir)) { Dest.PathText = L.T("noDest"); return; }
         Dest.PathText = L.T("folderPrefix") + _dstDir;
         if (!Directory.Exists(_dstDir)) return;
+        var names = SourceFileNames();
         if (Directory.GetParent(_dstDir) != null) Dest.Rows.Add(UpRow());
         foreach (var it in TransferService.LocalList(_dstDir))
-            Dest.Rows.Add(ToRow(it, false));
+            Dest.Rows.Add(ToRow(it, !it.IsDir && names.Contains(it.Name)));
     }
 
     private async void FetchRemoteAt(Destination d, string path)
     {
+        var gen = _destGen;
         Dest.Rows.Clear();
         Dest.Rows.Add(InfoRow("loadingFtp"));
         try
         {
             var list = await Task.Run(() => TransferService.ListPath(d, path));
+            if (gen != _destGen) return;
+            var names = SourceFileNames();
             Dest.Rows.Clear();
             if (path.TrimEnd('/').Length > 0) Dest.Rows.Add(UpRow());
             foreach (var it in list.OrderByDescending(x => x.IsDir).ThenBy(x => x.Name))
-                Dest.Rows.Add(ToRow(it, false));
+                Dest.Rows.Add(ToRow(it, !it.IsDir && names.Contains(it.Name)));
             if (Dest.Rows.Count == 0 || (Dest.Rows.Count == 1 && Dest.Rows[0].IsUp)) Dest.Rows.Add(InfoRow("emptyFolder"));
         }
         catch
         {
+            if (gen != _destGen) return;
             Dest.Rows.Clear();
             if (path.TrimEnd('/').Length > 0) Dest.Rows.Add(UpRow());
             Dest.Rows.Add(InfoRow("ftpOffline"));
@@ -781,6 +871,22 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     // ---------------- Transferência ----------------
+    /// <summary>Botão TRANSFER: inicia se parado, cancela se estiver enviando.</summary>
+    [RelayCommand]
+    private Task TransferOrCancel()
+    {
+        if (_transferring) { CancelTransfer(); return Task.CompletedTask; }
+        return DoTransferJobs(S.Jobs.ToList());
+    }
+
+    private void CancelTransfer()
+    {
+        if (!_transferring || CancelRequested) return;
+        CancelRequested = true;
+        _cts?.Cancel();
+        SetStatus(L.T("canceling"), StatusKind.Sub);
+    }
+
     [RelayCommand]
     private Task TransferAsync() => DoTransferJobs(S.Jobs.ToList());
 
@@ -821,6 +927,9 @@ public sealed partial class MainViewModel : ViewModelBase
 
         _transferring = true;
         IsTransferring = true;
+        CancelRequested = false;
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
         ProgressValue = 0;
         int sent = 0, skipped = 0, failed = 0;
         string? lastError = null;
@@ -883,6 +992,7 @@ public sealed partial class MainViewModel : ViewModelBase
                         FileName = fileName,
                         DestSummary = d.Summary,
                         SizeBytes = SafeFileLength(src),
+                        Verified = d.VerifyAfterTransfer,
                         State = QueueItemState.Queued,
                         StatusText = L.T("queueWaiting")
                     };
@@ -919,6 +1029,22 @@ public sealed partial class MainViewModel : ViewModelBase
                     foreach (var w in group)
                     {
                         var d = w.Dest; var src = w.Src; var qi = w.QueueItem;
+
+                        // Pula: cancelamento pedido (aplica a todos os itens restantes) OU toggle do item desmarcado.
+                        if (ct.IsCancellationRequested || !qi.Included)
+                        {
+                            Interlocked.Increment(ref skipped);
+                            var doneSkip = Interlocked.Increment(ref completed);
+                            _ui.Post(() =>
+                            {
+                                qi.State = QueueItemState.Skipped;
+                                qi.FinishedAt = DateTime.Now;
+                                RaiseQueueInfo();
+                                ProgressValue = steps > 0 ? doneSkip * 100.0 / steps : 0;
+                            });
+                            continue;
+                        }
+
                         var startedNow = Interlocked.Increment(ref started);
                         _ui.Post(() =>
                         {
@@ -999,6 +1125,9 @@ public sealed partial class MainViewModel : ViewModelBase
         }
         finally
         {
+            _cts?.Dispose();
+            _cts = null;
+            CancelRequested = false;
             _transferring = false;
             IsTransferring = false;
             RateText = "";

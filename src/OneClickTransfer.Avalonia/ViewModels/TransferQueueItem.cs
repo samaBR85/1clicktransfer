@@ -4,7 +4,7 @@ using OneClickTransfer.I18n;
 
 namespace OneClickTransfer.Avalonia.ViewModels;
 
-public enum QueueItemState { Queued, Running, Success, Failed }
+public enum QueueItemState { Queued, Running, Success, Failed, Skipped }
 
 /// <summary>Um item da fila de transferência: um arquivo indo para um destino específico.
 /// POCO de UI (não persiste em settings.json).</summary>
@@ -13,6 +13,10 @@ public sealed partial class TransferQueueItem : ObservableObject
     public string FileName { get; init; } = "";
     public string DestSummary { get; init; } = "";
     public long SizeBytes { get; init; }
+    public bool Verified { get; init; }   // destino tinha "Verify after transfer" ligado
+
+    // toggle da fila: desmarcado antes de rodar -> o motor pula este envio (State vira Skipped)
+    [ObservableProperty] private bool _included = true;
 
     private DateTime? _finishedAt;
     public DateTime? FinishedAt
@@ -38,15 +42,17 @@ public sealed partial class TransferQueueItem : ObservableObject
 
     public bool IsActive => State is QueueItemState.Queued or QueueItemState.Running;
     public bool IsFailed => State == QueueItemState.Failed;
+    public bool IsQueued => State == QueueItemState.Queued;   // toggle so habilitado enquanto na fila
 
     /// <summary>Texto exibido na coluna Progress quando o item não está mais ativo:
-    /// "Done" pra sucesso, "Failed" (+ motivo, se houver) pra falha.</summary>
+    /// "Done" (+ "verificado" se aplicável) pra sucesso, "Failed" (+ motivo) pra falha, "Pulado" pra skip.</summary>
     public string ResultText => State switch
     {
-        QueueItemState.Success => L.T("queueDone"),
+        QueueItemState.Success => Verified ? L.T("queueDoneVerified") : L.T("queueDone"),
         QueueItemState.Failed => string.IsNullOrEmpty(ErrorMessage)
             ? L.T("queueFailed")
             : L.T("queueFailedReason", ErrorMessage),
+        QueueItemState.Skipped => L.T("queueSkipped"),
         _ => "",
     };
 
@@ -65,6 +71,7 @@ public sealed partial class TransferQueueItem : ObservableObject
     {
         OnPropertyChanged(nameof(IsActive));
         OnPropertyChanged(nameof(IsFailed));
+        OnPropertyChanged(nameof(IsQueued));
         OnPropertyChanged(nameof(ResultText));
     }
 }
