@@ -97,6 +97,69 @@ public class MainViewModelTests
         vm.OnClosed();
     }
 
+    // ---- Reordenar tarefas ----
+    [Fact]
+    public void MoveJobUp_troca_com_a_anterior_e_mantem_selecao()
+    {
+        var s = WithJobs(Job("A"), Job("B"), Job("C"));
+        var vm = New(s);
+        vm.OnOpened();
+        vm.SelectedJobIndex = 1;   // B
+
+        vm.MoveJobUpCommand.Execute(null);
+
+        Assert.Equal(new[] { "B", "A", "C" }, vm.Jobs.Select(j => j.Name));
+        Assert.Equal(0, vm.SelectedJobIndex);
+        Assert.Equal(0, s.SelectedJob);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public void MoveJobDown_troca_com_a_seguinte_e_mantem_selecao()
+    {
+        var s = WithJobs(Job("A"), Job("B"), Job("C"));
+        var vm = New(s);
+        vm.OnOpened();
+        vm.SelectedJobIndex = 1;   // B
+
+        vm.MoveJobDownCommand.Execute(null);
+
+        Assert.Equal(new[] { "A", "C", "B" }, vm.Jobs.Select(j => j.Name));
+        Assert.Equal(2, vm.SelectedJobIndex);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public void CanMoveJobUp_false_no_primeiro_CanMoveJobDown_false_no_ultimo()
+    {
+        var s = WithJobs(Job("A"), Job("B"));
+        var vm = New(s);
+        vm.OnOpened();
+
+        vm.SelectedJobIndex = 0;
+        Assert.False(vm.CanMoveJobUp);
+        Assert.True(vm.CanMoveJobDown);
+
+        vm.SelectedJobIndex = 1;
+        Assert.True(vm.CanMoveJobUp);
+        Assert.False(vm.CanMoveJobDown);
+        vm.OnClosed();
+    }
+
+    [Fact]
+    public void MoveJobUp_no_primeiro_nao_faz_nada()
+    {
+        var s = WithJobs(Job("A"), Job("B"));
+        var vm = New(s);
+        vm.OnOpened();
+        vm.SelectedJobIndex = 0;
+
+        vm.MoveJobUpCommand.Execute(null);
+
+        Assert.Equal(new[] { "A", "B" }, vm.Jobs.Select(j => j.Name));
+        vm.OnClosed();
+    }
+
     // ---- CanTransfer ----
     [Fact]
     public void CanTransfer_false_without_ready_job()

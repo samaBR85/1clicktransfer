@@ -165,7 +165,16 @@ public sealed partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedJobDestsText));
         OnPropertyChanged(nameof(SelectedJobSummaryText));
         OnPropertyChanged(nameof(CanTransferSelected));
+        OnPropertyChanged(nameof(CanMoveJobUp));
+        OnPropertyChanged(nameof(CanMoveJobDown));
+        OnPropertyChanged(nameof(CanMoveJobUpUi));
+        OnPropertyChanged(nameof(CanMoveJobDownUi));
     }
+
+    public bool CanMoveJobUp => SelectedJobIndex > 0;
+    public bool CanMoveJobDown => SelectedJobIndex >= 0 && SelectedJobIndex < S.Jobs.Count - 1;
+    public bool CanMoveJobUpUi => NotTransferring && CanMoveJobUp;
+    public bool CanMoveJobDownUi => NotTransferring && CanMoveJobDown;
 
     partial void OnSelectedJobIndexChanged(int value)
     {
@@ -198,6 +207,8 @@ public sealed partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanGo));
         OnPropertyChanged(nameof(NotTransferring));
         OnPropertyChanged(nameof(CanTransferSelected));
+        OnPropertyChanged(nameof(CanMoveJobUpUi));
+        OnPropertyChanged(nameof(CanMoveJobDownUi));
     }
 
     partial void OnIsWatchCheckedChanged(bool value)
@@ -218,6 +229,8 @@ public sealed partial class MainViewModel : ViewModelBase
     public string DuplicateLabel => L.T("taskDuplicate");
     public string RenameLabel => L.T("taskRename");
     public string RemoveLabel => L.T("taskRemove");
+    public string MoveUpLabel => L.T("taskMoveUp");
+    public string MoveDownLabel => L.T("taskMoveDown");
     public string SourceHeader => L.T("source");
     public string DestHeader => L.T("destination");
     public string WatchTip => L.T("watchTip");
@@ -260,7 +273,8 @@ public sealed partial class MainViewModel : ViewModelBase
     private void Retranslate()
     {
         foreach (var p in new[] { nameof(Title), nameof(TasksHeader), nameof(NewLabel), nameof(DuplicateLabel),
-            nameof(RenameLabel), nameof(RemoveLabel), nameof(SourceHeader), nameof(DestHeader), nameof(WatchTip),
+            nameof(RenameLabel), nameof(RemoveLabel), nameof(MoveUpLabel), nameof(MoveDownLabel),
+            nameof(SourceHeader), nameof(DestHeader), nameof(WatchTip),
             nameof(RefreshTip), nameof(ColName), nameof(ColSize), nameof(ColModified), nameof(ActionLabel),
             nameof(ReplaceLabel), nameof(ReplaceIfNewerLabel), nameof(DontReplaceLabel), nameof(TransferLabel),
             nameof(SettingsLabel), nameof(HintText), nameof(LastTransferText), nameof(QueuePanelTitle),
@@ -369,6 +383,24 @@ public sealed partial class MainViewModel : ViewModelBase
         RefreshHome();
         UpdateReadyState();
         _watch.Restart(WatchedJobs());
+    }
+
+    [RelayCommand]
+    private void MoveJobUp() => MoveJob(-1);
+
+    [RelayCommand]
+    private void MoveJobDown() => MoveJob(1);
+
+    private void MoveJob(int delta)
+    {
+        var idx = SelectedJobIndex;
+        var newIdx = idx + delta;
+        if (idx < 0 || newIdx < 0 || newIdx >= S.Jobs.Count) return;
+        (S.Jobs[idx], S.Jobs[newIdx]) = (S.Jobs[newIdx], S.Jobs[idx]);
+        S.SelectedJob = newIdx;
+        SettingsService.Save(S);
+        RefreshJobs();
+        UpdateReadyState();
     }
 
     [RelayCommand]

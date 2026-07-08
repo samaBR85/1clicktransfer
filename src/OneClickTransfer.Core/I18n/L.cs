@@ -26,6 +26,8 @@ public static class L
         ["taskDuplicate"] = ("Duplicar", "Duplicate"),
         ["taskRename"] = ("Renomear", "Rename"),
         ["taskRemove"] = ("Remover", "Remove"),
+        ["taskMoveUp"] = ("Mover para cima", "Move up"),
+        ["taskMoveDown"] = ("Mover para baixo", "Move down"),
         ["taskNamePrompt"] = ("Nome da tarefa:", "Task name:"),
         ["copySuffix"] = ("(cópia)", "(copy)"),
         ["taskRemoveConfirm"] = ("Remover a tarefa \"{0}\"?", "Remove task \"{0}\"?"),
