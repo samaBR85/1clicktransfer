@@ -88,6 +88,15 @@ public static class TransferService
                 onProgress?.Invoke(new TransferProgress(fp.Progress, fp.TransferredBytes, total, fp.TransferSpeed));
         };
         c.UploadFile(srcFile, remote, FtpRemoteExists.Overwrite, true, FtpVerify.None, p);
+        if (d.VerifyAfterTransfer)
+        {
+            var remoteSize = c.GetFileSize(remote);
+            if (remoteSize != total)
+            {
+                c.Disconnect();
+                throw new IOException($"Verification failed: expected {total} bytes, got {remoteSize}");
+            }
+        }
         c.Disconnect();
     }
 
@@ -203,6 +212,15 @@ public static class TransferService
             double pct = total > 0 ? done / (double)total * 100.0 : 0;
             onProgress?.Invoke(new TransferProgress(pct, done, total, bps));
         });
+        if (d.VerifyAfterTransfer)
+        {
+            var remoteSize = c.GetAttributes(remote).Size;
+            if (remoteSize != total)
+            {
+                c.Disconnect();
+                throw new IOException($"Verification failed: expected {total} bytes, got {remoteSize}");
+            }
+        }
         c.Disconnect();
     }
 
@@ -339,6 +357,12 @@ public static class TransferService
             {
                 long size = new FileInfo(srcFile).Length;
                 LocalCopy(srcFile, d.Folder, relPath);
+                if (d.VerifyAfterTransfer)
+                {
+                    var dstSize = new FileInfo(Path.Combine(d.Folder, relPath)).Length;
+                    if (dstSize != size)
+                        throw new IOException($"Verification failed: expected {size} bytes, got {dstSize}");
+                }
                 onProgress?.Invoke(new TransferProgress(100, size, size, 0));
                 break;
             }

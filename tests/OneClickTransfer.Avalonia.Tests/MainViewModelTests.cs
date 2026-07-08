@@ -468,6 +468,24 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task Transfer_local_com_VerifyAfterTransfer_sucesso_normal()
+    {
+        var (src, dst) = MakeSrcAndDest(out var fileName);
+        var job = ReadyJob("A", src, dst);
+        job.Destinations[0].VerifyAfterTransfer = true;
+        var s = WithJobs(job);
+        var vm = New(s);
+        vm.OnOpened();
+
+        await vm.TransferCommand.ExecuteAsync(null);
+
+        Assert.True(File.Exists(Path.Combine(dst, fileName)));
+        Assert.Single(vm.SucceededItems);
+        Assert.Empty(vm.FailedItems);
+        vm.OnClosed();
+    }
+
+    [Fact]
     public async Task Transfer_populates_queue_items_success_and_failure()
     {
         var (src, _) = MakeSrcAndDest(out var fileName);

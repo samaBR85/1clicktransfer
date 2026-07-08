@@ -179,4 +179,18 @@ public class ModelsTests
         var s = new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h", ForceLegacyPasv = true };
         Assert.True(s.Clone().ForceLegacyPasv);
     }
+
+    [Fact]
+    public void Destination_Clone_PreservaVerifyAfterTransfer()
+    {
+        var d = new Destination { Type = DestType.Ftp, Host = "h", VerifyAfterTransfer = true };
+        Assert.True(d.Clone().VerifyAfterTransfer);
+    }
+
+    [Fact]
+    public void SavedServer_Clone_PreservaVerifyAfterTransfer()
+    {
+        var s = new SavedServer { Name = "NAS", Type = DestType.Ftp, Host = "h", VerifyAfterTransfer = true };
+        Assert.True(s.Clone().VerifyAfterTransfer);
+    }
 }

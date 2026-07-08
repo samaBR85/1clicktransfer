@@ -4,7 +4,7 @@
         x:Class="OneClickTransfer.Avalonia.Views.DestinationEditorWindow"
         x:DataType="vm:DestinationEditorViewModel"
         Title="{Binding WindowTitle}"
-        Width="540" Height="490"
+        Width="540" Height="516"
         WindowStartupLocation="CenterOwner" CanResize="False" ShowInTaskbar="False"
         Background="{DynamicResource BgBrush}">
 
@@ -20,6 +20,8 @@
         <RadioButton GroupName="dt" Content="{Binding FtpLabel}" IsChecked="{Binding IsFtp, Mode=TwoWay}" VerticalAlignment="Center"/>
         <RadioButton GroupName="dt" Content="{Binding SftpLabel}" IsChecked="{Binding IsSftp, Mode=TwoWay}" VerticalAlignment="Center"/>
       </StackPanel>
+
+      <CheckBox Content="{Binding VerifyLabel}" IsChecked="{Binding VerifyAfterTransfer, Mode=TwoWay}" Margin="0,0,0,10"/>
 
       <!-- Local -->
       <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource LineBrush}"

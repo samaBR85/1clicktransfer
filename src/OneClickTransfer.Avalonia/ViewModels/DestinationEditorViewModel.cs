@@ -75,6 +75,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
     [ObservableProperty] private string _password = "";
     [ObservableProperty] private bool _useTls;
     [ObservableProperty] private bool _forceLegacyPasv;
+    [ObservableProperty] private bool _verifyAfterTransfer;
 
     [ObservableProperty] private string _testResult = "";
     [ObservableProperty] private bool _testOk;
@@ -96,6 +97,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
     public string PassLabel => L.T("ftpPass");
     public string TlsLabel => L.T("ftpTls");
     public string PasvLabel => L.T("ftpLegacyPasv");
+    public string VerifyLabel => L.T("verifyAfterTransfer");
     public string TestLabel => L.T("testConn");
     public string SaveLabel => L.T("save");
     public string CancelLabel => L.T("cancel");
@@ -132,6 +134,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
         Password = SecretProtector.Unprotect(srv.Password);
         UseTls = srv.UseTls;
         ForceLegacyPasv = srv.ForceLegacyPasv;
+        VerifyAfterTransfer = srv.VerifyAfterTransfer;
         _typeSync = false;
         ApplyTypeChange();
     }
@@ -152,7 +155,8 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
             Username = Username.Trim(),
             Password = SecretProtector.Protect(Password),
             UseTls = IsFtp && UseTls,
-            ForceLegacyPasv = IsFtp && ForceLegacyPasv
+            ForceLegacyPasv = IsFtp && ForceLegacyPasv,
+            VerifyAfterTransfer = VerifyAfterTransfer
         };
         var idx = _s.SavedServers.FindIndex(x => x.Name == srv.Name);
         if (idx >= 0) _s.SavedServers[idx] = srv; else _s.SavedServers.Add(srv);
@@ -194,6 +198,7 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
         Password = SecretProtector.Unprotect(d.Password);
         UseTls = d.UseTls;
         ForceLegacyPasv = d.ForceLegacyPasv;
+        VerifyAfterTransfer = d.VerifyAfterTransfer;
         _typeSync = false;
         ApplyTypeChange();
     }
@@ -213,10 +218,11 @@ public sealed partial class DestinationEditorViewModel : ViewModelBase
                 Username = Username.Trim(),
                 Password = SecretProtector.Protect(Password),
                 UseTls = !sftp && UseTls,
-                ForceLegacyPasv = !sftp && ForceLegacyPasv
+                ForceLegacyPasv = !sftp && ForceLegacyPasv,
+                VerifyAfterTransfer = VerifyAfterTransfer
             };
         }
-        return new Destination { Type = DestType.Local, Folder = LocalFolder.Trim() };
+        return new Destination { Type = DestType.Local, Folder = LocalFolder.Trim(), VerifyAfterTransfer = VerifyAfterTransfer };
     }
 
     private void SetTest(string text, bool ok, bool error)

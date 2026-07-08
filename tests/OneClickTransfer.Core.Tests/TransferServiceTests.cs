@@ -44,6 +44,16 @@ public class TransferServiceTests : IDisposable
     }
 
     [Fact]
+    public void Send_Local_ComVerifyAfterTransfer_NaoQuebraTransferenciaNormal()
+    {
+        var src = MakeFile("v.txt", "conteudo de verificacao");
+        var dst = LocalDest("d");
+        dst.VerifyAfterTransfer = true;
+        TransferService.Send(dst, src, null);
+        Assert.True(File.Exists(Path.Combine(dst.Folder, "v.txt")));
+    }
+
+    [Fact]
     public void Send_NxM_LocalCopiaTudo()
     {
         var f1 = MakeFile("a.txt", "A");
