@@ -5,7 +5,7 @@
 <h1 align="center">1-Click Transfer</h1>
 
 <p align="center">
-  <a href="https://github.com/samaBR85/1clicktransfer/releases/latest"><img src="https://img.shields.io/github/v/release/samaBR85/1clicktransfer?label=download" alt="Release"></a>
+  <a href="https://github.com/samaBR85/1clicktransfer/releases"><img src="https://img.shields.io/github/v/release/samaBR85/1clicktransfer?label=download" alt="Release"></a>
   <img src="https://img.shields.io/github/downloads/samaBR85/1clicktransfer/total?label=downloads&color=success" alt="Downloads">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4" alt="Windows | Linux | macOS">
@@ -76,7 +76,7 @@ time**, or let it **watch** a file and send it automatically when it changes.
 </p>
 
 ## Download & run
-Grab the latest **[Release](https://github.com/samaBR85/1clicktransfer/releases/latest)** for your OS —
+Grab the latest **[Release](https://github.com/samaBR85/1clicktransfer/releases)** for your OS —
 each asset is a `.zip` containing a single **self-contained** executable (a `.app` bundle on macOS,
 so it gets a proper Dock icon), no runtime or install needed:
 
