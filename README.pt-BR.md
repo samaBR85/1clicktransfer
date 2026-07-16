@@ -5,7 +5,7 @@
 <h1 align="center">1-Click Transfer</h1>
 
 <p align="center">
-  <a href="https://github.com/samaBR85/1clicktransfer/releases"><img src="https://img.shields.io/github/v/release/samaBR85/1clicktransfer?label=download" alt="Release"></a>
+  <img src="https://img.shields.io/github/v/release/samaBR85/1clicktransfer?label=version" alt="Release">
   <img src="https://img.shields.io/github/downloads/samaBR85/1clicktransfer/total?label=downloads&color=success" alt="Downloads">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4" alt="Windows | Linux | macOS">
@@ -77,7 +77,7 @@ ou **uma de cada vez** — ou deixe o app **observar** um arquivo e enviá-lo so
 </p>
 
 ## Baixar e usar
-Baixe o **[Release](https://github.com/samaBR85/1clicktransfer/releases)** mais recente do seu
+Baixe o **Release** mais recente do seu
 SO — cada asset é um `.zip` com um executável **self-contained** dentro (no macOS, um `.app` com
 ícone de verdade no Dock), sem runtime nem instalação:
 
